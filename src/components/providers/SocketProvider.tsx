@@ -49,7 +49,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       setTimeout(() => {
         setScreen("game");
         router.push(`/game/${roomId}`);
-      }, 2500);
+      }, 4500);
     });
 
     // ── game:state ────────────────────────────────────────────────

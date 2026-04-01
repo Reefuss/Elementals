@@ -10,6 +10,28 @@ import { QueueState } from "@/components/lobby/QueueState";
 import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────
+//  Typewriter helper
+// ─────────────────────────────────────────────
+
+function Typewriter({ text, startDelay = 0 }: { text: string; startDelay?: number }) {
+  const [displayed, setDisplayed] = useState("");
+  useEffect(() => {
+    setDisplayed("");
+    const timer = setTimeout(() => {
+      let i = 0;
+      const iv = setInterval(() => {
+        i++;
+        setDisplayed(text.slice(0, i));
+        if (i >= text.length) clearInterval(iv);
+      }, 55);
+      return () => clearInterval(iv);
+    }, startDelay);
+    return () => clearTimeout(timer);
+  }, [text, startDelay]);
+  return <>{displayed || "\u00A0"}</>;
+}
+
+// ─────────────────────────────────────────────
 //  Match Found transition overlay
 // ─────────────────────────────────────────────
 
@@ -34,6 +56,12 @@ function MatchFoundOverlay({ opponent }: { opponent: { username: string } | null
           className="absolute w-32 h-32 rounded-full border-2 border-indigo-400"
         />
         <motion.div
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 3, opacity: 0 }}
+          transition={{ duration: 1.8, delay: 0.4 }}
+          className="absolute w-32 h-32 rounded-full border-2 border-indigo-400"
+        />
+        <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           className="text-5xl"
@@ -42,9 +70,16 @@ function MatchFoundOverlay({ opponent }: { opponent: { username: string } | null
         </motion.div>
         <div>
           <p className="text-sm text-white/50 uppercase tracking-widest mb-2">Match Found</p>
-          <h2 className="font-display text-3xl font-bold text-white">
-            vs <span className="text-indigo-300">{opponent?.username ?? "…"}</span>
-          </h2>
+          <motion.h2
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="font-display text-3xl font-bold text-white"
+          >
+            vs <span className="text-indigo-300">
+              <Typewriter text={opponent?.username ?? "…"} startDelay={1200} />
+            </span>
+          </motion.h2>
         </div>
         <p className="text-xs text-white/30">Preparing the arena…</p>
       </motion.div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Element } from "@/lib/game/types";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,67 @@ export function RainbowTiebreak({
   waitingForOp,
   onChoose,
 }: RainbowTiebreakProps) {
+  const [cinematic, setCinematic] = useState(false);
+  const prevOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (open && !prevOpenRef.current) {
+      setCinematic(true);
+      const t = setTimeout(() => setCinematic(false), 1800);
+      prevOpenRef.current = true;
+      return () => clearTimeout(t);
+    }
+    if (!open) {
+      prevOpenRef.current = false;
+    }
+  }, [open]);
+
+  if (cinematic) {
+    return (
+      <Modal open={open} title="">
+        <div className="flex flex-col items-center justify-center gap-6 py-4">
+          <motion.div
+            initial={{ scale: 0.4, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 320, damping: 22 }}
+            className="text-7xl leading-none"
+          >
+            🌈
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-center"
+          >
+            <p
+              className="font-display text-3xl font-bold tracking-widest"
+              style={{
+                background: "linear-gradient(90deg, #f87171, #fb923c, #fbbf24, #4ade80, #60a5fa, #c084fc)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              RAINBOW DUEL
+            </p>
+            <p className="text-sm text-white/50 mt-2">Both played Rainbow!</p>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="flex gap-6 text-4xl"
+          >
+            <span>☀</span>
+            <span className="text-white/30 self-center text-xl">vs</span>
+            <span>☀</span>
+          </motion.div>
+        </div>
+      </Modal>
+    );
+  }
+
   return (
     <Modal open={open} title="Rainbow Clash!">
       <div className="flex flex-col items-center gap-6">
@@ -63,9 +124,12 @@ export function RainbowTiebreak({
               animate={{ opacity: 1, y: 0 }}
               className="flex gap-4 w-full"
             >
-              {ELEMENT_OPTIONS.map(({ element, label, icon, color }) => (
+              {ELEMENT_OPTIONS.map(({ element, label, icon, color }, index) => (
                 <motion.button
                   key={element}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
                   whileHover={{ scale: 1.06, y: -3 }}
                   whileTap={{ scale: 0.96 }}
                   onClick={() => onChoose(element)}

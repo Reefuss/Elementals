@@ -1,12 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Card, GamePhase, RoundResult } from "@/lib/game/types";
+import { Card, GamePhase, RoundResult, WinReason, CardType } from "@/lib/game/types";
 import { GameCard, CardBack, CardSlot } from "./GameCard";
 import { TurnTimer } from "./TurnTimer";
-import { cardDisplayName } from "@/lib/game/rules";
 
 interface BattleArenaProps {
   phase:           GamePhase;
@@ -14,9 +13,43 @@ interface BattleArenaProps {
   msLeft:          number;
   selfHasPlayed:   boolean;
   opponentHasPlayed: boolean;
-  selfPlayedCard?: Card;       // card self played this round (if any, hidden to opp)
+  selfPlayedCard?: Card;       // kept for backward compat but unused
   lastResult?:     RoundResult | null;
   selfId:          string;
+}
+
+function reasonLine(result: RoundResult): string {
+  switch (result.reason) {
+    case WinReason.ELEMENT_BEATS: {
+      const beats: Record<string, string> = { SUN: "STAR", STAR: "MOON", MOON: "SUN" };
+      const p1 = result.playerOneCard;
+      const p2 = result.playerTwoCard;
+      if (p1.type === CardType.ELEMENT && p2.type === CardType.ELEMENT) {
+        if (beats[p1.element] === p2.element) {
+          const winEl = p1.element[0] + p1.element.slice(1).toLowerCase();
+          const loseEl = p2.element[0] + p2.element.slice(1).toLowerCase();
+          return `${winEl} beats ${loseEl}`;
+        } else {
+          const winEl = p2.element[0] + p2.element.slice(1).toLowerCase();
+          const loseEl = p1.element[0] + p1.element.slice(1).toLowerCase();
+          return `${winEl} beats ${loseEl}`;
+        }
+      }
+      return "Element beats element";
+    }
+    case WinReason.HIGHER_VALUE:
+      return "Higher value wins";
+    case WinReason.RAINBOW_BEATS:
+      return "Rainbow conquers all";
+    case WinReason.BLOCK_NEGATES:
+      return "Block cancels the round";
+    case WinReason.SAME_VALUE_TIE:
+      return "Equal power — tie";
+    case WinReason.RAINBOW_TIEBREAK:
+      return "Rainbow duel settled it";
+    default:
+      return "";
+  }
 }
 
 export function BattleArena({
@@ -32,17 +65,6 @@ export function BattleArena({
   const isRevealing = phase === GamePhase.REVEALING;
   const isPlaying   = phase === GamePhase.PLAYING;
 
-  // During REVEALING, show both real cards from lastResult
-  const revealedSelfCard =
-    isRevealing && lastResult
-      ? (lastResult.winnerId === selfId || lastResult.winnerId === null)
-        ? undefined  // use lastResult cards directly
-        : undefined
-      : undefined;
-
-  // Identify which card in lastResult belongs to self
-  // We assume players[0] = p1, but client only knows their own id.
-  // The result embeds scoreAfter keyed by playerId, so we check winnerId.
   const p1Card = lastResult?.playerOneCard;
   const p2Card = lastResult?.playerTwoCard;
 
@@ -51,9 +73,17 @@ export function BattleArena({
       {/* Round indicator */}
       <div className="flex items-center gap-4">
         <div className="h-px w-16 bg-white/10" />
-        <span className="font-display text-xs tracking-[0.3em] text-white/40 uppercase">
-          Round {round}
-        </span>
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={round}
+            initial={{ opacity: 0, scale: 1.4 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            className="font-display text-xs tracking-[0.3em] text-white/40 uppercase"
+          >
+            Round {round}
+          </motion.span>
+        </AnimatePresence>
         <div className="h-px w-16 bg-white/10" />
       </div>
 
@@ -68,7 +98,7 @@ export function BattleArena({
                 key="opp-reveal"
                 initial={{ rotateY: 90, scale: 0.9 }}
                 animate={{ rotateY: 0,  scale: 1   }}
-                transition={{ type: "spring", stiffness: 260, damping: 22, delay: 0.1 }}
+                transition={{ type: "spring", stiffness: 260, damping: 22, delay: 0.2 }}
               >
                 <GameCard card={p2Card} size="lg" />
               </motion.div>
@@ -107,21 +137,21 @@ export function BattleArena({
                 key="self-reveal"
                 initial={{ rotateY: 90, scale: 0.9 }}
                 animate={{ rotateY: 0,  scale: 1   }}
-                transition={{ type: "spring", stiffness: 260, damping: 22 }}
+                transition={{ type: "spring", stiffness: 260, damping: 22, delay: 0.75 }}
               >
                 <GameCard card={p1Card} size="lg" />
               </motion.div>
-            ) : selfHasPlayed && selfPlayedCard ? (
+            ) : selfHasPlayed ? (
               <motion.div
                 key="self-played"
-                initial={{ y: -20, scale: 0.9, opacity: 0 }}
-                animate={{ y: 0,   scale: 1,   opacity: 1 }}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1,   opacity: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 24 }}
               >
-                <GameCard card={selfPlayedCard} size="lg" played />
+                <CardBack size="lg" pulse />
               </motion.div>
             ) : (
-              <CardSlot size="lg" label={selfHasPlayed ? "Played" : "Play a card"} />
+              <CardSlot size="lg" label="Play a card" />
             )}
           </AnimatePresence>
         </div>
@@ -165,6 +195,7 @@ function RoundResultBanner({
 }) {
   const youWon = result.winnerId === selfId;
   const tie    = result.winnerId === null;
+  const reason = reasonLine(result);
 
   return (
     <motion.div
@@ -172,7 +203,7 @@ function RoundResultBanner({
       initial={{ opacity: 0, y: 12, scale: 0.9 }}
       animate={{ opacity: 1, y: 0,  scale: 1   }}
       exit={{ opacity: 0, y: -8 }}
-      transition={{ type: "spring", stiffness: 320, damping: 26 }}
+      transition={{ type: "spring", stiffness: 320, damping: 26, delay: 1.0 }}
       className={cn(
         "px-6 py-3 rounded-2xl text-center",
         "border font-display",
@@ -181,9 +212,12 @@ function RoundResultBanner({
         !tie && !youWon && "border-red-400/30 bg-red-500/10 text-red-300"
       )}
     >
-      <div className="text-lg font-bold">
+      <div className="text-xl font-bold">
         {tie ? "Tie Round" : youWon ? "Point Won!" : "Point Lost"}
       </div>
+      {reason && (
+        <div className="text-xs opacity-60 mt-1">{reason}</div>
+      )}
     </motion.div>
   );
 }

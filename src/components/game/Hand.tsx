@@ -57,7 +57,7 @@ export function Hand({ cards, selectedCardId, disabled, onSelectCard }: HandProp
                   type:      "spring",
                   stiffness: 320,
                   damping:   28,
-                  delay:     i * 0.05,
+                  delay:     i * 0.12,
                 }}
                 style={{ zIndex: i }}
                 className="relative"
