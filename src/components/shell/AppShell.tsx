@@ -32,24 +32,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col h-full">
       {/* ── Top bar ── */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-2 border-b border-white/[0.06]">
-        <span className="font-display text-sm font-bold tracking-widest text-white/60 uppercase">
-          Elementals
-        </span>
-        <div className="flex items-center gap-3">
-          {/* Coins */}
-          <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">
-            <CoinIcon className="w-3.5 h-3.5 text-amber-400" />
-            <span className="font-display text-xs font-bold text-amber-300">
-              {coins.toLocaleString()}
-            </span>
-          </div>
-          {/* Pity */}
-          <div className="flex items-center gap-1.5 bg-purple-500/10 border border-purple-500/20 rounded-full px-3 py-1">
-            <StarSmallIcon className="w-3.5 h-3.5 text-purple-400" />
-            <span className="font-display text-xs font-bold text-purple-300">
-              {pity}
-            </span>
+      <div className="shrink-0 border-b border-white/[0.06]">
+        <div className="max-w-[800px] mx-auto flex items-center justify-between px-4 py-2">
+          <span className="font-display text-sm font-bold tracking-widest text-white/60 uppercase">
+            Elementals
+          </span>
+          <div className="flex items-center gap-3">
+            {/* Coins */}
+            <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">
+              <CoinIcon className="w-3.5 h-3.5 text-amber-400" />
+              <span className="font-display text-xs font-bold text-amber-300">
+                {coins.toLocaleString()}
+              </span>
+            </div>
+            {/* Pity */}
+            <div className="flex items-center gap-1.5 bg-purple-500/10 border border-purple-500/20 rounded-full px-3 py-1">
+              <StarSmallIcon className="w-3.5 h-3.5 text-purple-400" />
+              <span className="font-display text-xs font-bold text-purple-300">
+                {pity}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -60,36 +62,43 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* ── Bottom nav ── */}
-      <nav className="shrink-0 flex items-stretch border-t border-white/[0.06] bg-cosmic-900/80 backdrop-blur-md">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const active = href === "/"
-            ? pathname === "/"
-            : pathname.startsWith(href);
-          const hasDot = href === "/missions" && missionDot;
+      <nav className="shrink-0 border-t border-white/[0.06] bg-cosmic-900/80 backdrop-blur-md">
+        <div className="max-w-[800px] mx-auto flex items-stretch">
+          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+            const active = href === "/"
+              ? pathname === "/"
+              : pathname.startsWith(href);
+            const hasDot = href === "/missions" && missionDot;
 
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "relative flex-1 flex flex-col items-center justify-center gap-1 py-2.5 transition-colors",
-                active ? "text-indigo-400" : "text-white/35 hover:text-white/60"
-              )}
-            >
-              {active && (
-                <motion.div
-                  layoutId="nav-indicator"
-                  className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-indigo-400"
-                />
-              )}
-              <Icon className="w-5 h-5" />
-              <span className="text-[10px] font-medium">{label}</span>
-              {hasDot && (
-                <span className="absolute top-2 right-1/4 w-1.5 h-1.5 rounded-full bg-indigo-400" />
-              )}
-            </Link>
-          );
-        })}
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "relative flex-1 flex flex-col items-center pt-1 pb-2.5 gap-1 transition-colors",
+                  active ? "text-indigo-400" : "text-white/35 hover:text-white/60"
+                )}
+              >
+                {/* Indicator sits flush above the icon */}
+                <div className="w-8 h-0.5 mb-1.5 rounded-full overflow-hidden">
+                  {active && (
+                    <motion.div
+                      layoutId="nav-indicator"
+                      className="w-full h-full rounded-full bg-indigo-400"
+                    />
+                  )}
+                </div>
+                <div className="relative">
+                  <Icon className="w-5 h-5" />
+                  {hasDot && (
+                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                  )}
+                </div>
+                <span className="text-[10px] font-medium">{label}</span>
+              </Link>
+            );
+          })}
+        </div>
       </nav>
     </div>
   );
