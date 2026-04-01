@@ -122,7 +122,7 @@ function DeckListScreen({ decks, activeDeckId, onSelect, onCreate }: {
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-white truncate">{deck.name}</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-xs text-white/40">{total}/20</span>
+                  <span className="text-xs text-white/40">{total}/25</span>
                   {validation.valid
                     ? <span className="text-xs text-indigo-400">Ready</span>
                     : <span className="text-xs text-red-400">Invalid</span>}
@@ -227,8 +227,8 @@ function DeckEditor({ deck, owned, onSave, onDelete, onBack, onSetActive, isActi
       {/* Stats + active */}
       <div className="flex items-center justify-between">
         <span className={cn("text-sm font-medium",
-          total === 20 ? "text-white" : total > 20 ? "text-red-400" : "text-white/50")}>
-          {total} / 20 cards
+          total === 25 ? "text-white" : total > 25 ? "text-red-400" : "text-white/50")}>
+          {total} / 25 cards
         </span>
         {isActive
           ? <span className="text-xs text-indigo-300 border border-indigo-500/30 rounded-full px-2.5 py-1">Active Deck</span>
@@ -242,8 +242,8 @@ function DeckEditor({ deck, owned, onSave, onDelete, onBack, onSetActive, isActi
       {/* Progress bar */}
       <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
         <div className={cn("h-full rounded-full transition-all duration-300",
-            total === 20 ? "bg-indigo-500" : total > 20 ? "bg-red-500" : "bg-white/25")}
-          style={{ width: `${Math.min((total / 20) * 100, 100)}%` }} />
+            total === 25 ? "bg-indigo-500" : total > 25 ? "bg-red-500" : "bg-white/25")}
+          style={{ width: `${Math.min((total / 25) * 100, 100)}%` }} />
       </div>
 
       {/* Validation errors */}
@@ -267,7 +267,7 @@ function DeckEditor({ deck, owned, onSave, onDelete, onBack, onSetActive, isActi
                 onRemove={() => removeCard(card.id)}
                 onAdd={() => addCard(card)}
                 canAdd={
-                  total < 20 &&
+                  total < 25 &&
                   (cards[card.id] ?? 0) < card.maxPerDeck &&
                   (cards[card.id] ?? 0) < (owned[card.id] ?? 0)
                 }
@@ -284,7 +284,7 @@ function DeckEditor({ deck, owned, onSave, onDelete, onBack, onSetActive, isActi
           {poolSorted.map((card) => {
             const ownedQty = owned[card.id] ?? 0;
             const inDeck   = cards[card.id] ?? 0;
-            const canAdd   = ownedQty > 0 && inDeck < card.maxPerDeck && total < 20 && inDeck < ownedQty;
+            const canAdd   = ownedQty > 0 && inDeck < card.maxPerDeck && total < 25 && inDeck < ownedQty;
             return (
               <div key={card.id} className={cn("py-1", ownedQty === 0 && "opacity-25")}>
                 <CardChip card={card} qty={inDeck}
@@ -310,12 +310,12 @@ function DeckEditor({ deck, owned, onSave, onDelete, onBack, onSetActive, isActi
           onClick={() => { onSave(cards); onBack(); }}
           className={cn(
             "w-full py-3 rounded-xl font-semibold text-sm transition-colors",
-            validation.valid && total === 20
+            validation.valid && total === 25
               ? "bg-indigo-600 hover:bg-indigo-500 text-white"
               : "bg-white/5 text-white/30 cursor-not-allowed border border-white/10"
           )}
         >
-          {validation.valid && total === 20 ? "Save Deck" : "Invalid Deck"}
+          {validation.valid && total === 25 ? "Save Deck" : "Invalid Deck"}
         </motion.button>
       </div>
     </div>

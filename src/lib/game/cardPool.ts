@@ -278,10 +278,11 @@ export const DEFAULT_COLLECTION: Record<string, number> = {
   m01: 3, m09: 2, m17: 1,
   // Star: 3 common, 2 uncommon, 2 rare
   t01: 3, t09: 2, t17: 2,
-  // Block ×2, Reshuffle ×2, Revive ×1
+  // Block ×2, Reshuffle ×2, Revive ×1, Discard Trap ×1  (total = 25)
   b01: 2,
   rs01: 2,
   rv01: 1,
+  dt01: 1,
 };
 
 export const STARTING_COINS       = 500;
@@ -307,9 +308,8 @@ export const PITY_SHOP_PRICES: Record<string, number> = Object.fromEntries(
 // ─────────────────────────────────────────────
 
 export const DECK_RULES = {
-  /** Base deck without Diamond */
-  minCards:        24,
-  /** With 1 Diamond */
+  /** Exact deck size required */
+  minCards:        25,
   maxCards:        25,
   minElementCards: 9,
   maxSpecialCards: 5,
