@@ -302,6 +302,20 @@ export class GameManager {
   }
 
   // ───────────────────────────────────────────────────────────
+  //  Forfeit
+  // ───────────────────────────────────────────────────────────
+
+  forfeitGame(roomId: string, forfeitingPlayerId: string): boolean {
+    const game = this.games.get(roomId);
+    if (!game) return false;
+    if (game.phase === GamePhase.GAME_OVER) return false;
+    const opp = game.players.find((p) => p.id !== forfeitingPlayerId);
+    if (!opp) return false;
+    this.endGame(game, opp.id, "score");
+    return true;
+  }
+
+  // ───────────────────────────────────────────────────────────
   //  Disconnect / reconnect
   // ───────────────────────────────────────────────────────────
 

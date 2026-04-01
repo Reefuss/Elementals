@@ -111,7 +111,8 @@ export default function GamePage() {
   } = useGame();
 
   const { resetGame } = useGameStore();
-  const [playError, setPlayError] = useState<string | null>(null);
+  const [playError,       setPlayError]       = useState<string | null>(null);
+  const [showForfeitConfirm, setShowForfeitConfirm] = useState(false);
 
   // Wire game sounds — fires at phase transitions, flips, timer beats
   useGameSounds(gameState, msLeft, gameState?.self.id ?? "");
@@ -137,12 +138,18 @@ export default function GamePage() {
 
   const handlePlayAgain = () => {
     resetGame();
-    router.push("/");
+    router.push("/battle");
   };
 
   const handleMainMenu = () => {
     resetGame();
     router.push("/");
+  };
+
+  const handleForfeit = () => {
+    socket.emit("game:forfeit", (err) => {
+      if (!err) { resetGame(); router.push("/"); }
+    });
   };
 
   if (!gameState) return <LoadingState />;
@@ -272,6 +279,55 @@ export default function GamePage() {
           </AnimatePresence>
         </div>
       </motion.div>
+
+      {/* ── Forfeit button ─── */}
+      {!isGameOver && (
+        <div className="absolute top-3 right-3 z-20">
+          <button
+            onClick={() => setShowForfeitConfirm(true)}
+            className="text-[10px] text-white/20 hover:text-red-400/70 transition-colors px-2 py-1 rounded-lg border border-transparent hover:border-red-500/20"
+          >
+            Forfeit
+          </button>
+        </div>
+      )}
+
+      {/* ── Forfeit confirm modal ─── */}
+      <AnimatePresence>
+        {showForfeitConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-6"
+            onClick={() => setShowForfeitConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 320, damping: 26 }}
+              onClick={(e) => e.stopPropagation()}
+              className="glass rounded-2xl p-6 w-full max-w-xs border border-white/10 text-center flex flex-col gap-4"
+            >
+              <p className="font-display text-lg font-bold text-white">Forfeit match?</p>
+              <p className="text-sm text-white/40">Your opponent wins. You still earn 30 coins.</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowForfeitConfirm(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-white/15 text-sm text-white/60 hover:text-white/80 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleForfeit}
+                  className="flex-1 py-2.5 rounded-xl bg-red-500/20 border border-red-500/30 text-sm text-red-300 font-semibold hover:bg-red-500/30 transition-colors"
+                >
+                  Forfeit
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Rainbow Tiebreak modal ─── */}
       <RainbowTiebreak

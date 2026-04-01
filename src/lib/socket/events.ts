@@ -30,6 +30,9 @@ export interface ClientToServerEvents {
 
   /** Request the server to re-push the current game state (used on game page mount) */
   "game:request_state": () => void;
+
+  /** Forfeit the current game */
+  "game:forfeit": (ack: (err: string | null) => void) => void;
 }
 
 // ─────────────────────────────────────────────
@@ -63,6 +66,9 @@ export interface ServerToClientEvents {
 
   /** Opponent reconnected */
   "game:opponent_reconnected": (payload: { username: string }) => void;
+
+  /** Opponent forfeited — you win */
+  "game:opponent_forfeited": (payload: { username: string }) => void;
 
   /** Server-side error message */
   "error:game": (payload: { code: string; message: string }) => void;

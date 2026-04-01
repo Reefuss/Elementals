@@ -182,6 +182,22 @@ export function registerSocketHandlers(io: AppServer): void {
       if (opp) io.to(opp.socketId).emit("game:rainbow_waiting");
     });
 
+    // ── game:forfeit ──────────────────────────────────────────────
+    socket.on("game:forfeit", (ack) => {
+      const roomId = socket.data.roomId ?? gameManager.getPlayerRoom(socket.data.playerId);
+      if (!roomId) { ack("Not in a game."); return; }
+      const ok = gameManager.forfeitGame(roomId, socket.data.playerId);
+      if (!ok) { ack("Cannot forfeit at this time."); return; }
+      ack(null);
+      const game = gameManager.getGame(roomId);
+      const opp  = game?.players.find((p) => p.id !== socket.data.playerId);
+      if (opp) {
+        io.to(opp.socketId).emit("game:opponent_forfeited", {
+          username: socket.data.username ?? "Opponent",
+        });
+      }
+    });
+
     // ── disconnect ────────────────────────────────────────────────
     socket.on("disconnect", (reason) => {
       console.log(`[disconnect] id=${socket.id} player=${socket.data.playerId} reason=${reason}`);
