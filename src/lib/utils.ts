@@ -27,11 +27,11 @@ export function setStoredUsername(name: string): void {
 }
 
 /** Element → Tailwind color key */
-export function elementColorKey(element: Element): "sun" | "moon" | "star" {
+export function elementColorKey(element: Element): "rock" | "scissors" | "paper" {
   switch (element) {
-    case Element.SUN:  return "sun";
-    case Element.MOON: return "moon";
-    case Element.STAR: return "star";
+    case Element.ROCK:     return "rock";
+    case Element.SCISSORS: return "scissors";
+    case Element.PAPER:    return "paper";
   }
 }
 
@@ -43,9 +43,9 @@ export function cardGlowClass(card: Card): string {
     return "shadow-block-glow";
   }
   switch (card.element) {
-    case Element.SUN:  return "shadow-sun-glow";
-    case Element.MOON: return "shadow-moon-glow";
-    case Element.STAR: return "shadow-star-glow";
+    case Element.ROCK:     return "shadow-rock-glow";
+    case Element.SCISSORS: return "shadow-scissors-glow";
+    case Element.PAPER:    return "shadow-paper-glow";
   }
 }
 
@@ -58,9 +58,9 @@ export function cardBorderColor(card: Card): string {
     return "from-block-400 to-block-600";
   }
   switch (card.element) {
-    case Element.SUN:  return "from-sun-400 to-sun-600";
-    case Element.MOON: return "from-moon-300 to-moon-600";
-    case Element.STAR: return "from-star-300 to-star-700";
+    case Element.ROCK:     return "from-rock-400 to-rock-600";
+    case Element.SCISSORS: return "from-scissors-300 to-scissors-600";
+    case Element.PAPER:    return "from-paper-300 to-paper-700";
   }
 }
 

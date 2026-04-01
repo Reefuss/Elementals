@@ -158,11 +158,11 @@ export default function HomePage() {
           <h1 className="font-display text-3xl font-bold text-white tracking-tight">ELEMENTALS</h1>
           <div className="flex gap-5 text-xl">
             <motion.span animate={{ rotate: [0, 12, -12, 0] }} transition={{ duration: 3, repeat: Infinity, delay: 0 }}
-              className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]">☀</motion.span>
+              className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]">✊</motion.span>
             <motion.span animate={{ rotate: [0, -12, 12, 0] }} transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
-              className="text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.8)]">☽</motion.span>
+              className="text-blue-300 drop-shadow-[0_0_8px_rgba(147,197,253,0.8)]">✌</motion.span>
             <motion.span animate={{ rotate: [0, 18, -18, 0] }} transition={{ duration: 3, repeat: Infinity, delay: 1 }}
-              className="text-purple-400 drop-shadow-[0_0_8px_rgba(232,121,249,0.8)]">★</motion.span>
+              className="text-purple-400 drop-shadow-[0_0_8px_rgba(232,121,249,0.8)]">✋</motion.span>
           </div>
         </div>
 

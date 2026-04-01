@@ -17,9 +17,9 @@ interface RainbowTiebreakProps {
 }
 
 const ELEMENT_OPTIONS: { element: Element; label: string; icon: string; color: string }[] = [
-  { element: Element.SUN,  label: "Sun",  icon: "☀",  color: "text-sun-400  border-sun-400/40  hover:bg-sun-400/10  hover:border-sun-400/80"  },
-  { element: Element.MOON, label: "Moon", icon: "☽",  color: "text-moon-300 border-moon-300/40 hover:bg-moon-300/10 hover:border-moon-300/80" },
-  { element: Element.STAR, label: "Star", icon: "★",  color: "text-star-400 border-star-400/40 hover:bg-star-400/10 hover:border-star-400/80" },
+  { element: Element.ROCK,     label: "Rock",     icon: "✊", color: "text-rock-400     border-rock-400/40     hover:bg-rock-400/10     hover:border-rock-400/80"     },
+  { element: Element.SCISSORS, label: "Scissors", icon: "✌", color: "text-scissors-300 border-scissors-300/40 hover:bg-scissors-300/10 hover:border-scissors-300/80" },
+  { element: Element.PAPER,    label: "Paper",    icon: "✋", color: "text-paper-400    border-paper-400/40    hover:bg-paper-400/10    hover:border-paper-400/80"    },
 ];
 
 export function RainbowTiebreak({
@@ -82,9 +82,9 @@ export function RainbowTiebreak({
             transition={{ delay: 0.5 }}
             className="flex gap-6 text-4xl"
           >
-            <span>☀</span>
+            <span>✊</span>
             <span className="text-white/30 self-center text-xl">vs</span>
-            <span>☀</span>
+            <span>✋</span>
           </motion.div>
         </div>
       </Modal>
@@ -152,7 +152,7 @@ export function RainbowTiebreak({
         </AnimatePresence>
 
         <p className="text-[11px] text-white/25 text-center">
-          Sun beats Star · Star beats Moon · Moon beats Sun
+          Rock beats Scissors · Scissors beats Paper · Paper beats Rock
         </p>
       </div>
     </Modal>

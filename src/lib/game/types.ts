@@ -3,9 +3,9 @@
 // ─────────────────────────────────────────────
 
 export enum Element {
-  SUN  = "SUN",
-  MOON = "MOON",
-  STAR = "STAR",
+  ROCK     = "ROCK",
+  PAPER    = "PAPER",
+  SCISSORS = "SCISSORS",
 }
 
 export enum SpecialType {

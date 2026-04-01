@@ -4,7 +4,7 @@ import React from "react";
 import { motion, HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger" | "sun" | "moon" | "star";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "rock" | "scissors" | "paper";
 type Size    = "sm" | "md" | "lg";
 
 interface ButtonProps extends Omit<HTMLMotionProps<"button">, "children"> {
@@ -24,15 +24,15 @@ const variantClasses: Record<Variant, string> = {
     "text-white/70 hover:text-white hover:bg-white/5",
   danger:
     "bg-gradient-to-b from-red-600 to-red-800 text-white border border-red-500/30",
-  sun:
-    "bg-gradient-to-b from-sun-500 to-sun-700 text-cosmic-900 font-semibold border border-sun-400/30 " +
-    "shadow-sun-glow hover:shadow-[0_6px_32px_rgba(251,191,36,0.7)]",
-  moon:
-    "bg-gradient-to-b from-moon-400 to-moon-600 text-cosmic-900 font-semibold border border-moon-300/30 " +
-    "shadow-moon-glow",
-  star:
-    "bg-gradient-to-b from-star-400 to-star-600 text-white font-semibold border border-star-300/30 " +
-    "shadow-star-glow",
+  rock:
+    "bg-gradient-to-b from-rock-500 to-rock-700 text-cosmic-900 font-semibold border border-rock-400/30 " +
+    "shadow-rock-glow hover:shadow-[0_6px_32px_rgba(251,191,36,0.7)]",
+  scissors:
+    "bg-gradient-to-b from-scissors-400 to-scissors-600 text-cosmic-900 font-semibold border border-scissors-300/30 " +
+    "shadow-scissors-glow",
+  paper:
+    "bg-gradient-to-b from-paper-400 to-paper-600 text-white font-semibold border border-paper-300/30 " +
+    "shadow-paper-glow",
 };
 
 const sizeClasses: Record<Size, string> = {

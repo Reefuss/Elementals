@@ -1,7 +1,7 @@
 // Elementals — full collectible card pool
 
 export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
-export type ElementKey = "SUN" | "MOON" | "STAR";
+export type ElementKey = "ROCK" | "PAPER" | "SCISSORS";
 export type SpecialKey = "BLOCK" | "RAINBOW" | "RESHUFFLE" | "DISCARD_TRAP" | "REVIVE";
 
 export interface CardVariant {
@@ -9,7 +9,6 @@ export interface CardVariant {
   type:         "element" | "special" | "diamond";
   element?:     ElementKey;
   specialType?: SpecialKey;
-  /** Element card power or Diamond card value */
   value?:       number;
   rarity:       Rarity;
   displayName:  string;
@@ -59,95 +58,95 @@ function dm(
 
 export const ALL_CARDS: CardVariant[] = [
 
-  // ══ SUN — 28 cards ══════════════════════════════════════════════════════
-  el("s01","SUN",3,"common",   "Sunstone Shard",    "sol_radiant",      "A fragment of crystallized dawn."),
-  el("s02","SUN",3,"common",   "Dawn Spark",        "sol_blazing",      "The first light. Still warm."),
-  el("s03","SUN",3,"common",   "Ember Wisp",        "sol_ancient",      "Small, but persistent."),
-  el("s04","SUN",3,"common",   "Solar Fleck",       "sol_celestial",    "One particle of a billion."),
-  el("s05","SUN",3,"common",   "Hearthfire",        "sol_radiant",      "Ancient warmth, remembered."),
-  el("s06","SUN",3,"common",   "Goldleaf",          "sol_blazing",      "Autumn's last gift."),
-  el("s07","SUN",3,"uncommon", "Torch Spirit",      "sol_ancient",      "It chooses who it lights."),
-  el("s08","SUN",3,"uncommon", "Dusk Ember",        "sol_celestial",    "The sun's final breath."),
-  el("s09","SUN",5,"uncommon", "Sunbeam",           "sol_radiant",      "Direct. Unyielding."),
-  el("s10","SUN",5,"uncommon", "Solar Wind",        "sol_blazing",      "200 miles per second."),
-  el("s11","SUN",5,"uncommon", "Firebird Feather",  "sol_ancient",      "It still burns."),
-  el("s12","SUN",5,"uncommon", "Brass Idol",        "sol_celestial",    "They prayed to it for centuries."),
-  el("s13","SUN",5,"rare",     "Solstice",          "sol_radiant",      "The longest moment of the year."),
-  el("s14","SUN",5,"rare",     "Phoenix Ascent",    "sol_blazing",      "Ash is just patience."),
-  el("s15","SUN",5,"rare",     "Helios Chariot",    "sol_ancient",      "The sky shook when he rode."),
-  el("s16","SUN",5,"rare",     "Radiant Lance",     "sol_celestial",    "Light, made violent."),
-  el("s17","SUN",8,"rare",     "Solar Drake",       "sol_radiant",      "A dragon born inside a star."),
-  el("s18","SUN",8,"rare",     "Ra's Eye",          "sol_blazing",      "It sees everything."),
-  el("s19","SUN",8,"rare",     "Suncore",           "sol_ancient",      "15 million degrees at rest."),
-  el("s20","SUN",8,"epic",     "Amaterasu",         "sol_celestial",    "When she hid, the world went dark."),
-  el("s21","SUN",8,"epic",     "Celestial Furnace", "sol_radiant",      "Where new suns are forged."),
-  el("s22","SUN",8,"epic",     "Grand Solaris",     "sol_blazing",      "Its orbits take centuries."),
-  el("s23","SUN",8,"epic",     "Ignition Throne",   "sol_ancient",      "Vacant since the first age."),
-  el("s24","SUN",8,"epic",     "The Eternal Noon",  "sol_celestial",    "No shadows. No mercy."),
-  el("s25","SUN",8,"epic",     "Nova Sovereign",    "sol_radiant",      "Commands the death of stars."),
-  el("s26","SUN",8,"legendary","Sunfire Axiom",     "sol_blazing",      "The equation that started everything."),
-  el("s27","SUN",8,"legendary","First Light",       "sol_ancient",      "Before the sun had a name."),
-  el("s28","SUN",8,"legendary","Sol Invictus",      "sol_celestial",    "The unconquered sun."),
+  // ══ ROCK — 28 cards ═════════════════════════════════════════════════════
+  el("s01","ROCK",3,"common",   "Pebble",            "rock_solid",   "Small. Determined."),
+  el("s02","ROCK",3,"common",   "Gravel Shard",      "rock_forge",   "Broken from something greater."),
+  el("s03","ROCK",3,"common",   "Cobblestone",       "rock_ancient", "Worn smooth by a thousand boots."),
+  el("s04","ROCK",3,"common",   "Flint Chip",        "rock_titan",   "Sparked fire for the first time."),
+  el("s05","ROCK",3,"common",   "Rubble",            "rock_solid",   "What's left after the wall falls."),
+  el("s06","ROCK",3,"common",   "River Stone",       "rock_forge",   "Patient. Polished."),
+  el("s07","ROCK",3,"uncommon", "Fieldstone",        "rock_ancient", "Pulled from the earth by bare hands."),
+  el("s08","ROCK",3,"uncommon", "Quarry Block",      "rock_titan",   "Cut with effort. Placed with care."),
+  el("s09","ROCK",5,"uncommon", "Boulder",           "rock_solid",   "Immovable. Until it isn't."),
+  el("s10","ROCK",5,"uncommon", "Obsidian Shard",    "rock_forge",   "Born in fire. Sharper than steel."),
+  el("s11","ROCK",5,"uncommon", "Granite Fist",      "rock_ancient", "The mountain's preferred weapon."),
+  el("s12","ROCK",5,"uncommon", "Iron Ore",          "rock_titan",   "Potential, unrefined."),
+  el("s13","ROCK",5,"rare",     "Stonefist",         "rock_solid",   "The punch that ended the argument."),
+  el("s14","ROCK",5,"rare",     "Basalt Column",     "rock_forge",   "Geometric. Natural. Inevitable."),
+  el("s15","ROCK",5,"rare",     "Tectonic Plate",    "rock_ancient", "Slow. Unstoppable."),
+  el("s16","ROCK",5,"rare",     "Warhammer Head",    "rock_titan",   "The handle broke. The head did not."),
+  el("s17","ROCK",8,"rare",     "Avalanche",         "rock_solid",   "There was a mountain here."),
+  el("s18","ROCK",8,"rare",     "Monolith",          "rock_forge",   "They built temples around it."),
+  el("s19","ROCK",8,"rare",     "Seismic Core",      "rock_ancient", "The earth's heartbeat."),
+  el("s20","ROCK",8,"epic",     "Titan's Knuckle",   "rock_titan",   "Left an impression."),
+  el("s21","ROCK",8,"epic",     "Continental Shelf", "rock_solid",   "The ocean floor calls it ceiling."),
+  el("s22","ROCK",8,"epic",     "Bedrock",           "rock_forge",   "You can't dig deeper than this."),
+  el("s23","ROCK",8,"epic",     "Crust Fragment",    "rock_ancient", "A piece of the planet's skin."),
+  el("s24","ROCK",8,"epic",     "Petrified Giant",   "rock_titan",   "It was moving once."),
+  el("s25","ROCK",8,"epic",     "Obsidian Throne",   "rock_solid",   "Forged where magma meets silence."),
+  el("s26","ROCK",8,"legendary","Pangaea Shard",      "rock_forge",   "From when there was only one land."),
+  el("s27","ROCK",8,"legendary","The Unmoved",        "rock_ancient", "Everything else moved around it."),
+  el("s28","ROCK",8,"legendary","Terra Absolute",     "rock_titan",   "The ground beneath all grounds."),
 
-  // ══ MOON — 28 cards ═════════════════════════════════════════════════════
-  el("m01","MOON",3,"common",   "Moonpetal",         "luna_tidal",       "White as new snow."),
-  el("m02","MOON",3,"common",   "Tidedrop",          "luna_dream",       "The ocean, in miniature."),
-  el("m03","MOON",3,"common",   "Silver Mist",       "luna_mythic",      "It moves without wind."),
-  el("m04","MOON",3,"common",   "Night Dew",         "luna_spectral",    "Cold and honest."),
-  el("m05","MOON",3,"common",   "Pale Wisp",         "luna_tidal",       "Lost, but still lit."),
-  el("m06","MOON",3,"common",   "Crescent Sliver",   "luna_dream",       "Even a sliver is enough."),
-  el("m07","MOON",3,"uncommon", "Lunar Echo",        "luna_mythic",      "Sound, reflected from the moon."),
-  el("m08","MOON",3,"uncommon", "Selene's Tear",     "luna_spectral",    "She cried when Endymion slept."),
-  el("m09","MOON",5,"uncommon", "Moonbeam",          "luna_tidal",       "Silence you can almost touch."),
-  el("m10","MOON",5,"uncommon", "Tidal Pull",        "luna_dream",       "The sea obeys."),
-  el("m11","MOON",5,"uncommon", "Silver Owl",        "luna_mythic",      "Watches from above. Always."),
-  el("m12","MOON",5,"uncommon", "Dream Veil",        "luna_spectral",    "Sleep, or something like it."),
-  el("m13","MOON",5,"rare",     "Waning Ritual",     "luna_tidal",       "Performed at every moonset."),
-  el("m14","MOON",5,"rare",     "Moonwolf",          "luna_dream",       "Howls at what it cannot reach."),
-  el("m15","MOON",5,"rare",     "Artemis' Arrow",    "luna_mythic",      "Never misses."),
-  el("m16","MOON",5,"rare",     "Lune Specter",      "luna_spectral",    "She died on a full moon."),
-  el("m17","MOON",8,"rare",     "Abyssal Tide",      "luna_tidal",       "The deep answers the moon's call."),
-  el("m18","MOON",8,"rare",     "Luna Shrine",       "luna_dream",       "Still active after 4,000 years."),
-  el("m19","MOON",8,"rare",     "Selene's Crown",    "luna_mythic",      "She placed it in the sky herself."),
-  el("m20","MOON",8,"epic",     "Tsukuyomi",         "luna_spectral",    "God of night. Rival to the sun."),
-  el("m21","MOON",8,"epic",     "Silver Leviathan",  "luna_tidal",       "It surfaces during full moons."),
-  el("m22","MOON",8,"epic",     "The Pale Watch",    "luna_dream",       "Never looks away."),
-  el("m23","MOON",8,"epic",     "Umbral Court",      "luna_mythic",      "Convenes only in darkness."),
-  el("m24","MOON",8,"epic",     "Lunar Recursion",   "luna_spectral",    "A moon reflected in itself."),
-  el("m25","MOON",8,"epic",     "Tidal God",         "luna_tidal",       "The sea is its body."),
-  el("m26","MOON",8,"legendary","Moon Axiom",        "luna_dream",       "Gravity, made visible."),
-  el("m27","MOON",8,"legendary","Last Night",        "luna_mythic",      "The dark before the dawn. Final."),
-  el("m28","MOON",8,"legendary","Luna Absoluta",     "luna_spectral",    "Everything consumed by pale light."),
+  // ══ SCISSORS — 28 cards ═════════════════════════════════════════════════
+  el("m01","SCISSORS",3,"common",   "Nail Scissors",     "scissors_sharp",  "Precise. Personal."),
+  el("m02","SCISSORS",3,"common",   "Tin Snip",          "scissors_blade",  "Built for the ordinary cut."),
+  el("m03","SCISSORS",3,"common",   "Craft Scissors",    "scissors_swift",  "Left-handed by accident."),
+  el("m04","SCISSORS",3,"common",   "Fraying Edge",      "scissors_void",   "Still cuts. Barely."),
+  el("m05","SCISSORS",3,"common",   "Pinking Shear",     "scissors_sharp",  "The zigzag serves a purpose."),
+  el("m06","SCISSORS",3,"common",   "Snipped Thread",    "scissors_blade",  "The loose end, dealt with."),
+  el("m07","SCISSORS",3,"uncommon", "Garden Shears",     "scissors_swift",  "Trims what overreaches."),
+  el("m08","SCISSORS",3,"uncommon", "Barber's Blade",    "scissors_void",   "A clean cut. No discussion."),
+  el("m09","SCISSORS",5,"uncommon", "Tailor's Shears",   "scissors_sharp",  "Fabric yields without complaint."),
+  el("m10","SCISSORS",5,"uncommon", "Hedge Trimmer",     "scissors_blade",  "The boundary is where you say it is."),
+  el("m11","SCISSORS",5,"uncommon", "Surgical Scissors", "scissors_swift",  "Makes the incision. Then leaves."),
+  el("m12","SCISSORS",5,"uncommon", "Sheet Metal Snips", "scissors_void",   "Industrial. Unforgiving."),
+  el("m13","SCISSORS",5,"rare",     "Fencing Foil",      "scissors_sharp",  "Tip before the blade."),
+  el("m14","SCISSORS",5,"rare",     "Shear Force",       "scissors_blade",  "Two edges meeting at one point."),
+  el("m15","SCISSORS",5,"rare",     "Katana Edge",       "scissors_swift",  "The draw is half the cut."),
+  el("m16","SCISSORS",5,"rare",     "Cold Chisel",       "scissors_void",   "Hammered into the gap."),
+  el("m17","SCISSORS",8,"rare",     "War Scythe",        "scissors_sharp",  "Repurposed for a different harvest."),
+  el("m18","SCISSORS",8,"rare",     "Guillotine Blade",  "scissors_blade",  "Clean. Final."),
+  el("m19","SCISSORS",8,"rare",     "Razor Judgement",   "scissors_swift",  "No hesitation."),
+  el("m20","SCISSORS",8,"epic",     "Splitting Edge",    "scissors_void",   "It divided the atom once."),
+  el("m21","SCISSORS",8,"epic",     "Twin Fang",         "scissors_sharp",  "Forged as one. Used as two."),
+  el("m22","SCISSORS",8,"epic",     "The Severance",     "scissors_blade",  "Some bonds are meant to break."),
+  el("m23","SCISSORS",8,"epic",     "Blade of Ends",     "scissors_swift",  "Everything terminates somewhere."),
+  el("m24","SCISSORS",8,"epic",     "Infinite Cut",      "scissors_void",   "Still in motion."),
+  el("m25","SCISSORS",8,"epic",     "Rift Shear",        "scissors_sharp",  "Cuts through more than matter."),
+  el("m26","SCISSORS",8,"legendary","Scissor Absolute",  "scissors_blade",  "The cut that cannot be undone."),
+  el("m27","SCISSORS",8,"legendary","Final Snip",        "scissors_swift",  "What comes after can't come back."),
+  el("m28","SCISSORS",8,"legendary","Edge Eternal",      "scissors_void",   "Still sharp. Always."),
 
-  // ══ STAR — 28 cards ═════════════════════════════════════════════════════
-  el("t01","STAR",3,"common",   "Stardust",          "star_cosmic",      "The building blocks of everything."),
-  el("t02","STAR",3,"common",   "Comet Chip",        "star_void",        "Cold and fast."),
-  el("t03","STAR",3,"common",   "Void Spark",        "star_nova",        "Static at the edge of nothing."),
-  el("t04","STAR",3,"common",   "Astral Fleck",      "star_constellation","One point among billions."),
-  el("t05","STAR",3,"common",   "Shooting Wish",     "star_cosmic",      "Make one before it fades."),
-  el("t06","STAR",3,"common",   "Nebula Whisper",    "star_void",        "Color that takes millennia to form."),
-  el("t07","STAR",3,"uncommon", "Pulsar Beat",       "star_nova",        "288 rotations per second."),
-  el("t08","STAR",3,"uncommon", "Binary Glint",      "star_constellation","They'll orbit each other forever."),
-  el("t09","STAR",5,"uncommon", "Starfall",          "star_cosmic",      "They fall every night. We just don't look."),
-  el("t10","STAR",5,"uncommon", "Quasar Jet",        "star_void",        "Brighter than a trillion suns."),
-  el("t11","STAR",5,"uncommon", "Celestial Shard",   "star_nova",        "A constellation, broken."),
-  el("t12","STAR",5,"uncommon", "Orion's Belt",      "star_constellation","Hunters knew them first."),
-  el("t13","STAR",5,"rare",     "Meteor Surge",      "star_cosmic",      "The atmosphere turns them to fire."),
-  el("t14","STAR",5,"rare",     "Constellation Blade","star_void",       "Only visible from the right angle."),
-  el("t15","STAR",5,"rare",     "Nova Bloom",        "star_nova",        "A death that outshines a galaxy."),
-  el("t16","STAR",5,"rare",     "Astral Hound",      "star_constellation","It follows star maps home."),
-  el("t17","STAR",8,"rare",     "Void Rift",         "star_cosmic",      "Reality has edges."),
-  el("t18","STAR",8,"rare",     "Gemini Clash",      "star_void",        "Even twins fight."),
-  el("t19","STAR",8,"rare",     "Supernova Shell",   "star_nova",        "Expanding at 10% the speed of light."),
-  el("t20","STAR",8,"epic",     "Sirius Prime",      "star_constellation","25 times more luminous than our sun."),
-  el("t21","STAR",8,"epic",     "Star Wyrm",         "star_cosmic",      "Swims through dark matter."),
-  el("t22","STAR",8,"epic",     "The Architect",     "star_void",        "Every star, planned."),
-  el("t23","STAR",8,"epic",     "Quantum Bloom",     "star_nova",        "All positions simultaneously."),
-  el("t24","STAR",8,"epic",     "Astral Fracture",   "star_constellation","The sky split at the seams."),
-  el("t25","STAR",8,"epic",     "Zenith Omen",       "star_cosmic",      "One star directly above. Watching."),
-  el("t26","STAR",8,"legendary","Star Axiom",        "star_void",        "The formula for light itself."),
-  el("t27","STAR",8,"legendary","Event Horizon",     "star_nova",        "Light can't leave. Neither can you."),
-  el("t28","STAR",8,"legendary","Stellar Absolute",  "star_constellation","All stars. One point. Infinite."),
+  // ══ PAPER — 28 cards ════════════════════════════════════════════════════
+  el("t01","PAPER",3,"common",   "Sticky Note",       "paper_scroll",  "Written. Forgotten. Found."),
+  el("t02","PAPER",3,"common",   "Receipt",           "paper_parchment","Proof of what it cost."),
+  el("t03","PAPER",3,"common",   "Newspaper",         "paper_arcane",  "The first draft of history."),
+  el("t04","PAPER",3,"common",   "Blank Page",        "paper_void",    "Potential, unwritten."),
+  el("t05","PAPER",3,"common",   "Folded Note",       "paper_scroll",  "Passed under the table."),
+  el("t06","PAPER",3,"common",   "Paper Crane",       "paper_parchment","It took patience."),
+  el("t07","PAPER",3,"uncommon", "Carbon Copy",       "paper_arcane",  "The duplicate that outlasted the original."),
+  el("t08","PAPER",3,"uncommon", "Parchment Scrap",   "paper_void",    "Old enough to matter."),
+  el("t09","PAPER",5,"uncommon", "Legal Brief",       "paper_scroll",  "Every word considered."),
+  el("t10","PAPER",5,"uncommon", "Blueprint",         "paper_parchment","The plan behind the thing."),
+  el("t11","PAPER",5,"uncommon", "Sealed Letter",     "paper_arcane",  "The contents changed everything."),
+  el("t12","PAPER",5,"uncommon", "Wanted Poster",     "paper_void",    "Someone is looking for you."),
+  el("t13","PAPER",5,"rare",     "Printed Manifesto", "paper_scroll",  "The words that started it."),
+  el("t14","PAPER",5,"rare",     "Ancient Map",       "paper_parchment","It was right. They just couldn't read it."),
+  el("t15","PAPER",5,"rare",     "Signed Decree",     "paper_arcane",  "Once sealed, no one argued."),
+  el("t16","PAPER",5,"rare",     "Ink Flood",         "paper_void",    "Too many words at once."),
+  el("t17","PAPER",8,"rare",     "Burning Scroll",    "paper_scroll",  "The library remembered."),
+  el("t18","PAPER",8,"rare",     "Dead Sea Fragment", "paper_parchment","Two thousand years old. Still relevant."),
+  el("t19","PAPER",8,"rare",     "Writ of Authority", "paper_arcane",  "Signed by someone no one questions."),
+  el("t20","PAPER",8,"epic",     "Codex Eternis",     "paper_void",    "Every law. Every word. One book."),
+  el("t21","PAPER",8,"epic",     "Infinite Scroll",   "paper_scroll",  "Still unrolling."),
+  el("t22","PAPER",8,"epic",     "The Proclamation",  "paper_parchment","When it was read, the world changed."),
+  el("t23","PAPER",8,"epic",     "Arcane Tome",       "paper_arcane",  "You can read it. You can't understand it."),
+  el("t24","PAPER",8,"epic",     "Sealed Grimoire",   "paper_void",    "The seal is why it still exists."),
+  el("t25","PAPER",8,"epic",     "Paper Absolute",    "paper_scroll",  "Wraps the world."),
+  el("t26","PAPER",8,"legendary","First Written Word", "paper_parchment","Before this, everything was silence."),
+  el("t27","PAPER",8,"legendary","The Final Draft",    "paper_arcane",  "Nothing changes after this."),
+  el("t28","PAPER",8,"legendary","Word Eternal",       "paper_void",    "Written once. True forever."),
 
   // ══ BLOCK — 10 cards ════════════════════════════════════════════════════
   sp("b01","BLOCK","common",    "Null Ward",         "block_null",       "It stops everything. Even hope.",      3),
@@ -192,12 +191,12 @@ export const ALL_CARDS: CardVariant[] = [
   sp("rv04","REVIVE","legendary","Eternal Recall",   "revive_light", "Nothing is ever truly gone.",            1),
 
   // ══ DIAMOND — 6 cards ═══════════════════════════════════════════════════
-  dm("d01", 10, "rare",      "Diamond Shard",     "diamond_prismatic", "A fragment of absolute clarity.",        ),
-  dm("d02", 12, "rare",      "Crystal Core",      "diamond_prismatic", "Compressed under infinite pressure.",   ),
-  dm("d03", 14, "epic",      "Faceted Aegis",     "diamond_prismatic", "Cuts through everything it touches.",   ),
-  dm("d04", 16, "epic",      "Prism Absolute",    "diamond_prismatic", "Light enters. Truth exits.",            ),
-  dm("d05", 18, "legendary", "Eternal Diamond",   "diamond_prismatic", "Formed at the birth of the universe.",  ),
-  dm("d06", 20, "legendary", "The Apex Crystal",  "diamond_prismatic", "Harder than any element. Any law.",     ),
+  dm("d01", 10, "rare",      "Diamond Shard",     "diamond_prismatic", "A fragment of absolute clarity."),
+  dm("d02", 12, "rare",      "Crystal Core",      "diamond_prismatic", "Compressed under infinite pressure."),
+  dm("d03", 14, "epic",      "Faceted Aegis",     "diamond_prismatic", "Cuts through everything it touches."),
+  dm("d04", 16, "epic",      "Prism Absolute",    "diamond_prismatic", "Light enters. Truth exits."),
+  dm("d05", 18, "legendary", "Eternal Diamond",   "diamond_prismatic", "Formed at the birth of the universe."),
+  dm("d06", 20, "legendary", "The Apex Crystal",  "diamond_prismatic", "Harder than any element. Any law."),
 ];
 
 export const CARD_MAP: Record<string, CardVariant> = Object.fromEntries(
@@ -217,7 +216,7 @@ export interface PackRarityWeights {
 }
 
 export interface PackSlotGuarantee {
-  slot:       number; // 0-indexed
+  slot:       number;
   minRarity:  Rarity;
 }
 
@@ -227,9 +226,7 @@ export interface PackType {
   tagline:      string;
   cost:         number;
   cardsPerPack: number;
-  /** Default weights used for most slots */
   rarityWeights: PackRarityWeights;
-  /** Per-slot guarantees: if rolled rarity is below minRarity, reroll from minRarity+ pool */
   guarantees:   PackSlotGuarantee[];
   accentColor:  string;
   bgFrom:       string;
@@ -267,16 +264,12 @@ export const PACK_TYPES: PackType[] = [
 //  Economy constants
 // ─────────────────────────────────────────────
 
-/**
- * New players start with a 24-card playable starter deck.
- * 9 commons + 6 uncommons + 4 rares + 5 specials (no Diamond).
- */
 export const DEFAULT_COLLECTION: Record<string, number> = {
-  // Sun: 3 common, 2 uncommon, 1 rare
+  // Rock: 3 common, 2 uncommon, 1 rare
   s01: 3, s09: 2, s17: 1,
-  // Moon: 3 common, 2 uncommon, 1 rare + 1 extra common
+  // Scissors: 3 common + 1, 2 uncommon, 1 rare
   m01: 3, m02: 1, m09: 2, m17: 1,
-  // Star: 3 common, 2 uncommon, 2 rare
+  // Paper: 3 common, 2 uncommon, 2 rare
   t01: 3, t09: 2, t17: 2,
   // Block ×2, Reshuffle ×2, Revive ×1  (5 specials, total = 25)
   b01: 2,
@@ -297,7 +290,6 @@ export function getPityPrice(card: CardVariant): number {
   return RARITY_PITY_PRICES[card.rarity];
 }
 
-/** Flat lookup for any consumers that want a quick price by id */
 export const PITY_SHOP_PRICES: Record<string, number> = Object.fromEntries(
   ALL_CARDS.map((c) => [c.id, getPityPrice(c)])
 );
@@ -307,7 +299,6 @@ export const PITY_SHOP_PRICES: Record<string, number> = Object.fromEntries(
 // ─────────────────────────────────────────────
 
 export const DECK_RULES = {
-  /** Exact deck size required */
   minCards:        25,
   maxCards:        25,
   minElementCards: 9,
@@ -422,10 +413,6 @@ export function openPack(packType: PackType): CardVariant[] {
 //  Duplicate pity conversion
 // ─────────────────────────────────────────────
 
-/**
- * Returns bonus pity points earned from duplicate cards in this pull.
- * Duplicates beyond maxPerDeck earn 50% of the card's pity price.
- */
 export function calcDuplicatePity(
   cards: CardVariant[],
   owned: Record<string, number>

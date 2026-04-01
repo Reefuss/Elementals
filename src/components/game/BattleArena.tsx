@@ -29,7 +29,7 @@ function reasonLine(result: RoundResult): string {
   const cap = (s: string) => s[0] + s.slice(1).toLowerCase();
   switch (result.reason) {
     case WinReason.ELEMENT_BEATS: {
-      const beats: Record<string, string> = { SUN: "STAR", STAR: "MOON", MOON: "SUN" };
+      const beats: Record<string, string> = { ROCK: "SCISSORS", SCISSORS: "PAPER", PAPER: "ROCK" };
       const p1 = result.playerOneCard;
       const p2 = result.playerTwoCard;
       if (p1.type === CardType.ELEMENT && p2.type === CardType.ELEMENT) {
@@ -69,9 +69,9 @@ function elementGlow(card: Card | undefined): string {
     return "0 0 28px 8px rgba(129,140,248,0.7)";
   }
   const map: Record<Element, string> = {
-    [Element.SUN]:  "0 0 28px 8px rgba(251,191,36,0.7)",
-    [Element.MOON]: "0 0 28px 8px rgba(147,197,253,0.7)",
-    [Element.STAR]: "0 0 28px 8px rgba(232,121,249,0.7)",
+    [Element.ROCK]:     "0 0 28px 8px rgba(251,191,36,0.7)",
+    [Element.SCISSORS]: "0 0 28px 8px rgba(147,197,253,0.7)",
+    [Element.PAPER]:    "0 0 28px 8px rgba(232,121,249,0.7)",
   };
   return map[card.element];
 }

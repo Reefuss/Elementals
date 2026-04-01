@@ -62,7 +62,7 @@ export function QueueState({ position, username, onCancel }: QueueStateProps) {
           >
             <div
               className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2
-                         w-3 h-3 rounded-full bg-sun-400
+                         w-3 h-3 rounded-full bg-rock-400
                          shadow-[0_0_8px_rgba(251,191,36,0.8)]"
             />
           </motion.div>
@@ -101,7 +101,7 @@ export function QueueState({ position, username, onCancel }: QueueStateProps) {
 // ─────────────────────────────────────────────
 
 const TIPS = [
-  "Sun beats Star, Star beats Moon, Moon beats Sun.",
+  "Rock beats Scissors, Scissors beats Paper, Paper beats Rock.",
   "Block cancels any card — even Rainbow.",
   "Rainbow beats every element… until it meets another Rainbow.",
   "Higher values win when two of the same element clash.",

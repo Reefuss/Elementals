@@ -100,17 +100,17 @@ export default function WelcomePage() {
                 animate={{ rotate: [0, 15, -15, 0], y: [0, -4, 0] }}
                 transition={{ duration: 4, repeat: Infinity, delay: 0 }}
                 className="text-amber-400 drop-shadow-[0_0_14px_rgba(251,191,36,0.9)]"
-              >☀</motion.span>
+              >✊</motion.span>
               <motion.span
                 animate={{ rotate: [0, -15, 15, 0], y: [0, -5, 0] }}
                 transition={{ duration: 4, repeat: Infinity, delay: 0.6 }}
                 className="text-blue-300 drop-shadow-[0_0_14px_rgba(147,197,253,0.9)]"
-              >☽</motion.span>
+              >✌</motion.span>
               <motion.span
                 animate={{ rotate: [0, 20, -20, 0], y: [0, -4, 0] }}
                 transition={{ duration: 4, repeat: Infinity, delay: 1.2 }}
                 className="text-purple-400 drop-shadow-[0_0_14px_rgba(192,132,252,0.9)]"
-              >★</motion.span>
+              >✋</motion.span>
             </motion.div>
 
             {/* Title */}
@@ -169,9 +169,9 @@ export default function WelcomePage() {
             {/* Small logo */}
             <div className="flex flex-col items-center gap-1.5">
               <div className="flex gap-3 text-xl">
-                <span className="text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]">☀</span>
-                <span className="text-blue-300 drop-shadow-[0_0_10px_rgba(147,197,253,0.8)]">☽</span>
-                <span className="text-purple-400 drop-shadow-[0_0_10px_rgba(192,132,252,0.8)]">★</span>
+                <span className="text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]">✊</span>
+                <span className="text-blue-300 drop-shadow-[0_0_10px_rgba(147,197,253,0.8)]">✌</span>
+                <span className="text-purple-400 drop-shadow-[0_0_10px_rgba(192,132,252,0.8)]">✋</span>
               </div>
               <p className="font-display text-base font-bold text-white tracking-widest uppercase">Elementals</p>
             </div>

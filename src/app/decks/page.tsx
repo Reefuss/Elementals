@@ -23,7 +23,7 @@ const RARITY_BADGE: Record<Rarity, string> = {
   legendary: "text-amber-300 border-amber-400/70",
 };
 
-const elementIcon: Record<string, string>  = { SUN: "☀", MOON: "☽", STAR: "★" };
+const elementIcon: Record<string, string>  = { ROCK: "✊", SCISSORS: "✌", PAPER: "✋" };
 
 function cardTotal(cards: Record<string, number>) {
   return Object.values(cards).reduce((s, n) => s + n, 0);

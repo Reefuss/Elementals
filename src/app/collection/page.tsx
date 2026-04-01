@@ -29,10 +29,10 @@ const RARITY_GLOW: Record<Rarity, string> = {
   legendary: "0 0 40px 10px rgba(251,191,36,0.60)",
 };
 
-const elementIcon: Record<string, string> = { SUN: "☀", MOON: "☽", STAR: "★" };
+const elementIcon: Record<string, string> = { ROCK: "✊", SCISSORS: "✌", PAPER: "✋" };
 
 type FilterRarity  = "all" | Rarity;
-type FilterElement = "all" | "SUN" | "MOON" | "STAR" | "special";
+type FilterElement = "all" | "ROCK" | "SCISSORS" | "PAPER" | "special";
 type FilterOwned   = "all" | "owned" | "unowned";
 
 // ─────────────────────────────────────────────
@@ -259,7 +259,7 @@ export default function CollectionPage() {
         </div>
         {/* Element */}
         <div className="flex gap-1.5 flex-wrap">
-          {(["all", "SUN", "MOON", "STAR", "special"] as FilterElement[]).map((el) => (
+          {(["all", "ROCK", "SCISSORS", "PAPER", "special"] as FilterElement[]).map((el) => (
             <button key={el} onClick={() => setFilterElement(el)}
               className={cn(
                 "px-2.5 py-1 rounded-full text-xs font-medium transition-colors",

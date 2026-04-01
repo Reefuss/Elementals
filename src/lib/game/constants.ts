@@ -16,11 +16,11 @@ export const TURN_DURATION_MS = 30_000;
 /** Grace period for reconnection before forfeit (ms) */
 export const RECONNECT_GRACE_MS = 30_000;
 
-/** Element beat order: Sun > Star > Moon > Sun */
+/** Beat order: Rock > Scissors > Paper > Rock */
 export const ELEMENT_BEAT_MAP: Record<string, string> = {
-  SUN:  "STAR",
-  STAR: "MOON",
-  MOON: "SUN",
+  ROCK:     "SCISSORS",
+  SCISSORS: "PAPER",
+  PAPER:    "ROCK",
 } as const;
 
 export const CARD_VALUES = [3, 5, 8] as const;
@@ -32,24 +32,24 @@ export type CardValue = (typeof CARD_VALUES)[number];
  * 5 element cards per element (2×+3, 2×+5, 1×+8), 3 Block, 2 Rainbow = 20 cards.
  */
 export const DECK_TEMPLATE = [
-  // Sun
-  { element: "SUN",  value: 3 },
-  { element: "SUN",  value: 3 },
-  { element: "SUN",  value: 5 },
-  { element: "SUN",  value: 5 },
-  { element: "SUN",  value: 8 },
-  // Moon
-  { element: "MOON", value: 3 },
-  { element: "MOON", value: 3 },
-  { element: "MOON", value: 5 },
-  { element: "MOON", value: 5 },
-  { element: "MOON", value: 8 },
-  // Star
-  { element: "STAR", value: 3 },
-  { element: "STAR", value: 3 },
-  { element: "STAR", value: 5 },
-  { element: "STAR", value: 5 },
-  { element: "STAR", value: 8 },
+  // Rock
+  { element: "ROCK",     value: 3 },
+  { element: "ROCK",     value: 3 },
+  { element: "ROCK",     value: 5 },
+  { element: "ROCK",     value: 5 },
+  { element: "ROCK",     value: 8 },
+  // Paper
+  { element: "PAPER",    value: 3 },
+  { element: "PAPER",    value: 3 },
+  { element: "PAPER",    value: 5 },
+  { element: "PAPER",    value: 5 },
+  { element: "PAPER",    value: 8 },
+  // Scissors
+  { element: "SCISSORS", value: 3 },
+  { element: "SCISSORS", value: 3 },
+  { element: "SCISSORS", value: 5 },
+  { element: "SCISSORS", value: 5 },
+  { element: "SCISSORS", value: 8 },
   // Special
   { special: "BLOCK" },
   { special: "BLOCK" },

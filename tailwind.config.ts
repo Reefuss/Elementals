@@ -18,7 +18,7 @@ const config: Config = {
           500: "#1a1a4e",
           400: "#22226a",
         },
-        sun: {
+        rock: {
           50:  "#fffbeb",
           100: "#fef3c7",
           200: "#fde68a",
@@ -29,7 +29,7 @@ const config: Config = {
           700: "#b45309",
           glow: "#FFD700",
         },
-        moon: {
+        scissors: {
           50:  "#f0f4ff",
           100: "#dbeafe",
           200: "#bfdbfe",
@@ -40,7 +40,7 @@ const config: Config = {
           700: "#1d4ed8",
           glow: "#93c5fd",
         },
-        star: {
+        paper: {
           50:  "#fdf4ff",
           100: "#fae8ff",
           200: "#f5d0fe",
@@ -64,9 +64,9 @@ const config: Config = {
         body: ["Inter", "system-ui", "sans-serif"],
       },
       boxShadow: {
-        "sun-glow":    "0 0 20px 4px rgba(251, 191, 36, 0.4), 0 0 60px 10px rgba(251, 191, 36, 0.15)",
-        "moon-glow":   "0 0 20px 4px rgba(147, 197, 253, 0.4), 0 0 60px 10px rgba(147, 197, 253, 0.15)",
-        "star-glow":   "0 0 20px 4px rgba(232, 121, 249, 0.4), 0 0 60px 10px rgba(232, 121, 249, 0.15)",
+        "rock-glow":     "0 0 20px 4px rgba(251, 191, 36, 0.4), 0 0 60px 10px rgba(251, 191, 36, 0.15)",
+        "scissors-glow": "0 0 20px 4px rgba(147, 197, 253, 0.4), 0 0 60px 10px rgba(147, 197, 253, 0.15)",
+        "paper-glow":    "0 0 20px 4px rgba(232, 121, 249, 0.4), 0 0 60px 10px rgba(232, 121, 249, 0.15)",
         "block-glow":  "0 0 20px 4px rgba(156, 163, 175, 0.4), 0 0 60px 10px rgba(156, 163, 175, 0.15)",
         "rainbow-glow":"0 0 20px 4px rgba(255, 100, 200, 0.5), 0 0 60px 10px rgba(100, 200, 255, 0.15)",
         "card":        "0 4px 24px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.4)",

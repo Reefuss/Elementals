@@ -10,43 +10,42 @@ import { SoundEngine } from "@/lib/sound/engine";
 //  Element SVG icons
 // ─────────────────────────────────────────────
 
-function SunIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 64 64" fill="none" className={className}>
-      <circle cx="32" cy="32" r="14" fill="currentColor" />
-      {[0,45,90,135,180,225,270,315].map((deg) => (
-        <line
-          key={deg}
-          x1="32" y1="32"
-          x2={32 + 26 * Math.cos((deg * Math.PI) / 180)}
-          y2={32 + 26 * Math.sin((deg * Math.PI) / 180)}
-          stroke="currentColor"
-          strokeWidth="3.5"
-          strokeLinecap="round"
-        />
-      ))}
-    </svg>
-  );
-}
-
-function MoonIcon({ className }: { className?: string }) {
+function RockIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" fill="none" className={className}>
       <path
-        d="M48 35.5A20 20 0 1 1 28.5 16a16 16 0 1 0 19.5 19.5Z"
+        d="M16 44 Q8 36 12 24 Q16 12 28 10 Q40 8 48 18 Q56 28 52 40 Q48 52 36 54 Q24 56 16 44Z"
         fill="currentColor"
+      />
+      <path
+        d="M22 38 Q18 30 22 22 Q26 16 34 16"
+        stroke="rgba(0,0,0,0.2)"
+        strokeWidth="3"
+        strokeLinecap="round"
+        fill="none"
       />
     </svg>
   );
 }
 
-function StarIcon({ className }: { className?: string }) {
+function ScissorsIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" fill="none" className={className}>
-      <polygon
-        points="32,4 39.5,24 62,24 44,37.5 51,58 32,45.5 13,58 20,37.5 2,24 24.5,24"
-        fill="currentColor"
-      />
+      <circle cx="19" cy="20" r="8" stroke="currentColor" strokeWidth="4" fill="none" />
+      <circle cx="19" cy="44" r="8" stroke="currentColor" strokeWidth="4" fill="none" />
+      <line x1="25" y1="25" x2="57" y2="52" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+      <line x1="25" y1="39" x2="57" y2="12" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PaperIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" fill="none" className={className}>
+      <rect x="12" y="8" width="40" height="48" rx="5" fill="currentColor" opacity="0.9" />
+      <line x1="20" y1="22" x2="44" y2="22" stroke="rgba(0,0,0,0.25)" strokeWidth="2.5" strokeLinecap="round" />
+      <line x1="20" y1="30" x2="44" y2="30" stroke="rgba(0,0,0,0.25)" strokeWidth="2.5" strokeLinecap="round" />
+      <line x1="20" y1="38" x2="36" y2="38" stroke="rgba(0,0,0,0.25)" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -210,35 +209,45 @@ function getCardTheme(card: Card): CardTheme {
 
   // CardType.ELEMENT
   switch (card.element) {
-    case Element.SUN:
+    case Element.ROCK:
       return {
         bg:         "bg-gradient-to-b from-[#1f1400] to-[#0f0900]",
-        border:     "border-sun-500/40",
-        iconColor:  "text-sun-400",
-        nameColor:  "text-sun-300",
-        glow:       "shadow-sun-glow",
-        valueColor: "text-sun-400",
-        label:      "Sun",
+        border:     "border-rock-500/40",
+        iconColor:  "text-rock-400",
+        nameColor:  "text-rock-300",
+        glow:       "shadow-rock-glow",
+        valueColor: "text-rock-400",
+        label:      "Rock",
       };
-    case Element.MOON:
+    case Element.SCISSORS:
       return {
         bg:         "bg-gradient-to-b from-[#05101e] to-[#020810]",
-        border:     "border-moon-500/40",
-        iconColor:  "text-moon-300",
-        nameColor:  "text-moon-200",
-        glow:       "shadow-moon-glow",
-        valueColor: "text-moon-300",
-        label:      "Moon",
+        border:     "border-scissors-500/40",
+        iconColor:  "text-scissors-300",
+        nameColor:  "text-scissors-200",
+        glow:       "shadow-scissors-glow",
+        valueColor: "text-scissors-300",
+        label:      "Scissors",
       };
-    case Element.STAR:
+    case Element.PAPER:
       return {
         bg:         "bg-gradient-to-b from-[#160a1f] to-[#0a0510]",
-        border:     "border-star-500/40",
-        iconColor:  "text-star-400",
-        nameColor:  "text-star-300",
-        glow:       "shadow-star-glow",
-        valueColor: "text-star-400",
-        label:      "Star",
+        border:     "border-paper-500/40",
+        iconColor:  "text-paper-400",
+        nameColor:  "text-paper-300",
+        glow:       "shadow-paper-glow",
+        valueColor: "text-paper-400",
+        label:      "Paper",
+      };
+    default:
+      return {
+        bg: "bg-gradient-to-b from-[#151520] to-[#0d0d18]",
+        border: "border-block-500/40",
+        iconColor: "text-block-400",
+        nameColor: "text-block-300",
+        glow: "shadow-block-glow",
+        valueColor: "text-block-300/60",
+        label: "",
       };
   }
 }
@@ -340,14 +349,14 @@ export function GameCard({
             isRainbow
               ? "rainbow-shimmer opacity-80"
               : cn("border-2", {
-                  "border-sun-400":    card.type === CardType.ELEMENT && card.element === Element.SUN,
-                  "border-moon-300":   card.type === CardType.ELEMENT && card.element === Element.MOON,
-                  "border-star-400":   card.type === CardType.ELEMENT && card.element === Element.STAR,
-                  "border-block-400":  isBlock,
-                  "border-emerald-400": isReshuffle,
-                  "border-red-400":    isTrap,
-                  "border-amber-400":  isRevive,
-                  "border-cyan-400":   isDiamond,
+                  "border-rock-400":     card.type === CardType.ELEMENT && card.element === Element.ROCK,
+                  "border-scissors-300": card.type === CardType.ELEMENT && card.element === Element.SCISSORS,
+                  "border-paper-400":    card.type === CardType.ELEMENT && card.element === Element.PAPER,
+                  "border-block-400":    isBlock,
+                  "border-emerald-400":  isReshuffle,
+                  "border-red-400":      isTrap,
+                  "border-amber-400":    isRevive,
+                  "border-cyan-400":     isDiamond,
                 })
           )}
         />
@@ -389,9 +398,9 @@ export function GameCard({
 
       {/* Central icon */}
       <div className="flex-1 flex items-center justify-center w-full">
-        {card.type === CardType.ELEMENT && card.element === Element.SUN  && <SunIcon      className={cn(dims.icon, theme.iconColor)} />}
-        {card.type === CardType.ELEMENT && card.element === Element.MOON && <MoonIcon     className={cn(dims.icon, theme.iconColor)} />}
-        {card.type === CardType.ELEMENT && card.element === Element.STAR && <StarIcon     className={cn(dims.icon, theme.iconColor)} />}
+        {card.type === CardType.ELEMENT && card.element === Element.ROCK     && <RockIcon     className={cn(dims.icon, theme.iconColor)} />}
+        {card.type === CardType.ELEMENT && card.element === Element.SCISSORS && <ScissorsIcon className={cn(dims.icon, theme.iconColor)} />}
+        {card.type === CardType.ELEMENT && card.element === Element.PAPER    && <PaperIcon    className={cn(dims.icon, theme.iconColor)} />}
         {isBlock      && <BlockIcon      className={cn(dims.icon, theme.iconColor)} />}
         {isRainbow    && <RainbowIcon    className={cn(dims.icon)} />}
         {isReshuffle  && <ReshuffleIcon  className={cn(dims.icon, theme.iconColor)} />}
@@ -441,7 +450,7 @@ export function CardBack({ size = "md", className, pulse }: CardBackProps) {
       <div className="absolute inset-2 rounded-xl opacity-50" />
       <div className="absolute inset-4 rounded-lg opacity-30" />
       <div className="w-6 h-6 opacity-20">
-        <StarIcon className="text-white" />
+        <DiamondIcon className="text-white" />
       </div>
     </motion.div>
   );
