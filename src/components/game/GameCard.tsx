@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Card, CardType, Element, SpecialType } from "@/lib/game/types";
+import { SoundEngine } from "@/lib/sound/engine";
 
 // ─────────────────────────────────────────────
 //  Element SVG icons
@@ -208,7 +209,10 @@ export function GameCard({
       whileHover={disabled || played ? {} : { y: selected ? -24 : -10, scale: selected ? 1.06 : 1.04 }}
       whileTap={disabled ? {} : { scale: 0.97 }}
       transition={{ type: "spring", stiffness: 350, damping: 28 }}
-      onClick={disabled ? undefined : onClick}
+      onClick={disabled ? undefined : () => {
+        SoundEngine.play(selected ? "card_deselect" : "card_select");
+        onClick?.();
+      }}
       className={cn(
         "relative flex flex-col items-center justify-between",
         "rounded-2xl border cursor-pointer",

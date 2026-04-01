@@ -6,6 +6,7 @@ import { MatchResult as IMatchResult } from "@/lib/game/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { POINTS_TO_WIN } from "@/lib/game/constants";
+import { SoundEngine } from "@/lib/sound/engine";
 
 interface MatchResultProps {
   result:    IMatchResult;
@@ -30,9 +31,13 @@ export function MatchResultScreen({
   const [counted, setCounted] = useState({ my: 0, opp: 0 });
 
   useEffect(() => {
+    // Play win/lose fanfare timed with the title slam (phase 1 at 500ms)
+    const t0 = setTimeout(() => {
+      SoundEngine.play(youWon ? "match_win" : isTie ? "round_tie" : "match_lose");
+    }, 500);
     const t1 = setTimeout(() => setPhase(1), 500);
     const t2 = setTimeout(() => setPhase(2), 1300);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
   useEffect(() => {

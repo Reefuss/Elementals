@@ -12,6 +12,7 @@ import { useGameStore } from "@/store/gameStore";
 import { ClientGameState, GamePhase } from "@/lib/game/types";
 import { getStoredPlayerId, setStoredPlayerId } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
+import { SoundEngine } from "@/lib/sound/engine";
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -43,6 +44,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
     // ── match:found ───────────────────────────────────────────────
     socket.on("match:found", ({ roomId, opponent }) => {
+      SoundEngine.play("match_found");
       setMatchFound(roomId, opponent);
       setScreen("match_found");
       // After the match-found cinematic, navigate to game room

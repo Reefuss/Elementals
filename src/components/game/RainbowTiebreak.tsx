@@ -6,6 +6,7 @@ import { Element } from "@/lib/game/types";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/utils";
+import { SoundEngine } from "@/lib/sound/engine";
 
 interface RainbowTiebreakProps {
   open:       boolean;
@@ -33,6 +34,7 @@ export function RainbowTiebreak({
 
   useEffect(() => {
     if (open && !prevOpenRef.current) {
+      SoundEngine.play("rainbow_clash");
       setCinematic(true);
       const t = setTimeout(() => setCinematic(false), 1800);
       prevOpenRef.current = true;

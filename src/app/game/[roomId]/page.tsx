@@ -6,7 +6,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useGameStore } from "@/store/gameStore";
 import { useGame } from "@/hooks/useGame";
 import { useSocket } from "@/hooks/useSocket";
+import { useGameSounds } from "@/hooks/useGameSounds";
 import { GamePhase } from "@/lib/game/types";
+import { SoundEngine } from "@/lib/sound/engine";
 
 import { Hand }               from "@/components/game/Hand";
 import { BattleArena }        from "@/components/game/BattleArena";
@@ -111,15 +113,21 @@ export default function GamePage() {
   const { resetGame } = useGameStore();
   const [playError, setPlayError] = useState<string | null>(null);
 
+  // Wire game sounds — fires at phase transitions, flips, timer beats
+  useGameSounds(gameState, msLeft, gameState?.self.id ?? "");
+
   // On mount, ask the server to re-push current state.
   // This handles the case where game:state was emitted before this page loaded.
   useEffect(() => {
+    // Unlock AudioContext on first interaction (browser policy)
+    SoundEngine.unlock();
     socket.emit("game:request_state");
   }, [socket]);
 
   const handlePlayCard = async () => {
     try {
       setPlayError(null);
+      SoundEngine.play("card_play");
       await playCard();
     } catch (e) {
       setPlayError(typeof e === "string" ? e : "Failed to play card.");
