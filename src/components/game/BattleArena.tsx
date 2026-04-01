@@ -120,7 +120,7 @@ export function BattleArena({
   const winnerCard = selfWon ? p1Card : oppWon ? p2Card : undefined;
 
   return (
-    <div className="flex flex-col items-center justify-center gap-4 py-4">
+    <div className="flex flex-col items-center justify-center gap-6 py-6">
 
       {/* ── Round indicator ────────────────────────── */}
       <div className="flex items-center gap-4">
@@ -140,7 +140,7 @@ export function BattleArena({
       </div>
 
       {/* ── Battle field ───────────────────────────── */}
-      <div className="relative flex items-center gap-8">
+      <div className="relative flex items-center gap-10">
 
         {/* Anticipation glow ring — step 1 only */}
         <AnimatePresence>

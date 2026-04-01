@@ -168,7 +168,7 @@ export default function GamePage() {
       </motion.div>
 
       {/* ── Center ─── */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4 py-3 overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 px-4 py-6 overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
