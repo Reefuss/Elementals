@@ -28,6 +28,8 @@ export function useGame() {
 
   const isRainbowTiebreak = gameState?.phase === GamePhase.RAINBOW_TIEBREAK;
 
+  const isRevivePick = gameState?.phase === GamePhase.REVIVE_PICK;
+
   const isGameOver = gameState?.phase === GamePhase.GAME_OVER;
 
   // ── Timer ─────────────────────────────────────────────────
@@ -82,16 +84,30 @@ export function useGame() {
     [socket]
   );
 
+  const submitRevivePick = useCallback(
+    (cardId: string): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        socket.emit("game:revive_pick", { cardId }, (err) => {
+          if (err) { reject(err); return; }
+          resolve();
+        });
+      });
+    },
+    [socket]
+  );
+
   return {
     gameState,
     selectedCardId,
     selectCard,
     playCard,
     submitRainbowChoice,
+    submitRevivePick,
     isMyTurn,
     isWaiting,
     isRevealing,
     isRainbowTiebreak,
+    isRevivePick,
     isGameOver,
     msLeft,
     opponentJustPlayed,

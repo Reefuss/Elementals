@@ -59,10 +59,11 @@ export function registerSocketHandlers(io: AppServer): void {
   // ── Connection ───────────────────────────────────────────────
 
   io.on("connection", (socket: AppSocket) => {
-    const queryId = socket.handshake.query.playerId as string | undefined;
+    const queryId    = socket.handshake.query.playerId as string | undefined;
     const isReturning = !!queryId && queryId !== "undefined";
-    socket.data.playerId = isReturning ? queryId : uuidv4();
-    socket.data.roomId   = null;
+    socket.data.playerId  = isReturning ? queryId : uuidv4();
+    socket.data.roomId    = null;
+    socket.data.deckCards = null;
 
     console.log(`[connect] id=${socket.id} player=${socket.data.playerId} returning=${isReturning}`);
 
@@ -89,38 +90,34 @@ export function registerSocketHandlers(io: AppServer): void {
     }
 
     // ── queue:join ────────────────────────────────────────────────
-    socket.on("queue:join", ({ username }, ack) => {
+    socket.on("queue:join", ({ username, deckCards }, ack) => {
       if (!username?.trim()) { ack("Username required."); return; }
 
-      socket.data.username = username.trim();
+      socket.data.username  = username.trim();
+      socket.data.deckCards = deckCards ?? null;
 
       const position = matchmaker.enqueue({
         playerId: socket.data.playerId,
-        username:  socket.data.username,
-        socketId:  socket.id,
-        joinedAt:  Date.now(),
+        username: socket.data.username,
+        socketId: socket.id,
+        joinedAt: Date.now(),
       });
 
       ack(null);
       socket.emit("queue:status", { position });
       console.log(`[queue] ${socket.data.username} pos=${position} qsize=${matchmaker.size()}`);
 
-      // Try to form a match
       const match = matchmaker.tryMatch();
       if (!match) return;
 
       const { roomId, player1, player2 } = match;
       console.log(`[match] ${player1.username} vs ${player2.username} room=${roomId}`);
 
-      // Join both sockets to the room
       io.in(player1.socketId).socketsJoin(roomId);
       io.in(player2.socketId).socketsJoin(roomId);
-
-      // Update roomId on both socket.data objects
       setSocketRoom(player1.socketId, roomId);
       setSocketRoom(player2.socketId, roomId);
 
-      // Notify both players
       io.to(player1.socketId).emit("match:found", {
         roomId,
         opponent: { id: player2.playerId, username: player2.username },
@@ -130,10 +127,15 @@ export function registerSocketHandlers(io: AppServer): void {
         opponent: { id: player1.playerId, username: player1.username },
       });
 
-      // Create authoritative game — this triggers onStateSync which pushes game:state
+      // Retrieve deck data from each player's socket
+      const p1Socket = io.sockets.sockets.get(player1.socketId);
+      const p2Socket = io.sockets.sockets.get(player2.socketId);
+      const p1Deck   = p1Socket?.data.deckCards ?? {};
+      const p2Deck   = p2Socket?.data.deckCards ?? {};
+
       gameManager.createGame(
-        { id: player1.playerId, username: player1.username, socketId: player1.socketId },
-        { id: player2.playerId, username: player2.username, socketId: player2.socketId },
+        { id: player1.playerId, username: player1.username, socketId: player1.socketId, deckCards: p1Deck },
+        { id: player2.playerId, username: player2.username, socketId: player2.socketId, deckCards: p2Deck },
         roomId
       );
     });
@@ -144,7 +146,6 @@ export function registerSocketHandlers(io: AppServer): void {
     });
 
     // ── game:request_state ────────────────────────────────────────
-    // Called by the game page on mount to recover state after page navigation.
     socket.on("game:request_state", () => {
       const roomId = socket.data.roomId ?? gameManager.getPlayerRoom(socket.data.playerId);
       if (!roomId) return;
@@ -180,6 +181,16 @@ export function registerSocketHandlers(io: AppServer): void {
       const game = gameManager.getGame(roomId);
       const opp  = game?.players.find((p) => p.id !== socket.data.playerId);
       if (opp) io.to(opp.socketId).emit("game:rainbow_waiting");
+    });
+
+    // ── game:revive_pick ──────────────────────────────────────────
+    socket.on("game:revive_pick", ({ cardId }, ack) => {
+      const roomId = socket.data.roomId ?? gameManager.getPlayerRoom(socket.data.playerId);
+      if (!roomId) { ack("Not in a game."); return; }
+
+      const result = gameManager.processRevivePick(roomId, socket.data.playerId, cardId);
+      if (result.error) { ack(result.error); return; }
+      ack(null);
     });
 
     // ── game:forfeit ──────────────────────────────────────────────

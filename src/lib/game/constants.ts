@@ -1,11 +1,14 @@
-/** Points required to win the match */
-export const POINTS_TO_WIN = 3;
+/** Rounds required to win the match (first to win this many rounds wins) */
+export const POINTS_TO_WIN = 2;
 
 /** Cards drawn at game start */
 export const INITIAL_HAND_SIZE = 4;
 
 /** Cards drawn at the start of each subsequent round */
 export const DRAW_PER_ROUND = 1;
+
+/** Cards drawn after a Reshuffle (hand is shuffled back into deck first) */
+export const RESHUFFLE_HAND_SIZE = 3;
 
 /** Server-enforced turn duration in milliseconds */
 export const TURN_DURATION_MS = 30_000;
@@ -24,7 +27,8 @@ export const CARD_VALUES = [3, 5, 8] as const;
 export type CardValue = (typeof CARD_VALUES)[number];
 
 /**
- * Deck template — one copy is created per player.
+ * Legacy deck template — kept for fallback / testing.
+ * The live game now builds decks from player collections.
  * 5 element cards per element (2×+3, 2×+5, 1×+8), 3 Block, 2 Rainbow = 20 cards.
  */
 export const DECK_TEMPLATE = [

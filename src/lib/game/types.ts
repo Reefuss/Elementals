@@ -9,13 +9,17 @@ export enum Element {
 }
 
 export enum SpecialType {
-  BLOCK   = "BLOCK",
-  RAINBOW = "RAINBOW",
+  BLOCK        = "BLOCK",
+  RAINBOW      = "RAINBOW",
+  RESHUFFLE    = "RESHUFFLE",
+  DISCARD_TRAP = "DISCARD_TRAP",
+  REVIVE       = "REVIVE",
 }
 
 export enum CardType {
   ELEMENT = "ELEMENT",
   SPECIAL = "SPECIAL",
+  DIAMOND = "DIAMOND",
 }
 
 export enum GamePhase {
@@ -27,6 +31,8 @@ export enum GamePhase {
   REVEALING          = "REVEALING",
   /** Rainbow vs Rainbow tiebreak in progress */
   RAINBOW_TIEBREAK   = "RAINBOW_TIEBREAK",
+  /** One or both players must pick a card from their discard pile (Revive) */
+  REVIVE_PICK        = "REVIVE_PICK",
   /** Game over */
   GAME_OVER          = "GAME_OVER",
 }
@@ -38,12 +44,26 @@ export enum RoundOutcome {
 }
 
 export enum WinReason {
-  ELEMENT_BEATS     = "ELEMENT_BEATS",
-  HIGHER_VALUE      = "HIGHER_VALUE",
-  RAINBOW_BEATS     = "RAINBOW_BEATS",
-  BLOCK_NEGATES     = "BLOCK_NEGATES",
-  SAME_VALUE_TIE    = "SAME_VALUE_TIE",
-  RAINBOW_TIEBREAK  = "RAINBOW_TIEBREAK",
+  // Element resolution
+  ELEMENT_BEATS       = "ELEMENT_BEATS",
+  HIGHER_VALUE        = "HIGHER_VALUE",
+  SAME_VALUE_TIE      = "SAME_VALUE_TIE",
+  // Rainbow
+  RAINBOW_BEATS       = "RAINBOW_BEATS",
+  RAINBOW_TIEBREAK    = "RAINBOW_TIEBREAK",
+  // Block
+  BLOCK_NEGATES       = "BLOCK_NEGATES",
+  // Diamond
+  DIAMOND             = "DIAMOND",
+  DIAMOND_VALUE       = "DIAMOND_VALUE",
+  DIAMOND_TIE         = "DIAMOND_TIE",
+  // Special actions
+  DISCARD_TRAP        = "DISCARD_TRAP",
+  DISCARD_TRAP_MUTUAL = "DISCARD_TRAP_MUTUAL",
+  REVIVE_FORFEIT      = "REVIVE_FORFEIT",
+  REVIVE_MUTUAL       = "REVIVE_MUTUAL",
+  RESHUFFLE           = "RESHUFFLE",
+  RESHUFFLE_MUTUAL    = "RESHUFFLE_MUTUAL",
 }
 
 // ─────────────────────────────────────────────
@@ -63,27 +83,36 @@ export interface SpecialCard {
   specialType: SpecialType;
 }
 
-export type Card = ElementCard | SpecialCard;
+export interface DiamondCard {
+  id:    string;
+  type:  CardType.DIAMOND;
+  /** Diamond value — beats all element cards; higher wins against other diamonds */
+  value: number;
+}
+
+export type Card = ElementCard | SpecialCard | DiamondCard;
 
 // ─────────────────────────────────────────────
 //  Round / match results
 // ─────────────────────────────────────────────
 
 export interface RoundResult {
-  roundNumber: number;
+  roundNumber:   number;
   playerOneCard: Card;
   playerTwoCard: Card;
-  outcome:   RoundOutcome;
-  reason:    WinReason;
+  outcome:       RoundOutcome;
+  reason:        WinReason;
   /** playerId of winner, or null on tie */
-  winnerId:  string | null;
-  scoreAfter: { [playerId: string]: number };
+  winnerId:      string | null;
+  scoreAfter:    { [playerId: string]: number };
+  /** playerId whose card was sent to the void (by Discard Trap), if any */
+  voidedCardOf?: string;
 }
 
 export interface MatchResult {
   /** playerId of match winner, or null for draw */
   winnerId:    string | null;
-  reason:      "score" | "both_out_of_cards";
+  reason:      "score" | "both_out_of_cards" | "forfeit";
   finalScores: { [playerId: string]: number };
   rounds:      RoundResult[];
 }
@@ -99,29 +128,35 @@ export interface ServerPlayer {
   socketId:  string;
   deck:      Card[];
   hand:      Card[];
+  /** Cards played and discarded this game (normal discard) */
+  discard:   Card[];
+  /** Cards permanently removed from the game (by Discard Trap) */
+  voided:    Card[];
   score:     number;
   connected: boolean;
 }
 
 /** Safe player info sent to the opponent */
 export interface OpponentView {
-  id:          string;
-  username:    string;
-  score:       number;
-  handCount:   number;
-  deckCount:   number;
-  hasPlayed:   boolean;
-  connected:   boolean;
+  id:           string;
+  username:     string;
+  score:        number;
+  handCount:    number;
+  deckCount:    number;
+  discardCount: number;
+  hasPlayed:    boolean;
+  connected:    boolean;
 }
 
 /** Full view of yourself */
 export interface SelfView {
-  id:        string;
-  username:  string;
-  score:     number;
-  hand:      Card[];
-  deckCount: number;
-  hasPlayed: boolean;
+  id:          string;
+  username:    string;
+  score:       number;
+  hand:        Card[];
+  deckCount:   number;
+  discardPile: Card[];
+  hasPlayed:   boolean;
 }
 
 // ─────────────────────────────────────────────
@@ -140,6 +175,13 @@ export interface ClientGameState {
   rainbowTiebreak: {
     attempt:      number;
     myChoice:     Element | null;
+    waitingForOp: boolean;
+  } | null;
+  /** Present during REVIVE_PICK phase */
+  revivePick: {
+    /** This player must pick a card from their discard pile */
+    needsPick:    boolean;
+    /** Waiting for the opponent to finish their pick */
     waitingForOp: boolean;
   } | null;
 }
@@ -161,5 +203,11 @@ export interface ServerGame {
   rainbowTiebreak: {
     attempt: number;
     choices: Map<string, Element>;
+  } | null;
+  /** Present during REVIVE_PICK phase: which players still need to pick */
+  revivePick: {
+    waitingFor: Set<string>;
+    /** cardId chosen, keyed by playerId */
+    picked: Map<string, string>;
   } | null;
 }

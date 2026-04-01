@@ -37,6 +37,7 @@ export function elementColorKey(element: Element): "sun" | "moon" | "star" {
 
 /** Returns the CSS glow shadow class for a card */
 export function cardGlowClass(card: Card): string {
+  if (card.type === CardType.DIAMOND) return "shadow-[0_0_20px_4px_rgba(34,211,238,0.5)]";
   if (card.type === CardType.SPECIAL) {
     if (card.specialType === SpecialType.RAINBOW) return "shadow-rainbow-glow";
     return "shadow-block-glow";
@@ -50,6 +51,7 @@ export function cardGlowClass(card: Card): string {
 
 /** Returns the gradient border color for a card */
 export function cardBorderColor(card: Card): string {
+  if (card.type === CardType.DIAMOND) return "from-cyan-400 to-cyan-600";
   if (card.type === CardType.SPECIAL) {
     if (card.specialType === SpecialType.RAINBOW)
       return "from-pink-500 via-yellow-400 via-green-400 to-blue-500";

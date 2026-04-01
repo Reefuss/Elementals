@@ -16,6 +16,7 @@ import { OpponentArea }       from "@/components/game/OpponentArea";
 import { Scoreboard }         from "@/components/game/Scoreboard";
 import { MatchResultScreen }  from "@/components/game/MatchResult";
 import { RainbowTiebreak }    from "@/components/game/RainbowTiebreak";
+import { RevivePick }         from "@/components/game/RevivePick";
 import { Button }             from "@/components/ui/button";
 import { cn }                 from "@/lib/utils";
 
@@ -102,9 +103,11 @@ export default function GamePage() {
     selectCard,
     playCard,
     submitRainbowChoice,
+    submitRevivePick,
     isMyTurn,
     isRevealing,
     isRainbowTiebreak,
+    isRevivePick,
     isGameOver,
     msLeft,
     opponentDisconnected,
@@ -333,6 +336,15 @@ export default function GamePage() {
         myChoice={rainbowTiebreak?.myChoice ?? null}
         waitingForOp={rainbowTiebreak?.waitingForOp ?? false}
         onChoose={submitRainbowChoice}
+      />
+
+      {/* ── Revive Pick modal ─── */}
+      <RevivePick
+        open={isRevivePick}
+        discardPile={self.discardPile ?? []}
+        needsPick={gameState.revivePick?.needsPick ?? false}
+        waitingForOp={gameState.revivePick?.waitingForOp ?? false}
+        onPick={submitRevivePick}
       />
 
       {/* ── Match result ─── */}

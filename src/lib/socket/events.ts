@@ -11,7 +11,10 @@ import type { ClientGameState, Element } from "../game/types";
 
 export interface ClientToServerEvents {
   /** Join matchmaking queue */
-  "queue:join": (payload: { username: string }, ack: (err: string | null) => void) => void;
+  "queue:join": (
+    payload: { username: string; deckCards?: Record<string, number> },
+    ack: (err: string | null) => void
+  ) => void;
 
   /** Leave matchmaking queue */
   "queue:leave": () => void;
@@ -22,6 +25,12 @@ export interface ClientToServerEvents {
   /** Submit Rainbow tiebreak element choice */
   "game:rainbow_choice": (
     payload: { element: Element },
+    ack: (err: string | null) => void
+  ) => void;
+
+  /** Pick a card from discard pile during REVIVE_PICK phase */
+  "game:revive_pick": (
+    payload: { cardId: string },
     ack: (err: string | null) => void
   ) => void;
 
@@ -85,7 +94,8 @@ export interface InterServerEvents {}
 // ─────────────────────────────────────────────
 
 export interface SocketData {
-  playerId: string;
-  username: string;
-  roomId:   string | null;
+  playerId:  string;
+  username:  string;
+  roomId:    string | null;
+  deckCards: Record<string, number> | null;
 }

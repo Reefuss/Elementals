@@ -1,14 +1,16 @@
-// Elementals — full 100-card collectible pool
+// Elementals — full collectible card pool
 
 export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
 export type ElementKey = "SUN" | "MOON" | "STAR";
+export type SpecialKey = "BLOCK" | "RAINBOW" | "RESHUFFLE" | "DISCARD_TRAP" | "REVIVE";
 
 export interface CardVariant {
   id:           string;
-  type:         "element" | "special";
+  type:         "element" | "special" | "diamond";
   element?:     ElementKey;
-  specialType?: "BLOCK" | "RAINBOW";
-  value?:       3 | 5 | 8;
+  specialType?: SpecialKey;
+  /** Element card power or Diamond card value */
+  value?:       number;
   rarity:       Rarity;
   displayName:  string;
   flavorText:   string;
@@ -34,7 +36,7 @@ function el(
 }
 
 function sp(
-  id: string, specialType: "BLOCK" | "RAINBOW",
+  id: string, specialType: SpecialKey,
   rarity: Rarity, displayName: string, artTheme: string,
   flavorText: string, maxPerDeck: number
 ): CardVariant {
@@ -42,8 +44,17 @@ function sp(
     artTheme, flavorText, setId: "base", maxPerDeck };
 }
 
+function dm(
+  id: string, value: number,
+  rarity: Rarity, displayName: string, artTheme: string,
+  flavorText: string
+): CardVariant {
+  return { id, type: "diamond", value, rarity, displayName,
+    artTheme, flavorText, setId: "base", maxPerDeck: 1 };
+}
+
 // ─────────────────────────────────────────────
-//  All 100 cards
+//  All cards
 // ─────────────────────────────────────────────
 
 export const ALL_CARDS: CardVariant[] = [
@@ -157,6 +168,36 @@ export const ALL_CARDS: CardVariant[] = [
   sp("r04","RAINBOW","epic",      "Iris Veil",         "rainbow_prismatic","The goddess wears the sky.",           1),
   sp("r05","RAINBOW","legendary", "Bifrost Bridge",    "rainbow_prismatic","All realms, connected.",               1),
   sp("r06","RAINBOW","legendary", "Prismatic Genesis", "rainbow_prismatic","The first light, split.",              1),
+
+  // ══ RESHUFFLE — 6 cards ═════════════════════════════════════════════════
+  sp("rs01","RESHUFFLE","common",   "Tide Turn",         "reshuffle_flow",  "The current shifts. So do you.",      2),
+  sp("rs02","RESHUFFLE","common",   "Second Wind",       "reshuffle_flow",  "Breathe in. Start again.",             2),
+  sp("rs03","RESHUFFLE","uncommon", "Cycle Break",       "reshuffle_arc",   "What was lost returns.",               2),
+  sp("rs04","RESHUFFLE","uncommon", "Recurrence",        "reshuffle_arc",   "Every loop ends with a beginning.",    2),
+  sp("rs05","RESHUFFLE","rare",     "Temporal Fold",     "reshuffle_arc",   "The past becomes the future.",         1),
+  sp("rs06","RESHUFFLE","epic",     "Paradox Engine",    "reshuffle_arc",   "It runs on contradiction.",            1),
+
+  // ══ DISCARD TRAP — 6 cards ══════════════════════════════════════════════
+  sp("dt01","DISCARD_TRAP","common",   "Void Snare",      "trap_dark",   "It swallows what it catches.",         2),
+  sp("dt02","DISCARD_TRAP","common",   "Null Trap",       "trap_dark",   "Simple. Permanent.",                   2),
+  sp("dt03","DISCARD_TRAP","uncommon", "Erasure Mark",    "trap_arcane", "One touch and it's gone.",             2),
+  sp("dt04","DISCARD_TRAP","uncommon", "Oblivion Hook",   "trap_arcane", "You can't pull back what it takes.",   2),
+  sp("dt05","DISCARD_TRAP","rare",     "Soul Cage",       "trap_arcane", "It doesn't destroy. It keeps.",        1),
+  sp("dt06","DISCARD_TRAP","epic",     "Null Edict",      "trap_dark",   "The highest authority of nothing.",    1),
+
+  // ══ REVIVE — 4 cards ════════════════════════════════════════════════════
+  sp("rv01","REVIVE","uncommon", "Echo Recall",      "revive_light", "The past answers when called.",          1),
+  sp("rv02","REVIVE","rare",     "Soul Return",      "revive_light", "Death is a delay, not an end.",          1),
+  sp("rv03","REVIVE","epic",     "Phoenix Memory",   "revive_light", "What burned once can burn again.",       1),
+  sp("rv04","REVIVE","legendary","Eternal Recall",   "revive_light", "Nothing is ever truly gone.",            1),
+
+  // ══ DIAMOND — 6 cards ═══════════════════════════════════════════════════
+  dm("d01", 10, "rare",      "Diamond Shard",     "diamond_prismatic", "A fragment of absolute clarity.",        ),
+  dm("d02", 12, "rare",      "Crystal Core",      "diamond_prismatic", "Compressed under infinite pressure.",   ),
+  dm("d03", 14, "epic",      "Faceted Aegis",     "diamond_prismatic", "Cuts through everything it touches.",   ),
+  dm("d04", 16, "epic",      "Prism Absolute",    "diamond_prismatic", "Light enters. Truth exits.",            ),
+  dm("d05", 18, "legendary", "Eternal Diamond",   "diamond_prismatic", "Formed at the birth of the universe.",  ),
+  dm("d06", 20, "legendary", "The Apex Crystal",  "diamond_prismatic", "Harder than any element. Any law.",     ),
 ];
 
 export const CARD_MAP: Record<string, CardVariant> = Object.fromEntries(
@@ -226,13 +267,21 @@ export const PACK_TYPES: PackType[] = [
 //  Economy constants
 // ─────────────────────────────────────────────
 
-/** New players start with a full 20-card playable deck already owned */
+/**
+ * New players start with a 24-card playable starter deck.
+ * 9 commons + 6 uncommons + 4 rares + 5 specials (no Diamond).
+ */
 export const DEFAULT_COLLECTION: Record<string, number> = {
-  s01: 2, s09: 2, s17: 1,   // Sun +3, +5, +8
-  m01: 2, m09: 2, m17: 1,   // Moon +3, +5, +8
-  t01: 2, t09: 2, t17: 1,   // Star +3, +5, +8
-  b01: 3,                    // Block ×3
-  r01: 2,                    // Rainbow ×2
+  // Sun: 3 common, 2 uncommon, 1 rare
+  s01: 3, s09: 2, s17: 1,
+  // Moon: 3 common, 2 uncommon, 1 rare
+  m01: 3, m09: 2, m17: 1,
+  // Star: 3 common, 2 uncommon, 2 rare
+  t01: 3, t09: 2, t17: 2,
+  // Block ×2, Reshuffle ×2, Revive ×1
+  b01: 2,
+  rs01: 2,
+  rv01: 1,
 };
 
 export const STARTING_COINS       = 500;
@@ -258,10 +307,18 @@ export const PITY_SHOP_PRICES: Record<string, number> = Object.fromEntries(
 // ─────────────────────────────────────────────
 
 export const DECK_RULES = {
-  totalCards:      20,
-  minElementCards: 12,
+  /** Base deck without Diamond */
+  minCards:        24,
+  /** With 1 Diamond */
+  maxCards:        25,
+  minElementCards: 9,
   maxSpecialCards: 5,
   maxRainbow:      2,
+  maxBlock:        3,
+  maxReshuffle:    2,
+  maxDiscardTrap:  2,
+  maxRevive:       1,
+  maxDiamond:      1,
 };
 
 export interface DeckValidationResult {
@@ -272,12 +329,21 @@ export interface DeckValidationResult {
 export function validateDeck(cards: Record<string, number>): DeckValidationResult {
   const errors: string[] = [];
   const total = Object.values(cards).reduce((s, n) => s + n, 0);
-  if (total !== DECK_RULES.totalCards)
-    errors.push(`Must be exactly ${DECK_RULES.totalCards} cards (currently ${total}).`);
 
-  let elementCount = 0;
-  let specialCount = 0;
-  let rainbowCount = 0;
+  if (total < DECK_RULES.minCards || total > DECK_RULES.maxCards) {
+    errors.push(
+      `Deck must be ${DECK_RULES.minCards}–${DECK_RULES.maxCards} cards (currently ${total}).`
+    );
+  }
+
+  let elementCount   = 0;
+  let specialCount   = 0;
+  let rainbowCount   = 0;
+  let blockCount     = 0;
+  let reshuffleCount = 0;
+  let trapCount      = 0;
+  let reviveCount    = 0;
+  let diamondCount   = 0;
 
   for (const [id, qty] of Object.entries(cards)) {
     if (qty <= 0) continue;
@@ -285,17 +351,35 @@ export function validateDeck(cards: Record<string, number>): DeckValidationResul
     if (!v) { errors.push(`Unknown card: ${id}`); continue; }
     if (qty > v.maxPerDeck)
       errors.push(`Max ${v.maxPerDeck}× ${v.displayName} per deck.`);
-    if (v.type === "element")         elementCount += qty;
-    if (v.type === "special")         specialCount += qty;
-    if (v.specialType === "RAINBOW")  rainbowCount += qty;
+
+    if (v.type === "element") elementCount += qty;
+    if (v.type === "diamond") diamondCount += qty;
+    if (v.type === "special") {
+      specialCount += qty;
+      if (v.specialType === "RAINBOW")      rainbowCount   += qty;
+      if (v.specialType === "BLOCK")        blockCount     += qty;
+      if (v.specialType === "RESHUFFLE")    reshuffleCount += qty;
+      if (v.specialType === "DISCARD_TRAP") trapCount      += qty;
+      if (v.specialType === "REVIVE")       reviveCount    += qty;
+    }
   }
 
   if (elementCount < DECK_RULES.minElementCards)
     errors.push(`Need at least ${DECK_RULES.minElementCards} element cards.`);
   if (specialCount > DECK_RULES.maxSpecialCards)
-    errors.push(`Max ${DECK_RULES.maxSpecialCards} special cards.`);
+    errors.push(`Max ${DECK_RULES.maxSpecialCards} special cards total.`);
   if (rainbowCount > DECK_RULES.maxRainbow)
     errors.push(`Max ${DECK_RULES.maxRainbow} Rainbow cards.`);
+  if (blockCount > DECK_RULES.maxBlock)
+    errors.push(`Max ${DECK_RULES.maxBlock} Block cards.`);
+  if (reshuffleCount > DECK_RULES.maxReshuffle)
+    errors.push(`Max ${DECK_RULES.maxReshuffle} Reshuffle cards.`);
+  if (trapCount > DECK_RULES.maxDiscardTrap)
+    errors.push(`Max ${DECK_RULES.maxDiscardTrap} Discard Trap cards.`);
+  if (reviveCount > DECK_RULES.maxRevive)
+    errors.push(`Max ${DECK_RULES.maxRevive} Revive card.`);
+  if (diamondCount > DECK_RULES.maxDiamond)
+    errors.push(`Max ${DECK_RULES.maxDiamond} Diamond card.`);
 
   return { valid: errors.length === 0, errors };
 }

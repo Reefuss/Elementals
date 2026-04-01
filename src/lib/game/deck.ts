@@ -1,8 +1,12 @@
 import { v4 as uuidv4 } from "uuid";
-import { Card, CardType, Element, SpecialType, ElementCard, SpecialCard } from "./types";
+import {
+  Card, CardType, Element, SpecialType,
+  ElementCard, SpecialCard, DiamondCard,
+} from "./types";
 import { DECK_TEMPLATE } from "./constants";
+import { CARD_MAP } from "./cardPool";
 
-/** Build a fresh, shuffled 20-card deck. */
+/** Build a fresh, shuffled 20-card legacy deck (used as fallback / testing). */
 export function createDeck(): Card[] {
   const deck: Card[] = DECK_TEMPLATE.map((entry) => {
     if ("special" in entry) {
@@ -23,6 +27,50 @@ export function createDeck(): Card[] {
     }
   });
 
+  return shuffle(deck);
+}
+
+/**
+ * Build a shuffled game deck from a saved deck's card-id→count mapping.
+ * Each card in the collection gets a fresh UUID so hands are trackable.
+ * Falls back to createDeck() if the provided mapping is empty or unknown.
+ */
+export function buildDeckFromCards(savedCards: Record<string, number>): Card[] {
+  const deck: Card[] = [];
+
+  for (const [variantId, qty] of Object.entries(savedCards)) {
+    if (qty <= 0) continue;
+    const variant = CARD_MAP[variantId];
+    if (!variant) continue;
+
+    for (let i = 0; i < qty; i++) {
+      if (variant.type === "element") {
+        const card: ElementCard = {
+          id:      uuidv4(),
+          type:    CardType.ELEMENT,
+          element: variant.element as Element,
+          value:   variant.value as 3 | 5 | 8,
+        };
+        deck.push(card);
+      } else if (variant.type === "special") {
+        const card: SpecialCard = {
+          id:          uuidv4(),
+          type:        CardType.SPECIAL,
+          specialType: variant.specialType as SpecialType,
+        };
+        deck.push(card);
+      } else if (variant.type === "diamond") {
+        const card: DiamondCard = {
+          id:    uuidv4(),
+          type:  CardType.DIAMOND,
+          value: variant.value as number,
+        };
+        deck.push(card);
+      }
+    }
+  }
+
+  if (deck.length === 0) return createDeck();
   return shuffle(deck);
 }
 

@@ -89,8 +89,8 @@ function HowToPlay({ onClose }: { onClose: () => void }) {
         className="glass rounded-3xl p-8 w-full max-w-lg mx-4 border border-white/10 overflow-y-auto max-h-[80vh]">
         <h2 className="font-display text-2xl font-bold text-white mb-6 text-center">How to Play</h2>
         <div className="space-y-4 text-sm text-white/70 leading-relaxed">
-          <Rule emoji="🎯" title="Goal">First to collect <strong className="text-white">3 points</strong> wins.</Rule>
-          <Rule emoji="🃏" title="Deck">20 cards — Sun, Moon, Star, and Specials. Draw 4 to start, then 1 per round.</Rule>
+          <Rule emoji="🎯" title="Goal">First to win <strong className="text-white">2 rounds</strong> wins the match.</Rule>
+          <Rule emoji="🃏" title="Deck">24–25 cards — Elements, Specials, and optional Diamond. Draw 4 to start, then 1 per round.</Rule>
           <Rule emoji="⚔️" title="Elements">
             <span className="text-amber-400 font-semibold">Sun</span> beats{" "}
             <span className="text-purple-400 font-semibold">Star</span> ·{" "}
@@ -100,8 +100,12 @@ function HowToPlay({ onClose }: { onClose: () => void }) {
             <span className="text-amber-400 font-semibold">Sun</span>
           </Rule>
           <Rule emoji="💎" title="Same Element">Higher value wins (+8 &gt; +5 &gt; +3). Ties score nothing.</Rule>
-          <Rule emoji="🛡" title="Block">Cancels all effects. No points awarded.</Rule>
+          <Rule emoji="🛡" title="Block">Cancels all effects. No points awarded. Highest priority after Discard Trap.</Rule>
           <Rule emoji="🌈" title="Rainbow">Beats any element. Rainbow vs Rainbow triggers a secret element vote.</Rule>
+          <Rule emoji="🔄" title="Reshuffle">Sacrifice the round — return your hand to the deck and draw 3 fresh cards.</Rule>
+          <Rule emoji="⛔" title="Discard Trap">Voids the opponent's played card permanently. Highest priority card.</Rule>
+          <Rule emoji="✨" title="Revive">Sacrifice the round to bring one card back from your discard pile.</Rule>
+          <Rule emoji="💠" title="Diamond">Beats all element cards. Diamond vs Diamond: higher value wins.</Rule>
           <Rule emoji="⏱" title="Timer">30 seconds per turn. A random card is auto-played if time runs out.</Rule>
         </div>
         <div className="mt-8 flex justify-center">
@@ -184,7 +188,7 @@ export default function BattlePage() {
     if (!deckValid) return;
     const name = (username || getStoredUsername() || "").trim();
     if (!name) return;
-    socket.emit("queue:join", { username: name }, (err) => {
+    socket.emit("queue:join", { username: name, deckCards: activeDeck?.cards ?? {} }, (err) => {
       if (err) return;
       setScreen("queue");
     });

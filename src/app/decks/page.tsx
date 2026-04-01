@@ -169,7 +169,7 @@ function DeckEditor({ deck, owned, onSave, onDelete, onBack, onSetActive, isActi
 
   const addCard = (card: CardVariant) => {
     const current = cards[card.id] ?? 0;
-    if (total >= DECK_RULES.totalCards)      return;
+    if (total >= DECK_RULES.maxCards)        return;
     if (current >= card.maxPerDeck)          return;
     if (current >= (owned[card.id] ?? 0))    return;
     setCards((prev) => ({ ...prev, [card.id]: current + 1 }));
