@@ -168,12 +168,12 @@ export default function GamePage() {
       </motion.div>
 
       {/* ── Center ─── */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4 overflow-hidden">
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4 py-3 overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="glass rounded-2xl px-6 py-3 flex items-center gap-4"
+          className="flex items-center gap-4"
         >
           <Scoreboard
             myScore={self.score}
