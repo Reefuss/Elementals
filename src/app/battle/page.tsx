@@ -7,7 +7,7 @@ import { useGameStore } from "@/store/gameStore";
 import { useSocket } from "@/hooks/useSocket";
 import { useDeckStore } from "@/store/deckStore";
 import { validateDeck } from "@/lib/game/cardPool";
-import { getStoredUsername, setStoredUsername } from "@/lib/utils";
+import { getStoredUsername } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -168,13 +168,11 @@ export default function BattlePage() {
   const decks        = useDeckStore((s) => s.decks);
   const activeDeckId = useDeckStore((s) => s.activeDeckId);
 
-  const [localUsername, setLocalUsername] = useState("");
-  const [queueError,    setQueueError]    = useState("");
-  const [showHowTo,     setShowHowTo]     = useState(false);
+  const [showHowTo, setShowHowTo] = useState(false);
 
   useEffect(() => {
     const saved = getStoredUsername();
-    if (saved) { setLocalUsername(saved); setUsername(saved); }
+    if (saved) setUsername(saved);
   }, []);
 
   // Deck validity
@@ -184,14 +182,10 @@ export default function BattlePage() {
 
   const handleQueue = () => {
     if (!deckValid) return;
-    const name = localUsername.trim();
-    if (!name)           { setQueueError("Please enter a name."); return; }
-    if (name.length > 20){ setQueueError("Max 20 characters."); return; }
-    setQueueError("");
-    setStoredUsername(name);
-    setUsername(name);
+    const name = (username || getStoredUsername() || "").trim();
+    if (!name) return;
     socket.emit("queue:join", { username: name }, (err) => {
-      if (err) { setQueueError(err); return; }
+      if (err) return;
       setScreen("queue");
     });
   };
@@ -267,29 +261,10 @@ export default function BattlePage() {
                   </div>
                 </div>
 
-                {/* Name input */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] text-white/40 uppercase tracking-widest pl-0.5">Your Name</label>
-                  <input
-                    type="text"
-                    placeholder="Enter your name…"
-                    value={localUsername}
-                    maxLength={20}
-                    onChange={(e) => { setLocalUsername(e.target.value); setQueueError(""); }}
-                    onKeyDown={(e) => e.key === "Enter" && handleQueue()}
-                    className={cn(
-                      "w-full px-4 py-2.5 rounded-xl border text-white placeholder-white/20 text-sm",
-                      "bg-white/5 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/60",
-                      "transition-all duration-200",
-                      queueError
-                        ? "border-red-500/50"
-                        : "border-white/10 hover:border-white/20 focus:border-indigo-400/50"
-                    )}
-                  />
-                  {queueError && (
-                    <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-                      className="text-xs text-red-400 pl-1">{queueError}</motion.p>
-                  )}
+                {/* Playing as */}
+                <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-[10px] text-white/40 uppercase tracking-widest">Playing as</span>
+                  <span className="text-sm font-semibold text-white">{username || getStoredUsername()}</span>
                 </div>
 
                 {/* Deck check */}

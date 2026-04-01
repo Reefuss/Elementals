@@ -234,6 +234,14 @@ export default function GamePage() {
           <div>
             <p className="font-display text-sm font-semibold text-white">{self.username}</p>
             <p className="text-[11px] text-white/40">{self.deckCount} in deck</p>
+            {!isGameOver && (
+              <button
+                onClick={() => setShowForfeitConfirm(true)}
+                className="text-[10px] text-white/20 hover:text-red-400/60 transition-colors mt-0.5"
+              >
+                Forfeit
+              </button>
+            )}
           </div>
           <div className="flex flex-col items-end">
             <motion.span
@@ -280,17 +288,6 @@ export default function GamePage() {
         </div>
       </motion.div>
 
-      {/* ── Forfeit button ─── */}
-      {!isGameOver && (
-        <div className="absolute top-3 right-3 z-20">
-          <button
-            onClick={() => setShowForfeitConfirm(true)}
-            className="text-[10px] text-white/20 hover:text-red-400/70 transition-colors px-2 py-1 rounded-lg border border-transparent hover:border-red-500/20"
-          >
-            Forfeit
-          </button>
-        </div>
-      )}
 
       {/* ── Forfeit confirm modal ─── */}
       <AnimatePresence>
