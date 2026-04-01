@@ -1,5 +1,5 @@
-/** Rounds required to win the match (first to win this many rounds wins) */
-export const POINTS_TO_WIN = 2;
+/** Points required to win the match */
+export const POINTS_TO_WIN = 3;
 
 /** Cards drawn at game start */
 export const INITIAL_HAND_SIZE = 4;

@@ -89,7 +89,7 @@ function HowToPlay({ onClose }: { onClose: () => void }) {
         className="glass rounded-3xl p-8 w-full max-w-lg mx-4 border border-white/10 overflow-y-auto max-h-[80vh]">
         <h2 className="font-display text-2xl font-bold text-white mb-6 text-center">How to Play</h2>
         <div className="space-y-4 text-sm text-white/70 leading-relaxed">
-          <Rule emoji="🎯" title="Goal">First to win <strong className="text-white">2 rounds</strong> wins the match.</Rule>
+          <Rule emoji="🎯" title="Goal">First to collect <strong className="text-white">3 points</strong> wins.</Rule>
           <Rule emoji="🃏" title="Deck">24–25 cards — Elements, Specials, and optional Diamond. Draw 4 to start, then 1 per round.</Rule>
           <Rule emoji="⚔️" title="Elements">
             <span className="text-amber-400 font-semibold">Sun</span> beats{" "}
