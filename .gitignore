@@ -5,6 +5,9 @@ node_modules/
 .next/
 out/
 
+# TypeScript incremental build info
+*.tsbuildinfo
+
 # Compiled server
 dist/
 
