@@ -120,7 +120,7 @@ export function BattleArena({
   const winnerCard = selfWon ? p1Card : oppWon ? p2Card : undefined;
 
   return (
-    <div className="flex flex-col items-center justify-center gap-6 py-6">
+    <div className="flex flex-col items-center justify-center gap-3 py-3">
 
       {/* ── Round indicator ────────────────────────── */}
       <div className="flex items-center gap-4">
@@ -140,7 +140,7 @@ export function BattleArena({
       </div>
 
       {/* ── Battle field ───────────────────────────── */}
-      <div className="relative flex items-center gap-10">
+      <div className="relative flex items-center gap-6">
 
         {/* Anticipation glow ring — step 1 only */}
         <AnimatePresence>
@@ -191,7 +191,7 @@ export function BattleArena({
                 }
                 transition={{ type: "spring", stiffness: 260, damping: 22, delay: revealStep < 2 ? 0.2 : 0 }}
               >
-                <GameCard card={p2Card} size="lg" />
+                <GameCard card={p2Card} size="md" />
               </motion.div>
             ) : opponentHasPlayed ? (
               <motion.div
@@ -206,10 +206,10 @@ export function BattleArena({
                   : { type: "spring", stiffness: 300, damping: 24 }
                 }
               >
-                <CardBack size="lg" pulse />
+                <CardBack size="md" pulse />
               </motion.div>
             ) : (
-              <CardSlot size="lg" label="Waiting…" />
+              <CardSlot size="md" label="Waiting…" />
             )}
           </AnimatePresence>
         </div>
@@ -281,7 +281,7 @@ export function BattleArena({
                 }
                 transition={{ type: "spring", stiffness: 260, damping: 22, delay: revealStep < 3 ? 0.75 : 0 }}
               >
-                <GameCard card={p1Card} size="lg" />
+                <GameCard card={p1Card} size="md" />
               </motion.div>
             ) : selfHasPlayed ? (
               <motion.div
@@ -296,10 +296,10 @@ export function BattleArena({
                   : { type: "spring", stiffness: 300, damping: 24 }
                 }
               >
-                <CardBack size="lg" pulse />
+                <CardBack size="md" pulse />
               </motion.div>
             ) : (
-              <CardSlot size="lg" label="Play a card" />
+              <CardSlot size="md" label="Play a card" />
             )}
           </AnimatePresence>
         </div>
