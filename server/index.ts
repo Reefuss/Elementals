@@ -39,10 +39,10 @@ async function main() {
     InterServerEvents,
     SocketData
   >(httpServer, {
-    cors: {
-      origin:      dev ? ["http://localhost:3000", "http://localhost:3001"] : "*",
-      credentials: true,
-    },
+    // credentials:true + origin:"*" is invalid — omit credentials in production
+    cors: dev
+      ? { origin: ["http://localhost:3000", "http://localhost:3001"], credentials: true }
+      : { origin: "*" },
     transports: ["websocket", "polling"],
   });
 

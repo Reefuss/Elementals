@@ -24,30 +24,32 @@ type AppServer = Server<
   SocketData
 >;
 
-/** Bootstraps all socket event handlers. */
 export function registerSocketHandlers(io: AppServer): void {
-  const matchmaker   = new Matchmaker();
-  const gameManager  = new GameManager();
+  const matchmaker  = new Matchmaker();
+  const gameManager = new GameManager();
 
-  // ── GameManager callbacks ────────────────────────────────────
+  // ── GameManager callbacks ─────────────────────────────────────
 
+  /**
+   * Push updated game state to each player individually.
+   * Uses io.to(socketId) — no socket object lookup needed.
+   */
   gameManager.onStateSync = (roomId: string) => {
     const game = gameManager.getGame(roomId);
     if (!game) return;
 
     for (const player of game.players) {
-      const socket = io.sockets.sockets.get(player.socketId);
-      const state  = gameManager.getClientState(roomId, player.id);
-      if (socket && state) {
-        socket.emit("game:state", state);
+      const state = gameManager.getClientState(roomId, player.id);
+      if (state) {
+        io.to(player.socketId).emit("game:state", state);
       }
     }
   };
 
-  gameManager.onGameOver = (roomId: string, _result: MatchResult) => {
-    // State is already synced with phase=GAME_OVER; the client reads matchResult from there.
-    // Schedule cleanup after players have had time to see the result screen.
-    setTimeout(() => gameManager.destroyGame(roomId), 120_000);
+  gameManager.onGameOver = (_roomId: string, _result: MatchResult) => {
+    // game:state with phase=GAME_OVER is already pushed by onStateSync.
+    // Clean up room after players have time to see the result screen.
+    setTimeout(() => gameManager.destroyGame(_roomId), 120_000);
   };
 
   gameManager.onAutoPlay = (roomId: string, playerId: string, cardId: string) => {
@@ -57,13 +59,14 @@ export function registerSocketHandlers(io: AppServer): void {
   // ── Connection ───────────────────────────────────────────────
 
   io.on("connection", (socket: AppSocket) => {
-    // Assign a stable playerId — sent as query param on reconnect
     const queryId = socket.handshake.query.playerId as string | undefined;
-    socket.data.playerId = queryId || uuidv4();
+    socket.data.playerId = queryId && queryId !== "undefined" ? queryId : uuidv4();
     socket.data.roomId   = null;
 
+    console.log(`[connect] socket=${socket.id} player=${socket.data.playerId}`);
+
     // ── Reconnect to in-progress game ──
-    if (queryId) {
+    if (queryId && queryId !== "undefined") {
       const roomId = gameManager.getPlayerRoom(queryId);
       if (roomId) {
         socket.data.roomId = roomId;
@@ -73,12 +76,10 @@ export function registerSocketHandlers(io: AppServer): void {
           const state = gameManager.getClientState(roomId, queryId);
           if (state) socket.emit("game:state", state);
 
-          // Notify opponent
           const game = gameManager.getGame(roomId);
           const opp  = game?.players.find((p) => p.id !== queryId);
           if (opp) {
-            const oppSocket = io.sockets.sockets.get(opp.socketId);
-            oppSocket?.emit("game:opponent_reconnected", {
+            io.to(opp.socketId).emit("game:opponent_reconnected", {
               username: socket.data.username ?? "Opponent",
             });
           }
@@ -92,6 +93,7 @@ export function registerSocketHandlers(io: AppServer): void {
         ack("Username required.");
         return;
       }
+
       socket.data.username = username.trim();
 
       const position = matchmaker.enqueue({
@@ -104,40 +106,40 @@ export function registerSocketHandlers(io: AppServer): void {
       ack(null);
       socket.emit("queue:status", { position });
 
-      // Try to form a match
+      console.log(`[queue] ${socket.data.username} (${socket.data.playerId}) pos=${position} queue=${matchmaker.size()}`);
+
+      // Attempt match
       const match = matchmaker.tryMatch();
-      if (match) {
-        const { roomId, player1, player2 } = match;
+      if (!match) return;
 
-        const s1 = io.sockets.sockets.get(player1.socketId);
-        const s2 = io.sockets.sockets.get(player2.socketId);
-        if (!s1 || !s2) {
-          // One player disconnected; re-enqueue the surviving one
-          if (s1) matchmaker.enqueue(player1);
-          if (s2) matchmaker.enqueue(player2);
-          return;
-        }
+      const { roomId, player1, player2 } = match;
+      console.log(`[match] ${player1.username} vs ${player2.username} room=${roomId}`);
 
-        s1.data.roomId = roomId;
-        s2.data.roomId = roomId;
-        s1.join(roomId);
-        s2.join(roomId);
+      // Make both sockets join the room — use socketsJoin (no object lookup)
+      io.in(player1.socketId).socketsJoin(roomId);
+      io.in(player2.socketId).socketsJoin(roomId);
 
-        s1.emit("match:found", {
-          roomId,
-          opponent: { id: player2.playerId, username: player2.username },
-        });
-        s2.emit("match:found", {
-          roomId,
-          opponent: { id: player1.playerId, username: player1.username },
-        });
+      // Update room tracking on socket.data
+      // The current socket is one of the two matched players
+      if (socket.id === player1.socketId) socket.data.roomId = roomId;
+      // The other player's socket.data.roomId will be updated on their next event
 
-        gameManager.createGame(
-          { id: player1.playerId, username: player1.username, socketId: player1.socketId },
-          { id: player2.playerId, username: player2.username, socketId: player2.socketId },
-          roomId
-        );
-      }
+      // Notify both players using io.to(socketId) — works without socket object lookup
+      io.to(player1.socketId).emit("match:found", {
+        roomId,
+        opponent: { id: player2.playerId, username: player2.username },
+      });
+      io.to(player2.socketId).emit("match:found", {
+        roomId,
+        opponent: { id: player1.playerId, username: player1.username },
+      });
+
+      // Create the authoritative game state
+      gameManager.createGame(
+        { id: player1.playerId, username: player1.username, socketId: player1.socketId },
+        { id: player2.playerId, username: player2.username, socketId: player2.socketId },
+        roomId
+      );
     });
 
     // ── queue:leave ─────────────────────────────────────────────
@@ -147,41 +149,44 @@ export function registerSocketHandlers(io: AppServer): void {
 
     // ── game:play ───────────────────────────────────────────────
     socket.on("game:play", ({ cardId }, ack) => {
-      const roomId = socket.data.roomId;
+      // Resolve roomId from socket.data (may need updating if match was formed
+      // while this socket was the "other" player)
+      const roomId = socket.data.roomId ?? gameManager.getPlayerRoom(socket.data.playerId);
       if (!roomId) { ack("Not in a game."); return; }
+      socket.data.roomId = roomId;
 
       const result = gameManager.processPlay(roomId, socket.data.playerId, cardId);
       if (result.error) { ack(result.error); return; }
 
       ack(null);
 
-      // Notify opponent that a card has been played (not which one)
-      socket.to(roomId).emit("game:opponent_played");
+      // Notify opponent a card was played (not which card)
+      const game = gameManager.getGame(roomId);
+      const opp  = game?.players.find((p) => p.id !== socket.data.playerId);
+      if (opp) io.to(opp.socketId).emit("game:opponent_played");
     });
 
     // ── game:rainbow_choice ─────────────────────────────────────
     socket.on("game:rainbow_choice", ({ element }, ack) => {
-      const roomId = socket.data.roomId;
+      const roomId = socket.data.roomId ?? gameManager.getPlayerRoom(socket.data.playerId);
       if (!roomId) { ack("Not in a game."); return; }
 
-      const result = gameManager.processRainbowChoice(
-        roomId,
-        socket.data.playerId,
-        element as Element
-      );
+      const result = gameManager.processRainbowChoice(roomId, socket.data.playerId, element as Element);
       if (result.error) { ack(result.error); return; }
 
       ack(null);
-      // Notify opponent they're waiting
-      socket.to(roomId).emit("game:rainbow_waiting");
+
+      const game = gameManager.getGame(roomId);
+      const opp  = game?.players.find((p) => p.id !== socket.data.playerId);
+      if (opp) io.to(opp.socketId).emit("game:rainbow_waiting");
     });
 
     // ── disconnect ──────────────────────────────────────────────
-    socket.on("disconnect", () => {
-      // Remove from queue if waiting
+    socket.on("disconnect", (reason) => {
+      console.log(`[disconnect] socket=${socket.id} player=${socket.data.playerId} reason=${reason}`);
       matchmaker.dequeue(socket.data.playerId);
 
-      const roomId = socket.data.roomId;
+      const roomId = socket.data.roomId ?? gameManager.getPlayerRoom(socket.data.playerId);
       if (!roomId) return;
 
       gameManager.handleDisconnect(roomId, socket.data.playerId);
@@ -189,8 +194,7 @@ export function registerSocketHandlers(io: AppServer): void {
       const game = gameManager.getGame(roomId);
       const opp  = game?.players.find((p) => p.id !== socket.data.playerId);
       if (opp) {
-        const oppSocket = io.sockets.sockets.get(opp.socketId);
-        oppSocket?.emit("game:opponent_disconnected", {
+        io.to(opp.socketId).emit("game:opponent_disconnected", {
           username:         socket.data.username ?? "Opponent",
           reconnectGraceMs: RECONNECT_GRACE_MS,
         });
