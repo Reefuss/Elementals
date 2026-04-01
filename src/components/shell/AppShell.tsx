@@ -18,25 +18,26 @@ const NAV_ITEMS = [
 
 /** Wraps non-game pages with top currency bar + bottom nav */
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const router   = useRouter();
+  const pathname    = usePathname();
+  const router      = useRouter();
+  const coins       = usePlayerStore((s) => s.coins);
+  const pity        = usePlayerStore((s) => s.pityPoints);
+  const gamesPlayed = useMissionStore((s) => s.gamesPlayedToday);
+  const claimed     = useMissionStore((s) => s.claimedMilestones);
+
+  const hideShell  = pathname.startsWith("/game/") || pathname === "/welcome";
+  const missionDot = gamesPlayed > 0 && claimed.length < 3;
 
   // Redirect to welcome screen if no username is stored
   useEffect(() => {
-    if (pathname.startsWith("/game/") || pathname === "/welcome") return;
+    if (hideShell) return;
     if (!getStoredUsername()) {
       router.replace("/welcome");
     }
   }, [pathname]);
 
   // Hide shell entirely on game arena and welcome pages
-  if (pathname.startsWith("/game/") || pathname === "/welcome") return <>{children}</>;
-
-  const coins      = usePlayerStore((s) => s.coins);
-  const pity       = usePlayerStore((s) => s.pityPoints);
-  const gamesPlayed = useMissionStore((s) => s.gamesPlayedToday);
-  const claimed    = useMissionStore((s) => s.claimedMilestones);
-  const missionDot = gamesPlayed > 0 && claimed.length < 3;
+  if (hideShell) return <>{children}</>;
 
   return (
     <div className="flex flex-col h-full">
