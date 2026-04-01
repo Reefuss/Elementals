@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/lib/game/types";
 import { GameCard } from "./GameCard";
@@ -19,15 +19,23 @@ interface HandProps {
  */
 export function Hand({ cards, selectedCardId, disabled, onSelectCard }: HandProps) {
   const count = cards.length;
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const cardSize = isMobile ? "sm" : "md";
 
   return (
-    <div className="w-full overflow-x-auto" style={{ minHeight: 180 }}>
+    <div className="flex items-end justify-center" style={{ minHeight: isMobile ? 130 : 180 }}>
       <div
-        className="relative flex items-end justify-center mx-auto"
+        className="relative flex items-end justify-center"
         style={{
-          gap: count > 6 ? 4 : 12,
-          width: "max-content",
-          minWidth: "100%",
+          gap: count > 6 ? 2 : (isMobile ? 6 : 12),
         }}
       >
         <AnimatePresence mode="popLayout">
@@ -58,7 +66,7 @@ export function Hand({ cards, selectedCardId, disabled, onSelectCard }: HandProp
                   card={card}
                   selected={card.id === selectedCardId}
                   disabled={disabled}
-                  size="md"
+                  size={cardSize}
                   onClick={() => onSelectCard(card.id)}
                 />
               </motion.div>

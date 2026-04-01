@@ -154,7 +154,7 @@ export default function GamePage() {
         initial={{ y: -40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="glass border-b border-white/05 flex-shrink-0"
+        className="border-b border-white/05 flex-shrink-0"
       >
         <OpponentArea opponent={opponent} />
       </motion.div>
@@ -213,7 +213,7 @@ export default function GamePage() {
         initial={{ y: 60, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="glass border-t border-white/05 flex-shrink-0 pb-4"
+        className="border-t border-white/05 flex-shrink-0 pb-4"
       >
         <div className="flex items-center justify-between px-6 pt-3 pb-2">
           <div>
