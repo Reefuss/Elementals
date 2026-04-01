@@ -39,7 +39,7 @@ export function OpponentArea({ opponent }: OpponentAreaProps) {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: i * 0.04, type: "spring", stiffness: 300 }}
           >
-            <CardBack size="sm" />
+            <CardBack size="xs" />
           </motion.div>
         ))}
         {opponent.handCount === 0 && (

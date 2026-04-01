@@ -166,7 +166,7 @@ interface GameCardProps {
   disabled?: boolean;
   played?:   boolean;
   revealed?: boolean;
-  size?:     "sm" | "md" | "lg";
+  size?:     "xs" | "sm" | "md" | "lg";
   onClick?:  () => void;
   className?: string;
   /** Animate in from a direction */
@@ -174,6 +174,7 @@ interface GameCardProps {
 }
 
 const cardSizes = {
+  xs: { outer: "w-12 h-16",  icon: "w-5 h-5",   name: "text-[7px]",  val: "text-xs" },
   sm: { outer: "w-20 h-28",  icon: "w-8 h-8",   name: "text-[9px]",  val: "text-sm" },
   md: { outer: "w-28 h-40",  icon: "w-12 h-12",  name: "text-xs",    val: "text-lg" },
   lg: { outer: "w-36 h-52",  icon: "w-16 h-16",  name: "text-sm",    val: "text-2xl" },
@@ -292,7 +293,7 @@ export function GameCard({
 // ─────────────────────────────────────────────
 
 interface CardBackProps {
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   className?: string;
   pulse?: boolean;
 }
@@ -304,15 +305,15 @@ export function CardBack({ size = "md", className, pulse }: CardBackProps) {
       animate={pulse ? { scale: [1, 1.04, 1] } : {}}
       transition={pulse ? { repeat: Infinity, duration: 1.5 } : {}}
       className={cn(
-        "relative rounded-2xl border border-white/08 card-back",
+        "relative rounded-2xl card-back",
         "flex items-center justify-center",
         dims.outer,
         className
       )}
     >
       {/* Pattern */}
-      <div className="absolute inset-2 rounded-xl border border-white/05 opacity-50" />
-      <div className="absolute inset-4 rounded-lg border border-white/04 opacity-30" />
+      <div className="absolute inset-2 rounded-xl opacity-50" />
+      <div className="absolute inset-4 rounded-lg opacity-30" />
       <div className="w-6 h-6 opacity-20">
         <StarIcon className="text-white" />
       </div>
@@ -324,7 +325,7 @@ export function CardBack({ size = "md", className, pulse }: CardBackProps) {
 //  Empty card slot
 // ─────────────────────────────────────────────
 
-export function CardSlot({ size = "md", label }: { size?: "sm" | "md" | "lg"; label?: string }) {
+export function CardSlot({ size = "md", label }: { size?: "xs" | "sm" | "md" | "lg"; label?: string }) {
   const dims = cardSizes[size];
   return (
     <div className={cn(
