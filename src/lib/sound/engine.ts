@@ -21,6 +21,7 @@ type SoundId =
   | "timer_tick"
   | "timer_urgent"
   | "rainbow_clash"
+  | "tension_build"
   | "ui_click";
 
 let _ctx: AudioContext | null = null;
@@ -235,6 +236,14 @@ export const SoundEngine = {
           tone(75, 0.07, { vol: 0.38 });
           noise(0.06, { filterFreq: 100, vol: 0.28, delay: 0.1 });
           tone(70, 0.06, { vol: 0.28, delay: 0.1 });
+          break;
+
+        // ── Reveal anticipation ──────────────────────
+        case "tension_build":
+          // Low ascending drone — held breath before the reveal
+          tone(80, 0.4, { type: "sine", vol: 0.35, freqEnd: 120 });
+          tone(120, 0.4, { type: "sine", vol: 0.2, freqEnd: 160, delay: 0.05 });
+          noise(0.35, { filterFreq: 80, filterType: "lowpass", vol: 0.2 });
           break;
 
         // ── Rainbow duel ─────────────────────────────

@@ -3,74 +3,126 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Card, GamePhase, RoundResult, WinReason, CardType } from "@/lib/game/types";
+import { Card, CardType, Element, GamePhase, RoundResult, WinReason } from "@/lib/game/types";
 import { GameCard, CardBack, CardSlot } from "./GameCard";
 import { TurnTimer } from "./TurnTimer";
+import { SoundEngine } from "@/lib/sound/engine";
 
-interface BattleArenaProps {
-  phase:           GamePhase;
-  round:           number;
-  msLeft:          number;
-  selfHasPlayed:   boolean;
-  opponentHasPlayed: boolean;
-  selfPlayedCard?: Card;       // kept for backward compat but unused
-  lastResult?:     RoundResult | null;
-  selfId:          string;
-}
+// ─────────────────────────────────────────────
+//  Reveal step timeline (ms from entering REVEALING)
+// ─────────────────────────────────────────────
+// 0     → step 1: anticipation — both CardBacks pulse, glow ring fires
+// 300   → step 2: opponent card flips
+// 750   → step 3: your card flips
+// 1300  → step 4: evaluate — winner scales, loser dims
+// 1850  → result banner (driven by animation delay, not step)
+
+const STEP_OPP_FLIP  = 300;
+const STEP_SELF_FLIP = 750;
+const STEP_EVALUATE  = 1300;
+
+// ─────────────────────────────────────────────
+//  Reason line
+// ─────────────────────────────────────────────
 
 function reasonLine(result: RoundResult): string {
+  const cap = (s: string) => s[0] + s.slice(1).toLowerCase();
   switch (result.reason) {
     case WinReason.ELEMENT_BEATS: {
       const beats: Record<string, string> = { SUN: "STAR", STAR: "MOON", MOON: "SUN" };
       const p1 = result.playerOneCard;
       const p2 = result.playerTwoCard;
       if (p1.type === CardType.ELEMENT && p2.type === CardType.ELEMENT) {
-        if (beats[p1.element] === p2.element) {
-          const winEl = p1.element[0] + p1.element.slice(1).toLowerCase();
-          const loseEl = p2.element[0] + p2.element.slice(1).toLowerCase();
-          return `${winEl} beats ${loseEl}`;
-        } else {
-          const winEl = p2.element[0] + p2.element.slice(1).toLowerCase();
-          const loseEl = p1.element[0] + p1.element.slice(1).toLowerCase();
-          return `${winEl} beats ${loseEl}`;
-        }
+        const [winner, loser] = beats[p1.element] === p2.element
+          ? [p1.element, p2.element]
+          : [p2.element, p1.element];
+        return `${cap(winner)} beats ${cap(loser)}`;
       }
-      return "Element beats element";
-    }
-    case WinReason.HIGHER_VALUE:
-      return "Higher value wins";
-    case WinReason.RAINBOW_BEATS:
-      return "Rainbow conquers all";
-    case WinReason.BLOCK_NEGATES:
-      return "Block cancels the round";
-    case WinReason.SAME_VALUE_TIE:
-      return "Equal power — tie";
-    case WinReason.RAINBOW_TIEBREAK:
-      return "Rainbow duel settled it";
-    default:
       return "";
+    }
+    case WinReason.HIGHER_VALUE:      return "Higher value wins";
+    case WinReason.RAINBOW_BEATS:     return "Rainbow conquers all";
+    case WinReason.BLOCK_NEGATES:     return "Block cancels the round";
+    case WinReason.SAME_VALUE_TIE:    return "Equal power — tie";
+    case WinReason.RAINBOW_TIEBREAK:  return "Rainbow duel settled it";
+    default: return "";
   }
 }
 
+// Per-element winner glow color
+function elementGlow(card: Card | undefined): string {
+  if (!card || card.type !== CardType.ELEMENT) return "0 0 28px 8px rgba(129,140,248,0.7)";
+  const map: Record<Element, string> = {
+    [Element.SUN]:  "0 0 28px 8px rgba(251,191,36,0.7)",
+    [Element.MOON]: "0 0 28px 8px rgba(147,197,253,0.7)",
+    [Element.STAR]: "0 0 28px 8px rgba(232,121,249,0.7)",
+  };
+  return map[card.element];
+}
+
+// ─────────────────────────────────────────────
+//  Props
+// ─────────────────────────────────────────────
+
+interface BattleArenaProps {
+  phase:             GamePhase;
+  round:             number;
+  msLeft:            number;
+  selfHasPlayed:     boolean;
+  opponentHasPlayed: boolean;
+  selfPlayedCard?:   Card;
+  lastResult?:       RoundResult | null;
+  selfId:            string;
+}
+
+// ─────────────────────────────────────────────
+//  Component
+// ─────────────────────────────────────────────
+
 export function BattleArena({
-  phase,
-  round,
-  msLeft,
-  selfHasPlayed,
-  opponentHasPlayed,
-  selfPlayedCard,
-  lastResult,
-  selfId,
+  phase, round, msLeft, selfHasPlayed, opponentHasPlayed,
+  lastResult, selfId,
 }: BattleArenaProps) {
   const isRevealing = phase === GamePhase.REVEALING;
   const isPlaying   = phase === GamePhase.PLAYING;
 
+  // Drives the cinematic sequence during REVEALING
+  // 0 = idle, 1 = anticipation, 2 = opp flipped, 3 = self flipped, 4 = evaluated
+  const [revealStep, setRevealStep] = useState(0);
+  // Tracks which flash has fired (changes key to re-trigger AnimatePresence)
+  const [oppFlashKey,  setOppFlashKey]  = useState(0);
+  const [selfFlashKey, setSelfFlashKey] = useState(0);
+
+  useEffect(() => {
+    if (phase !== GamePhase.REVEALING) {
+      setRevealStep(0);
+      return;
+    }
+    // Play tension drone the instant REVEALING starts
+    SoundEngine.play("tension_build");
+    setRevealStep(1);
+
+    const t1 = setTimeout(() => { setRevealStep(2); setOppFlashKey(k => k + 1);  }, STEP_OPP_FLIP);
+    const t2 = setTimeout(() => { setRevealStep(3); setSelfFlashKey(k => k + 1); }, STEP_SELF_FLIP);
+    const t3 = setTimeout(() => setRevealStep(4), STEP_EVALUATE);
+
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [phase]);
+
   const p1Card = lastResult?.playerOneCard;
   const p2Card = lastResult?.playerTwoCard;
 
+  const selfWon = isRevealing && lastResult?.winnerId === selfId;
+  const oppWon  = isRevealing && lastResult?.winnerId !== null && lastResult?.winnerId !== selfId;
+  const tied    = isRevealing && lastResult?.winnerId === null;
+
+  // Winner card for glow color (self = p1Card assumption)
+  const winnerCard = selfWon ? p1Card : oppWon ? p2Card : undefined;
+
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-4">
-      {/* Round indicator */}
+
+      {/* ── Round indicator ────────────────────────── */}
       <div className="flex items-center gap-4">
         <div className="h-px w-16 bg-white/10" />
         <AnimatePresence mode="wait">
@@ -87,18 +139,57 @@ export function BattleArena({
         <div className="h-px w-16 bg-white/10" />
       </div>
 
-      {/* Battle field */}
-      <div className="flex items-center gap-8">
-        {/* Opponent's slot */}
-        <div className="flex flex-col items-center gap-2">
+      {/* ── Battle field ───────────────────────────── */}
+      <div className="relative flex items-center gap-8">
+
+        {/* Anticipation glow ring — step 1 only */}
+        <AnimatePresence>
+          {revealStep === 1 && (
+            <motion.div
+              key="anticipation-ring"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute -inset-6 rounded-3xl pointer-events-none"
+              style={{ boxShadow: "0 0 40px 8px rgba(129,140,248,0.25)", border: "1px solid rgba(129,140,248,0.15)" }}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* ── Opponent slot ──────────────────────── */}
+        <div className="relative flex flex-col items-center gap-2">
           <span className="text-[10px] uppercase tracking-widest text-white/30">Opponent</span>
+
+          {/* Impact flash on flip */}
+          <AnimatePresence>
+            {isRevealing && revealStep >= 2 && (
+              <motion.div
+                key={`opp-flash-${oppFlashKey}`}
+                initial={{ opacity: 0.55 }}
+                animate={{ opacity: 0 }}
+                transition={{ duration: 0.28 }}
+                className="absolute inset-0 rounded-2xl bg-white pointer-events-none z-20"
+              />
+            )}
+          </AnimatePresence>
+
           <AnimatePresence mode="wait">
             {isRevealing && p2Card ? (
               <motion.div
                 key="opp-reveal"
                 initial={{ rotateY: 90, scale: 0.9 }}
-                animate={{ rotateY: 0,  scale: 1   }}
-                transition={{ type: "spring", stiffness: 260, damping: 22, delay: 0.2 }}
+                animate={revealStep >= 4
+                  ? { rotateY: 0, scale: oppWon ? 1.08 : tied ? 1 : 0.9, opacity: oppWon ? 1 : tied ? 0.7 : 0.42 }
+                  : { rotateY: 0, scale: 1 }
+                }
+                style={revealStep >= 4 && oppWon
+                  ? { filter: `drop-shadow(${elementGlow(p2Card)})` }
+                  : revealStep >= 4 && !tied
+                  ? { filter: "grayscale(0.5)" }
+                  : {}
+                }
+                transition={{ type: "spring", stiffness: 260, damping: 22, delay: revealStep < 2 ? 0.2 : 0 }}
               >
                 <GameCard card={p2Card} size="lg" />
               </motion.div>
@@ -106,8 +197,14 @@ export function BattleArena({
               <motion.div
                 key="opp-back"
                 initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1,   opacity: 1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 24 }}
+                animate={revealStep === 1
+                  ? { scale: [1, 1.06, 1, 1.06, 1], opacity: 1 }
+                  : { scale: 1, opacity: 1 }
+                }
+                transition={revealStep === 1
+                  ? { duration: 0.3, repeat: 0 }
+                  : { type: "spring", stiffness: 300, damping: 24 }
+                }
               >
                 <CardBack size="lg" pulse />
               </motion.div>
@@ -117,27 +214,72 @@ export function BattleArena({
           </AnimatePresence>
         </div>
 
-        {/* Center: timer + VS */}
-        <div className="flex flex-col items-center gap-3">
-          <TurnTimer
-            msLeft={msLeft}
-            visible={isPlaying && !selfHasPlayed}
-          />
+        {/* ── Center: timer / VS / clash ─────────── */}
+        <div className="flex flex-col items-center gap-3 w-14">
+          <TurnTimer msLeft={msLeft} visible={isPlaying && !selfHasPlayed} />
+
           {!isPlaying && (
-            <div className="font-display text-white/20 text-xs tracking-[0.4em]">VS</div>
+            <AnimatePresence mode="wait">
+              {revealStep >= 4 && !tied ? (
+                <motion.div
+                  key="clash"
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                  className={cn(
+                    "font-display text-sm font-bold",
+                    selfWon ? "text-indigo-400" : oppWon ? "text-red-400" : "text-white/20"
+                  )}
+                >
+                  {selfWon ? "▶" : "◀"}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="vs"
+                  initial={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="font-display text-white/20 text-xs tracking-[0.4em]"
+                >
+                  VS
+                </motion.div>
+              )}
+            </AnimatePresence>
           )}
         </div>
 
-        {/* Self's slot */}
-        <div className="flex flex-col items-center gap-2">
+        {/* ── Self slot ──────────────────────────── */}
+        <div className="relative flex flex-col items-center gap-2">
           <span className="text-[10px] uppercase tracking-widest text-white/30">You</span>
+
+          {/* Impact flash on flip */}
+          <AnimatePresence>
+            {isRevealing && revealStep >= 3 && (
+              <motion.div
+                key={`self-flash-${selfFlashKey}`}
+                initial={{ opacity: 0.55 }}
+                animate={{ opacity: 0 }}
+                transition={{ duration: 0.28 }}
+                className="absolute inset-0 rounded-2xl bg-white pointer-events-none z-20"
+              />
+            )}
+          </AnimatePresence>
+
           <AnimatePresence mode="wait">
             {isRevealing && p1Card ? (
               <motion.div
                 key="self-reveal"
                 initial={{ rotateY: 90, scale: 0.9 }}
-                animate={{ rotateY: 0,  scale: 1   }}
-                transition={{ type: "spring", stiffness: 260, damping: 22, delay: 0.75 }}
+                animate={revealStep >= 4
+                  ? { rotateY: 0, scale: selfWon ? 1.08 : tied ? 1 : 0.9, opacity: selfWon ? 1 : tied ? 0.7 : 0.42 }
+                  : { rotateY: 0, scale: 1 }
+                }
+                style={revealStep >= 4 && selfWon
+                  ? { filter: `drop-shadow(${elementGlow(p1Card)})` }
+                  : revealStep >= 4 && !tied
+                  ? { filter: "grayscale(0.5)" }
+                  : {}
+                }
+                transition={{ type: "spring", stiffness: 260, damping: 22, delay: revealStep < 3 ? 0.75 : 0 }}
               >
                 <GameCard card={p1Card} size="lg" />
               </motion.div>
@@ -145,8 +287,14 @@ export function BattleArena({
               <motion.div
                 key="self-played"
                 initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1,   opacity: 1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 24 }}
+                animate={revealStep === 1
+                  ? { scale: [1, 1.06, 1, 1.06, 1], opacity: 1 }
+                  : { scale: 1, opacity: 1 }
+                }
+                transition={revealStep === 1
+                  ? { duration: 0.3, repeat: 0 }
+                  : { type: "spring", stiffness: 300, damping: 24 }
+                }
               >
                 <CardBack size="lg" pulse />
               </motion.div>
@@ -157,7 +305,7 @@ export function BattleArena({
         </div>
       </div>
 
-      {/* Status message */}
+      {/* ── Status / result ────────────────────────── */}
       <AnimatePresence mode="wait">
         {isPlaying && (
           <motion.div
@@ -183,16 +331,10 @@ export function BattleArena({
 }
 
 // ─────────────────────────────────────────────
-//  Inline round result banner (lives in arena)
+//  Result banner
 // ─────────────────────────────────────────────
 
-function RoundResultBanner({
-  result,
-  selfId,
-}: {
-  result: RoundResult;
-  selfId: string;
-}) {
+function RoundResultBanner({ result, selfId }: { result: RoundResult; selfId: string }) {
   const youWon = result.winnerId === selfId;
   const tie    = result.winnerId === null;
   const reason = reasonLine(result);
@@ -200,24 +342,21 @@ function RoundResultBanner({
   return (
     <motion.div
       key="result-banner"
-      initial={{ opacity: 0, y: 12, scale: 0.9 }}
+      initial={{ opacity: 0, y: 16, scale: 0.88 }}
       animate={{ opacity: 1, y: 0,  scale: 1   }}
       exit={{ opacity: 0, y: -8 }}
-      transition={{ type: "spring", stiffness: 320, damping: 26, delay: 1.0 }}
+      transition={{ type: "spring", stiffness: 340, damping: 24, delay: 1.85 }}
       className={cn(
-        "px-6 py-3 rounded-2xl text-center",
-        "border font-display",
-        tie    && "border-white/10 bg-white/5 text-white/60",
-        youWon && "border-indigo-400/40 bg-indigo-500/10 text-indigo-300",
-        !tie && !youWon && "border-red-400/30 bg-red-500/10 text-red-300"
+        "px-6 py-3 rounded-2xl text-center border font-display",
+        tie    && "border-white/10  bg-white/5       text-white/60",
+        youWon && "border-indigo-400/50 bg-indigo-500/15 text-indigo-300",
+        !tie && !youWon && "border-red-400/40 bg-red-500/10 text-red-300"
       )}
     >
       <div className="text-xl font-bold">
         {tie ? "Tie Round" : youWon ? "Point Won!" : "Point Lost"}
       </div>
-      {reason && (
-        <div className="text-xs opacity-60 mt-1">{reason}</div>
-      )}
+      {reason && <div className="text-xs opacity-60 mt-1">{reason}</div>}
     </motion.div>
   );
 }
