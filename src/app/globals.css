@@ -1,0 +1,218 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────
+   Base resets & CSS custom properties
+───────────────────────────────────────────────── */
+:root {
+  --color-sun:     #fbbf24;
+  --color-moon:    #93c5fd;
+  --color-star:    #e879f9;
+  --color-block:   #9ca3af;
+  --color-rainbow: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #c77dff);
+
+  --glow-sun:     0 0 24px 6px rgba(251,191,36,0.45), 0 0 60px 16px rgba(251,191,36,0.18);
+  --glow-moon:    0 0 24px 6px rgba(147,197,253,0.45), 0 0 60px 16px rgba(147,197,253,0.18);
+  --glow-star:    0 0 24px 6px rgba(232,121,249,0.45), 0 0 60px 16px rgba(232,121,249,0.18);
+  --glow-block:   0 0 24px 6px rgba(156,163,175,0.35), 0 0 60px 16px rgba(156,163,175,0.12);
+  --glow-rainbow: 0 0 24px 6px rgba(255,100,200,0.5),  0 0 60px 16px rgba(100,200,255,0.2);
+
+  --radius-card: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #050510;
+  color: #f0f0ff;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden; /* Game is a single-screen experience */
+}
+
+/* ─────────────────────────────────────────────────
+   Starfield background
+───────────────────────────────────────────────── */
+.starfield {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse at 20% 30%, rgba(99,58,162,0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 70%, rgba(30,64,175,0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 50%, rgba(251,191,36,0.04) 0%, transparent 70%),
+    #050510;
+}
+
+.starfield::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 60%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 40% 30%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 80%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,0.9) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 85% 55%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 75%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 92% 40%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 35% 90%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 60% 45%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 78% 85%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 5%  50%, rgba(255,255,255,0.7) 0%, transparent 100%);
+}
+
+/* ─────────────────────────────────────────────────
+   Glass panel utility
+───────────────────────────────────────────────── */
+.glass {
+  background: rgba(10, 10, 30, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-light {
+  background: rgba(20, 20, 50, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ─────────────────────────────────────────────────
+   Card base styles
+───────────────────────────────────────────────── */
+.card-base {
+  position: relative;
+  border-radius: var(--radius-card);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  user-select: none;
+  overflow: hidden;
+}
+
+.card-base:hover {
+  transform: translateY(-8px) scale(1.03);
+}
+
+.card-base.selected {
+  transform: translateY(-16px) scale(1.05);
+}
+
+.card-base.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.card-back {
+  background: linear-gradient(135deg, #0d0d28, #1a1a4e);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ─────────────────────────────────────────────────
+   Gradient borders via pseudo-element
+───────────────────────────────────────────────── */
+.gradient-border {
+  position: relative;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: var(--gb-gradient);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ─────────────────────────────────────────────────
+   Typography helpers
+───────────────────────────────────────────────── */
+.font-display {
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+.text-glow-sun  { text-shadow: 0 0 16px rgba(251,191,36,0.8);  }
+.text-glow-moon { text-shadow: 0 0 16px rgba(147,197,253,0.8); }
+.text-glow-star { text-shadow: 0 0 16px rgba(232,121,249,0.8); }
+
+/* ─────────────────────────────────────────────────
+   Scrollbar (thin, dark)
+───────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+
+/* ─────────────────────────────────────────────────
+   Animations
+───────────────────────────────────────────────── */
+@keyframes card-flip {
+  0%   { transform: rotateY(0deg); }
+  50%  { transform: rotateY(90deg); }
+  100% { transform: rotateY(0deg); }
+}
+
+@keyframes score-burst {
+  0%   { transform: scale(1) translateY(0); opacity: 1; }
+  50%  { transform: scale(1.8) translateY(-20px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2.0); opacity: 0; }
+}
+
+@keyframes drift-in-bottom {
+  from { transform: translateY(60px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes drift-in-top {
+  from { transform: translateY(-60px); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+.animate-card-flip    { animation: card-flip 0.6s ease-in-out; }
+.animate-score-burst  { animation: score-burst 0.5s ease-out; }
+.animate-pulse-ring   { animation: pulse-ring 1.5s ease-out infinite; }
+.animate-drift-bottom { animation: drift-in-bottom 0.5s ease-out both; }
+.animate-drift-top    { animation: drift-in-top 0.5s ease-out both; }
+
+/* ─────────────────────────────────────────────────
+   Rainbow shimmer
+───────────────────────────────────────────────── */
+.rainbow-shimmer {
+  background: linear-gradient(
+    90deg,
+    #ff6b6b 0%,
+    #ffd93d 20%,
+    #6bcb77 40%,
+    #4d96ff 60%,
+    #c77dff 80%,
+    #ff6b6b 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
