@@ -274,15 +274,14 @@ export const PACK_TYPES: PackType[] = [
 export const DEFAULT_COLLECTION: Record<string, number> = {
   // Sun: 3 common, 2 uncommon, 1 rare
   s01: 3, s09: 2, s17: 1,
-  // Moon: 3 common, 2 uncommon, 1 rare
-  m01: 3, m09: 2, m17: 1,
+  // Moon: 3 common, 2 uncommon, 1 rare + 1 extra common
+  m01: 3, m02: 1, m09: 2, m17: 1,
   // Star: 3 common, 2 uncommon, 2 rare
   t01: 3, t09: 2, t17: 2,
-  // Block ×2, Reshuffle ×2, Revive ×1, Discard Trap ×1  (total = 25)
+  // Block ×2, Reshuffle ×2, Revive ×1  (5 specials, total = 25)
   b01: 2,
   rs01: 2,
   rv01: 1,
-  dt01: 1,
 };
 
 export const STARTING_COINS       = 500;
