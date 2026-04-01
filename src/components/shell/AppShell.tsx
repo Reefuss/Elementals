@@ -7,26 +7,21 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getStoredUsername } from "@/lib/utils";
 import { usePlayerStore } from "@/store/playerStore";
-import { useMissionStore } from "@/store/missionStore";
 
 const NAV_ITEMS = [
   { href: "/",           label: "Home",       icon: HomeIcon       },
   { href: "/collection", label: "Collection", icon: GridIcon       },
   { href: "/battle",     label: "Battle",     icon: SwordsIcon     },
-  { href: "/missions",   label: "Missions",   icon: CheckIcon      },
 ] as const;
 
 /** Wraps non-game pages with top currency bar + bottom nav */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname    = usePathname();
   const router      = useRouter();
-  const coins       = usePlayerStore((s) => s.coins);
-  const pity        = usePlayerStore((s) => s.pityPoints);
-  const gamesPlayed = useMissionStore((s) => s.gamesPlayedToday);
-  const claimed     = useMissionStore((s) => s.claimedMilestones);
+  const coins = usePlayerStore((s) => s.coins);
+  const pity  = usePlayerStore((s) => s.pityPoints);
 
-  const hideShell  = pathname.startsWith("/game/") || pathname === "/welcome";
-  const missionDot = gamesPlayed > 0 && claimed.length < 3;
+  const hideShell = pathname.startsWith("/game/") || pathname === "/welcome";
 
   // Redirect to welcome screen if no username is stored
   useEffect(() => {
@@ -78,8 +73,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             const active = href === "/"
               ? pathname === "/"
               : pathname.startsWith(href);
-            const hasDot = href === "/missions" && missionDot;
-
             return (
               <Link
                 key={href}
@@ -100,9 +93,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="relative">
                   <Icon className="w-5 h-5" />
-                  {hasDot && (
-                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-indigo-400" />
-                  )}
                 </div>
                 <span className="text-[10px] font-medium">{label}</span>
               </Link>
@@ -153,14 +143,6 @@ function SwordsIcon({ className }: { className?: string }) {
   );
 }
 
-function CheckIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <rect x="3" y="3" width="18" height="18" rx="3" />
-      <path d="M8 12l3 3 5-5" />
-    </svg>
-  );
-}
 
 function CoinIcon({ className }: { className?: string }) {
   return (

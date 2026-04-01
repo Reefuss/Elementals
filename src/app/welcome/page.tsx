@@ -53,15 +53,15 @@ export default function WelcomePage() {
     <div className="fixed inset-0 bg-cosmic-950 flex flex-col items-center justify-center overflow-hidden">
 
       {/* Background particle field */}
-      {[...Array(18)].map((_, i) => (
+      {[...Array(12)].map((_, i) => (
         <motion.div
           key={i}
           className="absolute rounded-full"
           style={{
             left:   `${(i * 17 + 5) % 100}%`,
             top:    `${(i * 23 + 8) % 100}%`,
-            width:  i % 3 === 0 ? 3 : i % 3 === 1 ? 2 : 1.5,
-            height: i % 3 === 0 ? 3 : i % 3 === 1 ? 2 : 1.5,
+            width:  i % 3 === 0 ? 2 : i % 3 === 1 ? 1.5 : 1,
+            height: i % 3 === 0 ? 2 : i % 3 === 1 ? 1.5 : 1,
             backgroundColor:
               i % 3 === 0 ? "rgba(251,191,36,0.5)"
               : i % 3 === 1 ? "rgba(147,197,253,0.5)"
@@ -86,7 +86,7 @@ export default function WelcomePage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.4 }}
-            className="flex flex-col items-center gap-8 cursor-pointer select-none"
+            className="flex flex-col items-center gap-5 cursor-pointer select-none"
             onClick={handleTitleClick}
           >
             {/* Element trinity */}
@@ -94,22 +94,22 @@ export default function WelcomePage() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
-              className="flex gap-8 text-4xl"
+              className="flex gap-6 text-3xl"
             >
               <motion.span
-                animate={{ rotate: [0, 15, -15, 0], y: [0, -6, 0] }}
+                animate={{ rotate: [0, 15, -15, 0], y: [0, -4, 0] }}
                 transition={{ duration: 4, repeat: Infinity, delay: 0 }}
-                className="text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.9)]"
+                className="text-amber-400 drop-shadow-[0_0_14px_rgba(251,191,36,0.9)]"
               >☀</motion.span>
               <motion.span
-                animate={{ rotate: [0, -15, 15, 0], y: [0, -8, 0] }}
+                animate={{ rotate: [0, -15, 15, 0], y: [0, -5, 0] }}
                 transition={{ duration: 4, repeat: Infinity, delay: 0.6 }}
-                className="text-blue-300 drop-shadow-[0_0_20px_rgba(147,197,253,0.9)]"
+                className="text-blue-300 drop-shadow-[0_0_14px_rgba(147,197,253,0.9)]"
               >☽</motion.span>
               <motion.span
-                animate={{ rotate: [0, 20, -20, 0], y: [0, -5, 0] }}
+                animate={{ rotate: [0, 20, -20, 0], y: [0, -4, 0] }}
                 transition={{ duration: 4, repeat: Infinity, delay: 1.2 }}
-                className="text-purple-400 drop-shadow-[0_0_20px_rgba(192,132,252,0.9)]"
+                className="text-purple-400 drop-shadow-[0_0_14px_rgba(192,132,252,0.9)]"
               >★</motion.span>
             </motion.div>
 
@@ -120,20 +120,20 @@ export default function WelcomePage() {
               transition={{ delay: 0.9, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
               className="text-center"
             >
-              <h1 className="font-display text-5xl font-bold text-white tracking-[0.2em] uppercase">
+              <h1 className="font-display text-[2.1rem] font-bold text-white tracking-[0.15em] uppercase">
                 Elementals
               </h1>
               <motion.div
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
                 transition={{ delay: 1.4, duration: 0.6, ease: "easeOut" }}
-                className="h-px bg-gradient-to-r from-transparent via-white/30 to-transparent mt-3"
+                className="h-px bg-gradient-to-r from-transparent via-white/30 to-transparent mt-2"
               />
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.6 }}
-                className="text-xs text-white/30 tracking-[0.3em] uppercase mt-2"
+                className="text-[10px] text-white/30 tracking-[0.25em] uppercase mt-1.5"
               >
                 Card Battle
               </motion.p>
@@ -144,7 +144,7 @@ export default function WelcomePage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: titleReady ? 1 : 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
-              className="text-sm text-white/40 tracking-widest uppercase"
+              className="text-xs text-white/40 tracking-widest uppercase"
             >
               <motion.span
                 animate={{ opacity: [0.4, 1, 0.4] }}
@@ -164,23 +164,23 @@ export default function WelcomePage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col items-center gap-8 w-full max-w-sm px-6"
+            className="flex flex-col items-center gap-5 w-full max-w-sm px-6"
           >
             {/* Small logo */}
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex gap-4 text-2xl">
-                <span className="text-amber-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.8)]">☀</span>
-                <span className="text-blue-300 drop-shadow-[0_0_12px_rgba(147,197,253,0.8)]">☽</span>
-                <span className="text-purple-400 drop-shadow-[0_0_12px_rgba(192,132,252,0.8)]">★</span>
+            <div className="flex flex-col items-center gap-1.5">
+              <div className="flex gap-3 text-xl">
+                <span className="text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]">☀</span>
+                <span className="text-blue-300 drop-shadow-[0_0_10px_rgba(147,197,253,0.8)]">☽</span>
+                <span className="text-purple-400 drop-shadow-[0_0_10px_rgba(192,132,252,0.8)]">★</span>
               </div>
-              <p className="font-display text-xl font-bold text-white tracking-widest uppercase">Elementals</p>
+              <p className="font-display text-base font-bold text-white tracking-widest uppercase">Elementals</p>
             </div>
 
             {/* Name form */}
-            <div className="w-full flex flex-col gap-3">
+            <div className="w-full flex flex-col gap-2.5">
               <div className="text-center">
-                <p className="font-display text-lg font-bold text-white">Choose your name</p>
-                <p className="text-xs text-white/35 mt-1">This is how other players will see you.</p>
+                <p className="font-display text-base font-bold text-white">Choose your name</p>
+                <p className="text-[11px] text-white/35 mt-0.5">This is how other players will see you.</p>
               </div>
 
               <input
@@ -192,7 +192,7 @@ export default function WelcomePage() {
                 onChange={(e) => { setName(e.target.value); setNameError(""); }}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
                 className={cn(
-                  "w-full px-4 py-3 rounded-xl border text-white placeholder-white/20 text-sm text-center",
+                  "w-full px-4 py-2.5 rounded-xl border text-white placeholder-white/20 text-sm text-center",
                   "bg-white/5 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/60",
                   "transition-all duration-200",
                   nameError
@@ -217,7 +217,7 @@ export default function WelcomePage() {
                 onClick={handleSubmit}
                 disabled={submitting}
                 className={cn(
-                  "w-full py-3 rounded-xl font-display font-bold text-sm tracking-wider transition-all duration-200",
+                  "w-full py-2.5 rounded-xl font-display font-bold text-sm tracking-wider transition-all duration-200",
                   submitting
                     ? "bg-indigo-600/30 text-indigo-300/50 border border-indigo-500/20 cursor-not-allowed"
                     : "bg-indigo-600/40 text-indigo-200 border border-indigo-500/40 hover:bg-indigo-600/60 hover:border-indigo-400/60"
