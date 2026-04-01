@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGameStore } from "@/store/gameStore";
 import { useGame } from "@/hooks/useGame";
-import { useSocket, useSocketInit } from "@/hooks/useSocket";
+import { useSocket } from "@/hooks/useSocket";
 import { GamePhase } from "@/lib/game/types";
 
 import { Hand }               from "@/components/game/Hand";
@@ -40,7 +40,7 @@ function DisconnectBanner({ username }: { username: string }) {
   return (
     <motion.div
       initial={{ y: -48, opacity: 0 }}
-      animate={{ y: 0,   opacity: 1 }}
+      animate={{ y: 0, opacity: 1 }}
       exit={{ y: -48, opacity: 0 }}
       className="absolute top-0 inset-x-0 z-30 flex justify-center pt-3 pointer-events-none"
     >
@@ -54,49 +54,18 @@ function DisconnectBanner({ username }: { username: string }) {
 }
 
 // ─────────────────────────────────────────────
-//  Play button
-// ─────────────────────────────────────────────
-
-function PlayButton({
-  disabled,
-  onClick,
-}: {
-  disabled: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: disabled ? 0 : 1, y: 0 }}
-      className="flex justify-center pt-2"
-    >
-      <Button
-        variant="primary"
-        size="lg"
-        disabled={disabled}
-        onClick={onClick}
-        className="font-display tracking-widest text-sm"
-      >
-        Play Card ✦
-      </Button>
-    </motion.div>
-  );
-}
-
-// ─────────────────────────────────────────────
-//  Phase status chip
+//  Phase chip
 // ─────────────────────────────────────────────
 
 function PhaseChip({ phase }: { phase: GamePhase }) {
   const labels: Partial<Record<GamePhase, string>> = {
-    [GamePhase.PLAYING]:          "Your Turn",
-    [GamePhase.REVEALING]:        "Reveal",
-    [GamePhase.RAINBOW_TIEBREAK]: "Rainbow Duel",
-    [GamePhase.WAITING]:          "Starting…",
+    [GamePhase.PLAYING]:           "Your Turn",
+    [GamePhase.REVEALING]:         "Reveal",
+    [GamePhase.RAINBOW_TIEBREAK]:  "Rainbow Duel",
+    [GamePhase.WAITING]:           "Starting…",
   };
   const label = labels[phase];
   if (!label) return null;
-
   return (
     <motion.span
       key={phase}
@@ -104,10 +73,10 @@ function PhaseChip({ phase }: { phase: GamePhase }) {
       animate={{ opacity: 1, scale: 1 }}
       className={cn(
         "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider",
-        phase === GamePhase.PLAYING         && "bg-indigo-500/20 text-indigo-300 border border-indigo-400/30",
-        phase === GamePhase.REVEALING       && "bg-amber-500/20  text-amber-300  border border-amber-400/30",
+        phase === GamePhase.PLAYING          && "bg-indigo-500/20 text-indigo-300 border border-indigo-400/30",
+        phase === GamePhase.REVEALING        && "bg-amber-500/20  text-amber-300  border border-amber-400/30",
         phase === GamePhase.RAINBOW_TIEBREAK && "bg-pink-500/20   text-pink-300   border border-pink-400/30",
-        phase === GamePhase.WAITING         && "bg-white/5       text-white/40   border border-white/10",
+        phase === GamePhase.WAITING          && "bg-white/5       text-white/40   border border-white/10",
       )}
     >
       <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
@@ -123,8 +92,7 @@ function PhaseChip({ phase }: { phase: GamePhase }) {
 export default function GamePage() {
   const params = useParams<{ roomId: string }>();
   const router = useRouter();
-
-  useSocketInit(); // ensure events are wired
+  const socket = useSocket();
 
   const {
     gameState,
@@ -133,7 +101,6 @@ export default function GamePage() {
     playCard,
     submitRainbowChoice,
     isMyTurn,
-    isWaiting,
     isRevealing,
     isRainbowTiebreak,
     isGameOver,
@@ -141,21 +108,14 @@ export default function GamePage() {
     opponentDisconnected,
   } = useGame();
 
-  const {
-    resetGame,
-    setScreen,
-    matchRoomId,
-  } = useGameStore();
-
+  const { resetGame } = useGameStore();
   const [playError, setPlayError] = useState<string | null>(null);
 
-  // Verify we're in the right room
+  // On mount, ask the server to re-push current state.
+  // This handles the case where game:state was emitted before this page loaded.
   useEffect(() => {
-    // If we have gameState and the roomId doesn't match, redirect home
-    if (gameState && gameState.roomId !== params.roomId) {
-      router.replace("/");
-    }
-  }, [gameState, params.roomId, router]);
+    socket.emit("game:request_state");
+  }, [socket]);
 
   const handlePlayCard = async () => {
     try {
@@ -177,41 +137,30 @@ export default function GamePage() {
     router.push("/");
   };
 
-  // ── No state yet — loading ──
   if (!gameState) return <LoadingState />;
 
   const { self, opponent, phase, round, lastResult, rainbowTiebreak } = gameState;
 
-  // Find the card self played (still in cache via lastResult or from hand before it was removed)
-  // Since card is removed from hand on play, we reconstruct from lastResult during REVEALING
-  // During PLAYING/after play, we show the played indicator without the card face
-  const selfPlayedCard =
-    phase === GamePhase.REVEALING && lastResult
-      ? undefined // BattleArena handles reveal from lastResult
-      : undefined;
-
   return (
     <div className="h-full flex flex-col relative overflow-hidden select-none">
-      {/* Disconnect banner */}
       <AnimatePresence>
         {opponentDisconnected && (
           <DisconnectBanner username={opponentDisconnected.username} />
         )}
       </AnimatePresence>
 
-      {/* ── Opponent area ─────────────────────── */}
+      {/* ── Opponent area ─── */}
       <motion.div
         initial={{ y: -40, opacity: 0 }}
-        animate={{ y: 0,   opacity: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
         className="glass border-b border-white/05 flex-shrink-0"
       >
         <OpponentArea opponent={opponent} />
       </motion.div>
 
-      {/* ── Center: scoreboard + arena ────────── */}
+      {/* ── Center ─── */}
       <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4 overflow-hidden">
-        {/* Scoreboard */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -228,7 +177,6 @@ export default function GamePage() {
           <PhaseChip phase={phase} />
         </motion.div>
 
-        {/* Battle arena */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -241,13 +189,11 @@ export default function GamePage() {
             msLeft={msLeft}
             selfHasPlayed={self.hasPlayed}
             opponentHasPlayed={opponent.hasPlayed}
-            selfPlayedCard={selfPlayedCard}
             lastResult={lastResult}
             selfId={self.id}
           />
         </motion.div>
 
-        {/* Error message */}
         <AnimatePresence>
           {playError && (
             <motion.p
@@ -262,14 +208,13 @@ export default function GamePage() {
         </AnimatePresence>
       </div>
 
-      {/* ── Player area ───────────────────────── */}
+      {/* ── Player area ─── */}
       <motion.div
         initial={{ y: 60, opacity: 0 }}
-        animate={{ y: 0,  opacity: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
         className="glass border-t border-white/05 flex-shrink-0 pb-4"
       >
-        {/* Player info bar */}
         <div className="flex items-center justify-between px-6 pt-3 pb-2">
           <div>
             <p className="font-display text-sm font-semibold text-white">{self.username}</p>
@@ -279,7 +224,7 @@ export default function GamePage() {
             <motion.span
               key={self.score}
               initial={{ scale: 1.4, color: "#818cf8" }}
-              animate={{ scale: 1,   color: "#ffffff" }}
+              animate={{ scale: 1, color: "#ffffff" }}
               className="font-display text-2xl font-bold"
             >
               {self.score}
@@ -288,7 +233,6 @@ export default function GamePage() {
           </div>
         </div>
 
-        {/* Hand */}
         <div className="px-4">
           <Hand
             cards={self.hand}
@@ -298,16 +242,30 @@ export default function GamePage() {
           />
         </div>
 
-        {/* Play button — only shown when card is selected and it's my turn */}
-        <div className="px-4">
-          <PlayButton
-            disabled={!selectedCardId || !isMyTurn}
-            onClick={handlePlayCard}
-          />
+        {/* Play button */}
+        <div className="px-4 pt-2 flex justify-center">
+          <AnimatePresence>
+            {selectedCardId && isMyTurn && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+              >
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={handlePlayCard}
+                  className="font-display tracking-widest text-sm"
+                >
+                  Play Card ✦
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
 
-      {/* ── Rainbow Tiebreak modal ─────────────── */}
+      {/* ── Rainbow Tiebreak modal ─── */}
       <RainbowTiebreak
         open={isRainbowTiebreak}
         attempt={rainbowTiebreak?.attempt ?? 1}
@@ -316,7 +274,7 @@ export default function GamePage() {
         onChoose={submitRainbowChoice}
       />
 
-      {/* ── Match result overlay ──────────────── */}
+      {/* ── Match result ─── */}
       <AnimatePresence>
         {isGameOver && gameState.matchResult && (
           <MatchResultScreen

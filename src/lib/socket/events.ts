@@ -27,6 +27,9 @@ export interface ClientToServerEvents {
 
   /** Signal ready to start next round after result reveal */
   "game:ready": () => void;
+
+  /** Request the server to re-push the current game state (used on game page mount) */
+  "game:request_state": () => void;
 }
 
 // ─────────────────────────────────────────────

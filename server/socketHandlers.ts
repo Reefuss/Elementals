@@ -30,14 +30,9 @@ export function registerSocketHandlers(io: AppServer): void {
 
   // ── GameManager callbacks ─────────────────────────────────────
 
-  /**
-   * Push updated game state to each player individually.
-   * Uses io.to(socketId) — no socket object lookup needed.
-   */
   gameManager.onStateSync = (roomId: string) => {
     const game = gameManager.getGame(roomId);
     if (!game) return;
-
     for (const player of game.players) {
       const state = gameManager.getClientState(roomId, player.id);
       if (state) {
@@ -47,8 +42,6 @@ export function registerSocketHandlers(io: AppServer): void {
   };
 
   gameManager.onGameOver = (_roomId: string, _result: MatchResult) => {
-    // game:state with phase=GAME_OVER is already pushed by onStateSync.
-    // Clean up room after players have time to see the result screen.
     setTimeout(() => gameManager.destroyGame(_roomId), 120_000);
   };
 
@@ -56,23 +49,31 @@ export function registerSocketHandlers(io: AppServer): void {
     gameManager.processPlay(roomId, playerId, cardId);
   };
 
+  // ── Helper: update roomId on a socket's data ──────────────────
+
+  function setSocketRoom(socketId: string, roomId: string) {
+    const s = io.sockets.sockets.get(socketId);
+    if (s) s.data.roomId = roomId;
+  }
+
   // ── Connection ───────────────────────────────────────────────
 
   io.on("connection", (socket: AppSocket) => {
     const queryId = socket.handshake.query.playerId as string | undefined;
-    socket.data.playerId = queryId && queryId !== "undefined" ? queryId : uuidv4();
+    const isReturning = !!queryId && queryId !== "undefined";
+    socket.data.playerId = isReturning ? queryId : uuidv4();
     socket.data.roomId   = null;
 
-    console.log(`[connect] socket=${socket.id} player=${socket.data.playerId}`);
+    console.log(`[connect] id=${socket.id} player=${socket.data.playerId} returning=${isReturning}`);
 
-    // ── Reconnect to in-progress game ──
-    if (queryId && queryId !== "undefined") {
+    // ── Reconnect to in-progress game ────────────────────────────
+    if (isReturning) {
       const roomId = gameManager.getPlayerRoom(queryId);
       if (roomId) {
         socket.data.roomId = roomId;
         socket.join(roomId);
-        const reconnected = gameManager.handleReconnect(roomId, queryId, socket.id);
-        if (reconnected) {
+        const ok = gameManager.handleReconnect(roomId, queryId, socket.id);
+        if (ok) {
           const state = gameManager.getClientState(roomId, queryId);
           if (state) socket.emit("game:state", state);
 
@@ -87,12 +88,9 @@ export function registerSocketHandlers(io: AppServer): void {
       }
     }
 
-    // ── queue:join ──────────────────────────────────────────────
+    // ── queue:join ────────────────────────────────────────────────
     socket.on("queue:join", ({ username }, ack) => {
-      if (!username?.trim()) {
-        ack("Username required.");
-        return;
-      }
+      if (!username?.trim()) { ack("Username required."); return; }
 
       socket.data.username = username.trim();
 
@@ -105,26 +103,24 @@ export function registerSocketHandlers(io: AppServer): void {
 
       ack(null);
       socket.emit("queue:status", { position });
+      console.log(`[queue] ${socket.data.username} pos=${position} qsize=${matchmaker.size()}`);
 
-      console.log(`[queue] ${socket.data.username} (${socket.data.playerId}) pos=${position} queue=${matchmaker.size()}`);
-
-      // Attempt match
+      // Try to form a match
       const match = matchmaker.tryMatch();
       if (!match) return;
 
       const { roomId, player1, player2 } = match;
       console.log(`[match] ${player1.username} vs ${player2.username} room=${roomId}`);
 
-      // Make both sockets join the room — use socketsJoin (no object lookup)
+      // Join both sockets to the room
       io.in(player1.socketId).socketsJoin(roomId);
       io.in(player2.socketId).socketsJoin(roomId);
 
-      // Update room tracking on socket.data
-      // The current socket is one of the two matched players
-      if (socket.id === player1.socketId) socket.data.roomId = roomId;
-      // The other player's socket.data.roomId will be updated on their next event
+      // Update roomId on both socket.data objects
+      setSocketRoom(player1.socketId, roomId);
+      setSocketRoom(player2.socketId, roomId);
 
-      // Notify both players using io.to(socketId) — works without socket object lookup
+      // Notify both players
       io.to(player1.socketId).emit("match:found", {
         roomId,
         opponent: { id: player2.playerId, username: player2.username },
@@ -134,7 +130,7 @@ export function registerSocketHandlers(io: AppServer): void {
         opponent: { id: player1.playerId, username: player1.username },
       });
 
-      // Create the authoritative game state
+      // Create authoritative game — this triggers onStateSync which pushes game:state
       gameManager.createGame(
         { id: player1.playerId, username: player1.username, socketId: player1.socketId },
         { id: player2.playerId, username: player2.username, socketId: player2.socketId },
@@ -142,15 +138,23 @@ export function registerSocketHandlers(io: AppServer): void {
       );
     });
 
-    // ── queue:leave ─────────────────────────────────────────────
+    // ── queue:leave ───────────────────────────────────────────────
     socket.on("queue:leave", () => {
       matchmaker.dequeue(socket.data.playerId);
     });
 
-    // ── game:play ───────────────────────────────────────────────
+    // ── game:request_state ────────────────────────────────────────
+    // Called by the game page on mount to recover state after page navigation.
+    socket.on("game:request_state", () => {
+      const roomId = socket.data.roomId ?? gameManager.getPlayerRoom(socket.data.playerId);
+      if (!roomId) return;
+      socket.data.roomId = roomId;
+      const state = gameManager.getClientState(roomId, socket.data.playerId);
+      if (state) socket.emit("game:state", state);
+    });
+
+    // ── game:play ─────────────────────────────────────────────────
     socket.on("game:play", ({ cardId }, ack) => {
-      // Resolve roomId from socket.data (may need updating if match was formed
-      // while this socket was the "other" player)
       const roomId = socket.data.roomId ?? gameManager.getPlayerRoom(socket.data.playerId);
       if (!roomId) { ack("Not in a game."); return; }
       socket.data.roomId = roomId;
@@ -159,14 +163,12 @@ export function registerSocketHandlers(io: AppServer): void {
       if (result.error) { ack(result.error); return; }
 
       ack(null);
-
-      // Notify opponent a card was played (not which card)
       const game = gameManager.getGame(roomId);
       const opp  = game?.players.find((p) => p.id !== socket.data.playerId);
       if (opp) io.to(opp.socketId).emit("game:opponent_played");
     });
 
-    // ── game:rainbow_choice ─────────────────────────────────────
+    // ── game:rainbow_choice ───────────────────────────────────────
     socket.on("game:rainbow_choice", ({ element }, ack) => {
       const roomId = socket.data.roomId ?? gameManager.getPlayerRoom(socket.data.playerId);
       if (!roomId) { ack("Not in a game."); return; }
@@ -175,22 +177,20 @@ export function registerSocketHandlers(io: AppServer): void {
       if (result.error) { ack(result.error); return; }
 
       ack(null);
-
       const game = gameManager.getGame(roomId);
       const opp  = game?.players.find((p) => p.id !== socket.data.playerId);
       if (opp) io.to(opp.socketId).emit("game:rainbow_waiting");
     });
 
-    // ── disconnect ──────────────────────────────────────────────
+    // ── disconnect ────────────────────────────────────────────────
     socket.on("disconnect", (reason) => {
-      console.log(`[disconnect] socket=${socket.id} player=${socket.data.playerId} reason=${reason}`);
+      console.log(`[disconnect] id=${socket.id} player=${socket.data.playerId} reason=${reason}`);
       matchmaker.dequeue(socket.data.playerId);
 
       const roomId = socket.data.roomId ?? gameManager.getPlayerRoom(socket.data.playerId);
       if (!roomId) return;
 
       gameManager.handleDisconnect(roomId, socket.data.playerId);
-
       const game = gameManager.getGame(roomId);
       const opp  = game?.players.find((p) => p.id !== socket.data.playerId);
       if (opp) {
