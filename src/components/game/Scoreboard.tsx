@@ -53,22 +53,10 @@ export function Scoreboard({
             <ScorePip key={i} filled={i < myScore} animateIn={i === myScore - 1} />
           ))}
         </div>
-        <motion.span
-          key={myScore}
-          initial={{ scale: 1.6, color: "#818cf8" }}
-          animate={{ scale: 1,   color: "#ffffff" }}
-          transition={{ duration: 0.4 }}
-          className="font-display text-lg font-bold"
-        >
-          {myScore}
-        </motion.span>
       </div>
 
       {/* VS divider */}
-      <div className="flex flex-col items-center gap-1">
-        <div className="text-white/20 text-xs font-display tracking-[0.3em]">VS</div>
-        <div className="w-px h-6 bg-white/10" />
-      </div>
+      <div className="text-white/20 text-xs font-display tracking-[0.3em]">VS</div>
 
       {/* Opponent score */}
       <div className="flex flex-col items-center gap-1">
@@ -80,15 +68,6 @@ export function Scoreboard({
             <ScorePip key={i} filled={i < opponentScore} animateIn={i === opponentScore - 1} />
           ))}
         </div>
-        <motion.span
-          key={opponentScore}
-          initial={{ scale: 1.6, color: "#818cf8" }}
-          animate={{ scale: 1,   color: "#ffffff" }}
-          transition={{ duration: 0.4 }}
-          className="font-display text-lg font-bold"
-        >
-          {opponentScore}
-        </motion.span>
       </div>
     </div>
   );
