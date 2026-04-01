@@ -32,8 +32,14 @@ export const useCollectionStore = create<CollectionStore>()(
       getQuantity: (variantId) => get().owned[variantId] ?? 0,
 
       initialize: () => {
-        if (get().initialized) return;
-        set({ owned: { ...DEFAULT_COLLECTION }, initialized: true });
+        // Always merge DEFAULT_COLLECTION so new starter cards added after
+        // first launch are granted to existing players.
+        const current = get().owned;
+        const merged  = { ...current };
+        for (const [id, qty] of Object.entries(DEFAULT_COLLECTION)) {
+          if ((merged[id] ?? 0) < qty) merged[id] = qty;
+        }
+        set({ owned: merged, initialized: true });
       },
     }),
     { name: "elementals-collection" }
