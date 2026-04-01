@@ -327,7 +327,10 @@ export function CardBack({ size = "md", className, pulse }: CardBackProps) {
 export function CardSlot({ size = "md", label }: { size?: "sm" | "md" | "lg"; label?: string }) {
   const dims = cardSizes[size];
   return (
-    <div className={cn("flex items-center justify-center", dims.outer)}>
+    <div className={cn(
+      "flex items-center justify-center rounded-2xl border-2 border-dashed border-white/10 bg-white/[0.02]",
+      dims.outer
+    )}>
       {label && <span className="text-xs text-white/20">{label}</span>}
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { POINTS_TO_WIN } from "@/lib/game/constants";
 
@@ -44,7 +44,7 @@ export function Scoreboard({
       compact ? "scale-90" : ""
     )}>
       {/* Player score */}
-      <div className="flex flex-col items-center gap-1.5 min-w-[90px]">
+      <div className="flex flex-col items-center gap-1.5">
         <span className="text-xs text-white/50 font-medium truncate max-w-[80px]">
           {myUsername}
         </span>
@@ -71,7 +71,7 @@ export function Scoreboard({
       </div>
 
       {/* Opponent score */}
-      <div className="flex flex-col items-center gap-1.5 min-w-[90px]">
+      <div className="flex flex-col items-center gap-1.5">
         <span className="text-xs text-white/50 font-medium truncate max-w-[80px]">
           {opponentName}
         </span>

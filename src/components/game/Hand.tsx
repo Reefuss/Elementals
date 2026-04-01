@@ -21,12 +21,13 @@ export function Hand({ cards, selectedCardId, disabled, onSelectCard }: HandProp
   const count = cards.length;
 
   return (
-    <div className="flex items-end justify-center" style={{ minHeight: 180 }}>
+    <div className="w-full overflow-x-auto" style={{ minHeight: 180 }}>
       <div
-        className="relative flex items-end justify-center"
+        className="relative flex items-end justify-center mx-auto"
         style={{
-          // Overlap cards slightly when there are many
           gap: count > 6 ? 4 : 12,
+          width: "max-content",
+          minWidth: "100%",
         }}
       >
         <AnimatePresence mode="popLayout">

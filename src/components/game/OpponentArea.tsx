@@ -14,7 +14,7 @@ export function OpponentArea({ opponent }: OpponentAreaProps) {
   return (
     <div className="flex items-center justify-between px-6 py-4">
       {/* Username + connection */}
-      <div className="flex flex-col gap-0.5 min-w-[120px]">
+      <div className="flex flex-col gap-0.5">
         <div className="flex items-center gap-2">
           <span className="font-display text-sm font-semibold text-white truncate max-w-[140px]">
             {opponent.username}
@@ -48,7 +48,7 @@ export function OpponentArea({ opponent }: OpponentAreaProps) {
       </div>
 
       {/* Score */}
-      <div className="flex flex-col items-end gap-0.5 min-w-[48px]">
+      <div className="flex flex-col items-end gap-0.5">
         <motion.span
           key={opponent.score}
           initial={{ scale: 1.5, color: "#818cf8" }}
