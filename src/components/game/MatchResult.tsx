@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { POINTS_TO_WIN } from "@/lib/game/constants";
 import { SoundEngine } from "@/lib/sound/engine";
+import { usePlayerStore } from "@/store/playerStore";
+import { useMissionStore } from "@/store/missionStore";
 
 interface MatchResultProps {
   result:    IMatchResult;
@@ -27,11 +29,19 @@ export function MatchResultScreen({
   const myScore  = result.finalScores[selfId] ?? 0;
   const oppScore = Object.entries(result.finalScores).find(([id]) => id !== selfId)?.[1] ?? 0;
 
-  const [phase, setPhase] = useState(0);
-  const [counted, setCounted] = useState({ my: 0, opp: 0 });
+  const recordMatch  = usePlayerStore((s) => s.recordMatch);
+  const recordGame   = useMissionStore((s) => s.recordGame);
+
+  const [phase, setPhase]         = useState(0);
+  const [counted, setCounted]     = useState({ my: 0, opp: 0 });
+  const [coinsEarned, setCoins]   = useState(0);
 
   useEffect(() => {
-    // Play win/lose fanfare timed with the title slam (phase 1 at 500ms)
+    // Award coins + record mission progress once on mount
+    const coins = recordMatch(youWon);
+    setCoins(coins);
+    recordGame();
+
     const t0 = setTimeout(() => {
       SoundEngine.play(youWon ? "match_win" : isTie ? "round_tie" : "match_lose");
     }, 500);
@@ -129,6 +139,17 @@ export function MatchResultScreen({
               >
                 {isTie ? "Draw!" : youWon ? "Victory!" : "Defeat"}
               </span>
+            </motion.div>
+
+            {/* Coin reward */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.25, type: "spring", stiffness: 300 }}
+              className="inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1 mb-4"
+            >
+              <span className="text-amber-400 text-xs">✦</span>
+              <span className="text-amber-300 text-xs font-bold">+{coinsEarned} coins</span>
             </motion.div>
 
             <motion.p

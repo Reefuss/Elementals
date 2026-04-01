@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SocketProvider } from "@/components/providers/SocketProvider";
+import { AppShell } from "@/components/shell/AppShell";
 
 export const metadata: Metadata = {
   title:       "Elementals — Cosmic Card Duel",
@@ -31,7 +32,7 @@ export default function RootLayout({
         {/* SocketProvider mounts once and never unmounts — survives page navigation */}
         <SocketProvider>
           <div className="relative z-10 h-full">
-            {children}
+            <AppShell>{children}</AppShell>
           </div>
         </SocketProvider>
       </body>
