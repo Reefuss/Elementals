@@ -1,16 +1,16 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { getStoredUsername } from "@/lib/utils";
 import { usePlayerStore } from "@/store/playerStore";
 import { useMissionStore } from "@/store/missionStore";
 
 const NAV_ITEMS = [
   { href: "/",           label: "Home",       icon: HomeIcon       },
-  { href: "/packs",      label: "Packs",      icon: PackIcon       },
   { href: "/collection", label: "Collection", icon: GridIcon       },
   { href: "/battle",     label: "Battle",     icon: SwordsIcon     },
   { href: "/missions",   label: "Missions",   icon: CheckIcon      },
@@ -19,9 +19,18 @@ const NAV_ITEMS = [
 /** Wraps non-game pages with top currency bar + bottom nav */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router   = useRouter();
 
-  // Hide shell entirely on the game arena page
-  if (pathname.startsWith("/game/")) return <>{children}</>;
+  // Redirect to welcome screen if no username is stored
+  useEffect(() => {
+    if (pathname.startsWith("/game/") || pathname === "/welcome") return;
+    if (!getStoredUsername()) {
+      router.replace("/welcome");
+    }
+  }, [pathname]);
+
+  // Hide shell entirely on game arena and welcome pages
+  if (pathname.startsWith("/game/") || pathname === "/welcome") return <>{children}</>;
 
   const coins      = usePlayerStore((s) => s.coins);
   const pity       = usePlayerStore((s) => s.pityPoints);
@@ -117,15 +126,6 @@ function HomeIcon({ className }: { className?: string }) {
   );
 }
 
-function PackIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M12 2L2 7l10 5 10-5-10-5z" />
-      <path d="M2 17l10 5 10-5" />
-      <path d="M2 12l10 5 10-5" />
-    </svg>
-  );
-}
 
 function GridIcon({ className }: { className?: string }) {
   return (
