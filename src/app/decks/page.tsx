@@ -38,6 +38,11 @@ const ri = (r: Rarity) => RARITY_ORDER.indexOf(r);
 function autoBuildDeck(owned: Record<string, number>): Record<string, number> {
   const result: Record<string, number> = {};
 
+  const remaining    = () => 25 - cardTotal(result);
+  const specialCount = () => ALL_CARDS
+    .filter((c) => c.type === "special")
+    .reduce((s, c) => s + (result[c.id] ?? 0), 0);
+
   const pickElement = (element: string, target: number) => {
     const candidates = ALL_CARDS
       .filter((c) => c.type === "element" && c.element === element && (owned[c.id] ?? 0) > 0)
@@ -56,9 +61,8 @@ function autoBuildDeck(owned: Record<string, number>): Record<string, number> {
   pickElement("SCISSORS", 7);
   pickElement("PAPER",    7);
 
-  // Fill remaining 4 slots: specials first (highest rarity), then elements
-  const remaining = () => 25 - cardTotal(result);
-  const utility = ALL_CARDS
+  // Fill remaining slots with specials (respecting max 5), then diamonds, then more elements
+  const fillers = ALL_CARDS
     .filter((c) => (owned[c.id] ?? 0) > 0)
     .sort((a, b) => {
       if (a.type === "special" && b.type !== "special") return -1;
@@ -68,13 +72,18 @@ function autoBuildDeck(owned: Record<string, number>): Record<string, number> {
       return ri(a.rarity) - ri(b.rarity);
     });
 
-  for (const card of utility) {
+  for (const card of fillers) {
     if (remaining() <= 0) break;
+    if (card.type === "special" && specialCount() >= DECK_RULES.maxSpecialCards) continue;
     const inDeck    = result[card.id] ?? 0;
     const available = Math.min(owned[card.id] ?? 0, card.maxPerDeck) - inDeck;
     if (available <= 0) continue;
-    const toAdd = Math.min(available, remaining());
-    result[card.id] = inDeck + toAdd;
+    // For specials, also cap by how many slots remain under the special limit
+    const specialSlots = card.type === "special"
+      ? DECK_RULES.maxSpecialCards - specialCount()
+      : Infinity;
+    const toAdd = Math.min(available, remaining(), specialSlots);
+    if (toAdd > 0) result[card.id] = inDeck + toAdd;
   }
 
   return result;
