@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGameStore } from "@/store/gameStore";
 import { useGame } from "@/hooks/useGame";
 import { useSocket } from "@/hooks/useSocket";
 import { useGameSounds } from "@/hooks/useGameSounds";
-import { GamePhase } from "@/lib/game/types";
+import { Card, GamePhase } from "@/lib/game/types";
 import { SoundEngine } from "@/lib/sound/engine";
+import { GameCard } from "@/components/game/GameCard";
 
 import { Hand }               from "@/components/game/Hand";
 import { BattleArena }        from "@/components/game/BattleArena";
@@ -114,8 +115,20 @@ export default function GamePage() {
   } = useGame();
 
   const { resetGame } = useGameStore();
-  const [playError,       setPlayError]       = useState<string | null>(null);
+  const [playError,          setPlayError]          = useState<string | null>(null);
   const [showForfeitConfirm, setShowForfeitConfirm] = useState(false);
+
+  // ── Drag-to-play state ──────────────────────────────
+  const dropZoneRef    = useRef<HTMLDivElement>(null);
+  const dropZoneRect   = useRef<DOMRect | null>(null);
+  const playCardRef    = useRef(playCard);
+  const selectCardRef  = useRef(selectCard);
+  useEffect(() => { playCardRef.current = playCard; }, [playCard]);
+  useEffect(() => { selectCardRef.current = selectCard; }, [selectCard]);
+
+  const [dragState, setDragState] = useState<{
+    cardId: string; card: Card; x: number; y: number; active: boolean;
+  } | null>(null);
 
   // Wire game sounds — fires at phase transitions, flips, timer beats
   useGameSounds(gameState, msLeft, gameState?.self.id ?? "");
@@ -128,16 +141,66 @@ export default function GamePage() {
     socket.emit("game:request_state");
   }, [socket]);
 
-  const handlePlayCard = async () => {
+  const handlePlayCard = useCallback(async () => {
     try {
       setPlayError(null);
       SoundEngine.play("card_play");
-      await playCard();
+      await playCardRef.current();
     } catch (e) {
       setPlayError(typeof e === "string" ? e : "Failed to play card.");
       setTimeout(() => setPlayError(null), 3000);
     }
-  };
+  }, []);
+
+  // ── Drag handlers ────────────────────────────────────
+  const handleCardDragStart = useCallback((cardId: string, e: React.PointerEvent) => {
+    if (!isMyTurn || gameState?.phase === GamePhase.REVEALING) return;
+    e.preventDefault();
+    const card = gameState?.self.hand.find((c) => c.id === cardId);
+    if (!card) return;
+    // Measure drop zone position now while layout is stable
+    dropZoneRect.current = dropZoneRef.current?.getBoundingClientRect() ?? null;
+    setDragState({ cardId, card, x: e.clientX, y: e.clientY, active: false });
+  }, [isMyTurn, gameState]);
+
+  useEffect(() => {
+    if (!dragState) return;
+    const startX = dragState.x;
+    const startY = dragState.y;
+
+    const onMove = (e: PointerEvent) => {
+      e.preventDefault();
+      const moved = Math.abs(e.clientX - startX) > 8 || Math.abs(e.clientY - startY) > 8;
+      setDragState((prev) => prev ? { ...prev, x: e.clientX, y: e.clientY, active: prev.active || moved } : null);
+    };
+
+    const onUp = async (e: PointerEvent) => {
+      const rect = dropZoneRect.current;
+      const pad  = 40; // generous hit area
+      const over = rect &&
+        e.clientX >= rect.left  - pad && e.clientX <= rect.right  + pad &&
+        e.clientY >= rect.top   - pad && e.clientY <= rect.bottom + pad;
+
+      setDragState(null);
+      if (over) {
+        await handlePlayCard();
+      } else {
+        selectCardRef.current(dragState.cardId); // keep it selected if missed
+      }
+    };
+
+    const onCancel = () => setDragState(null);
+
+    window.addEventListener("pointermove",  onMove,    { passive: false });
+    window.addEventListener("pointerup",    onUp);
+    window.addEventListener("pointercancel", onCancel);
+    return () => {
+      window.removeEventListener("pointermove",  onMove);
+      window.removeEventListener("pointerup",    onUp);
+      window.removeEventListener("pointercancel", onCancel);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!dragState]);
 
   const handlePlayAgain = () => {
     resetGame();
@@ -209,6 +272,8 @@ export default function GamePage() {
             opponentHasPlayed={opponent.hasPlayed}
             lastResult={lastResult}
             selfId={self.id}
+            isDragging={!!dragState?.active}
+            dropZoneRef={dropZoneRef}
           />
         </motion.div>
 
@@ -265,30 +330,17 @@ export default function GamePage() {
             selectedCardId={selectedCardId}
             disabled={!isMyTurn || phase === GamePhase.REVEALING}
             onSelectCard={selectCard}
+            draggingCardId={dragState?.cardId ?? null}
+            onDragStart={handleCardDragStart}
           />
         </div>
 
-        {/* Play button */}
-        <div className="px-4 pt-2 flex justify-center">
-          <AnimatePresence>
-            {selectedCardId && isMyTurn && (
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8 }}
-              >
-                <Button
-                  variant="primary"
-                  size="lg"
-                  onClick={handlePlayCard}
-                  className="font-display tracking-widest text-sm"
-                >
-                  Play Card ✦
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        {/* Drag hint */}
+        {isMyTurn && phase !== GamePhase.REVEALING && !dragState && (
+          <p className="text-[10px] text-white/20 text-center pt-1 pb-1">
+            Drag a card to the centre to play
+          </p>
+        )}
       </motion.div>
 
 
@@ -356,6 +408,88 @@ export default function GamePage() {
             onPlayAgain={handlePlayAgain}
             onMainMenu={handleMainMenu}
           />
+        )}
+      </AnimatePresence>
+
+      {/* ── Drag overlay ─── */}
+      <AnimatePresence>
+        {dragState?.active && (
+          <>
+            {/* Dim overlay */}
+            <motion.div
+              key="drag-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-0 z-[100] pointer-events-none bg-black/65"
+            />
+
+            {/* Drop zone glow ring */}
+            {dropZoneRect.current && (() => {
+              const r = dropZoneRect.current!;
+              return (
+                <motion.div
+                  key="drop-zone-ring"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    position: "fixed",
+                    left:   r.left   - 12,
+                    top:    r.top    - 12,
+                    width:  r.width  + 24,
+                    height: r.height + 24,
+                    zIndex: 101,
+                    borderRadius: 22,
+                    pointerEvents: "none",
+                  }}
+                >
+                  {/* Outer pulsing ring */}
+                  <motion.div
+                    animate={{ boxShadow: [
+                      "0 0 0 2px rgba(129,140,248,0.6), 0 0 20px 4px rgba(129,140,248,0.3)",
+                      "0 0 0 2px rgba(129,140,248,1),   0 0 40px 8px rgba(129,140,248,0.6)",
+                      "0 0 0 2px rgba(129,140,248,0.6), 0 0 20px 4px rgba(129,140,248,0.3)",
+                    ]}}
+                    transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute inset-0 rounded-[22px]"
+                  />
+                  {/* Inner fill */}
+                  <div className="absolute inset-0 rounded-[22px] bg-indigo-500/10" />
+                  {/* Label */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <motion.span
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 1, repeat: Infinity }}
+                      className="text-xs text-indigo-300 font-semibold tracking-widest uppercase"
+                    >
+                      Drop here
+                    </motion.span>
+                  </div>
+                </motion.div>
+              );
+            })()}
+
+            {/* Ghost card following pointer */}
+            <motion.div
+              key="ghost-card"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1.08, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              style={{
+                position: "fixed",
+                left: dragState.x,
+                top:  dragState.y,
+                transform: "translate(-50%, -50%)",
+                zIndex: 102,
+                pointerEvents: "none",
+                filter: "drop-shadow(0 0 20px rgba(129,140,248,0.8))",
+              }}
+            >
+              <GameCard card={dragState.card} size="md" />
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>

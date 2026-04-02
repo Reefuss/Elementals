@@ -4,20 +4,17 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/lib/game/types";
 import { GameCard } from "./GameCard";
-import { cn } from "@/lib/utils";
 
 interface HandProps {
-  cards:           Card[];
-  selectedCardId:  string | null;
-  disabled:        boolean;
-  onSelectCard:    (cardId: string) => void;
+  cards:            Card[];
+  selectedCardId:   string | null;
+  disabled:         boolean;
+  onSelectCard:     (cardId: string) => void;
+  draggingCardId?:  string | null;
+  onDragStart?:     (cardId: string, e: React.PointerEvent) => void;
 }
 
-// ─────────────────────────────────────────────
-//  Hand
-// ─────────────────────────────────────────────
-
-export function Hand({ cards, selectedCardId, disabled, onSelectCard }: HandProps) {
+export function Hand({ cards, selectedCardId, disabled, onSelectCard, draggingCardId, onDragStart }: HandProps) {
   const count = cards.length;
   const [isMobile, setIsMobile] = useState(false);
 
@@ -31,44 +28,46 @@ export function Hand({ cards, selectedCardId, disabled, onSelectCard }: HandProp
   const cardSize = isMobile ? "sm" : "md";
 
   return (
-    <>
-      <div className="flex items-end justify-center" style={{ minHeight: isMobile ? 130 : 180 }}>
-        <div
-          className="relative flex items-end justify-center"
-          style={{ gap: count > 6 ? 2 : (isMobile ? 6 : 12) }}
-        >
-          <AnimatePresence mode="popLayout">
-            {cards.map((card, i) => {
-              const midpoint = (count - 1) / 2;
-              const offset   = i - midpoint;
-              const rotation = count > 1 ? offset * 2.5 : 0;
-              const yOffset  = Math.abs(offset) * 4;
+    <div className="flex items-end justify-center" style={{ minHeight: isMobile ? 130 : 180 }}>
+      <div
+        className="relative flex items-end justify-center"
+        style={{ gap: count > 6 ? 2 : (isMobile ? 6 : 12) }}
+      >
+        <AnimatePresence mode="popLayout">
+          {cards.map((card, i) => {
+            const midpoint = (count - 1) / 2;
+            const offset   = i - midpoint;
+            const rotation = count > 1 ? offset * 2.5 : 0;
+            const yOffset  = Math.abs(offset) * 4;
+            const isDraggingThis = draggingCardId === card.id;
 
-              return (
-                <motion.div
-                  key={card.id}
-                  layout
-                  initial={{ y: 80, opacity: 0, rotate: rotation }}
-                  animate={{ y: yOffset, opacity: 1, rotate: rotation }}
-                  exit={{ y: 80, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 320, damping: 28, delay: i * 0.12 }}
-                  style={{ zIndex: i }}
-                  className="relative"
-                >
-                  <GameCard
-                    card={card}
-                    selected={card.id === selectedCardId}
-                    disabled={disabled}
-                    size={cardSize}
-                    onClick={() => onSelectCard(card.id)}
-                  />
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
+            return (
+              <motion.div
+                key={card.id}
+                layout
+                initial={{ y: 80, opacity: 0, rotate: rotation }}
+                animate={{ y: yOffset, opacity: isDraggingThis ? 0.25 : 1, rotate: rotation }}
+                exit={{ y: 80, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 320, damping: 28, delay: i * 0.12 }}
+                style={{ zIndex: i }}
+                className="relative touch-none"
+                onPointerDown={(e) => {
+                  if (disabled) return;
+                  onDragStart?.(card.id, e);
+                  onSelectCard(card.id);
+                }}
+              >
+                <GameCard
+                  card={card}
+                  selected={card.id === selectedCardId && !draggingCardId}
+                  disabled={disabled}
+                  size={cardSize}
+                />
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
       </div>
-
-    </>
+    </div>
   );
 }

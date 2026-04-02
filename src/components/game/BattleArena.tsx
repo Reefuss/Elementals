@@ -89,6 +89,8 @@ interface BattleArenaProps {
   selfPlayedCard?:   Card;
   lastResult?:       RoundResult | null;
   selfId:            string;
+  isDragging?:       boolean;
+  dropZoneRef?:      React.RefObject<HTMLDivElement>;
 }
 
 // ─────────────────────────────────────────────
@@ -97,7 +99,7 @@ interface BattleArenaProps {
 
 export function BattleArena({
   phase, round, msLeft, selfHasPlayed, opponentHasPlayed,
-  selfPlayedCard, lastResult, selfId,
+  selfPlayedCard, lastResult, selfId, isDragging, dropZoneRef,
 }: BattleArenaProps) {
   const isRevealing = phase === GamePhase.REVEALING;
   const isPlaying   = phase === GamePhase.PLAYING;
@@ -270,6 +272,10 @@ export function BattleArena({
         {/* ── Self slot ──────────────────────────── */}
         <div className="relative flex flex-col items-center gap-2">
           <span className="text-[10px] uppercase tracking-widest text-white/30">You</span>
+          {/* Invisible drop zone ref anchor — sized to match the card slot */}
+          {!selfHasPlayed && !isRevealing && (
+            <div ref={dropZoneRef} className="absolute inset-0 pointer-events-none" />
+          )}
 
           {/* Impact flash on flip */}
           <AnimatePresence>
