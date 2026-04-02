@@ -475,7 +475,7 @@ export const COINS_WIN            = 100;
 export const COINS_LOSS           = 30;
 
 const RARITY_PITY_PRICES: Record<Rarity, number> = {
-  common: 5, uncommon: 10, rare: 20, epic: 50, legendary: 120,
+  common: 5, uncommon: 10, rare: 20, epic: 50, legendary: 120, diamond: 300,
 };
 
 export function getPityPrice(card: CardVariant): number {
@@ -570,7 +570,7 @@ export function validateDeck(cards: Record<string, number>): DeckValidationResul
 //  Pack opening
 // ─────────────────────────────────────────────
 
-const RARITY_ORDER: Rarity[] = ["common", "uncommon", "rare", "epic", "legendary"];
+const RARITY_ORDER: Rarity[] = ["common", "uncommon", "rare", "epic", "legendary", "diamond"];
 function rarityIndex(r: Rarity) { return RARITY_ORDER.indexOf(r); }
 
 function rollRarity(weights: PackRarityWeights): Rarity {
