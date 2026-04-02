@@ -46,10 +46,11 @@ export function buildDeckFromCards(savedCards: Record<string, number>): Card[] {
     for (let i = 0; i < qty; i++) {
       if (variant.type === "element") {
         const card: ElementCard = {
-          id:      uuidv4(),
-          type:    CardType.ELEMENT,
-          element: variant.element as Element,
-          value:   variant.value as 3 | 5 | 8,
+          id:        uuidv4(),
+          type:      CardType.ELEMENT,
+          element:   variant.element as Element,
+          value:     variant.value as 3 | 5 | 8,
+          variantId: variantId,
         };
         deck.push(card);
       } else if (variant.type === "special") {
@@ -57,13 +58,15 @@ export function buildDeckFromCards(savedCards: Record<string, number>): Card[] {
           id:          uuidv4(),
           type:        CardType.SPECIAL,
           specialType: variant.specialType as SpecialType,
+          variantId:   variantId,
         };
         deck.push(card);
       } else if (variant.type === "diamond") {
         const card: DiamondCard = {
-          id:    uuidv4(),
-          type:  CardType.DIAMOND,
-          value: variant.value as number,
+          id:        uuidv4(),
+          type:      CardType.DIAMOND,
+          value:     variant.value as number,
+          variantId: variantId,
         };
         deck.push(card);
       }

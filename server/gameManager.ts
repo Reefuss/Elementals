@@ -1,5 +1,7 @@
 import {
+  ActiveEffect,
   Card,
+  CardType,
   ClientGameState,
   Element,
   GamePhase,
@@ -13,6 +15,7 @@ import {
   SpecialType,
   WinReason,
 } from "../src/lib/game/types";
+import { CARD_MAP } from "../src/lib/game/cardPool";
 import {
   DRAW_PER_ROUND,
   INITIAL_HAND_SIZE,
@@ -56,15 +59,17 @@ export class GameManager {
     roomId: string
   ): InternalGame {
     const makePlayer = (info: typeof p1): ServerPlayer => ({
-      id:        info.id,
-      username:  info.username,
-      socketId:  info.socketId,
-      deck:      buildDeckFromCards(info.deckCards ?? {}),
-      hand:      [],
-      discard:   [],
-      voided:    [],
-      score:     0,
-      connected: true,
+      id:            info.id,
+      username:      info.username,
+      socketId:      info.socketId,
+      deck:          buildDeckFromCards(info.deckCards ?? {}),
+      hand:          [],
+      discard:       [],
+      voided:        [],
+      score:         0,
+      connected:     true,
+      drawModifier:  0,
+      firstWinUsed:  false,
     });
 
     const game: InternalGame = {
@@ -74,6 +79,7 @@ export class GameManager {
       players:         [makePlayer(p1), makePlayer(p2)],
       plays:           new Map(),
       results:         [],
+      activeEffects:   [],
       turnStartedAt:   null,
       turnTimer:       null,
       rainbowTiebreak: null,
@@ -95,11 +101,18 @@ export class GameManager {
     game.rainbowTiebreak = null;
     game.revivePick      = null;
 
-    const drawCount = game.round === 1 ? INITIAL_HAND_SIZE : DRAW_PER_ROUND;
+    const baseDrawCount = game.round === 1 ? INITIAL_HAND_SIZE : DRAW_PER_ROUND;
     for (const player of game.players) {
-      const drawn = drawCards(player.deck, drawCount);
+      const actualDraw = Math.max(0, baseDrawCount + player.drawModifier);
+      player.drawModifier = 0;
+      const drawn = drawCards(player.deck, actualDraw);
       player.hand.push(...drawn);
     }
+
+    // Tick down persistent active effects
+    game.activeEffects = game.activeEffects
+      .map((e) => e.roundsRemaining === -1 ? e : { ...e, roundsRemaining: e.roundsRemaining - 1 })
+      .filter((e) => e.roundsRemaining !== 0);
 
     const [p1, p2] = game.players;
     if (areBothOutOfCards(p1.hand, p1.deck, p2.hand, p2.deck)) {
@@ -150,6 +163,31 @@ export class GameManager {
     if (!isValidPlay(cardId, player.hand)) return { error: "Card not in hand." };
 
     const card = player.hand.find((c) => c.id === cardId)!;
+
+    // Enforce opp_no_special restriction
+    const noSpecialEffect = game.activeEffects.find(
+      (e) => e.type === "opp_no_special" && e.forPlayerId !== playerId
+    );
+    if (noSpecialEffect && card.type === CardType.SPECIAL) {
+      return { error: "You cannot play special cards this round." };
+    }
+
+    // Enforce opp_type_restrict restriction
+    const typeRestrictEffect = game.activeEffects.find(
+      (e) => e.type === "opp_type_restrict" && e.forPlayerId !== playerId && e.restrictType
+    );
+    if (typeRestrictEffect?.restrictType) {
+      const lastResult = game.results[game.results.length - 1];
+      const myLastCard = lastResult
+        ? (game.players[0].id === playerId ? lastResult.playerOneCard : lastResult.playerTwoCard)
+        : null;
+      if (myLastCard && card.type === myLastCard.type) {
+        const sameElement = card.type === CardType.ELEMENT && myLastCard.type === CardType.ELEMENT &&
+          card.element === myLastCard.element;
+        if (sameElement) return { error: "You cannot play the same element type this round." };
+      }
+    }
+
     game.cardCache.set(cardId, card);
     player.hand = player.hand.filter((c) => c.id !== cardId);
     game.plays.set(playerId, cardId);
@@ -170,7 +208,89 @@ export class GameManager {
     const p1Card   = game.cardCache.get(game.plays.get(p1.id)!)!;
     const p2Card   = game.cardCache.get(game.plays.get(p2.id)!)!;
 
-    const resolution = resolveCards(p1Card, p2Card);
+    // ── Look up card effect variants ──────────────────────────
+    const p1Variant = p1Card.variantId ? CARD_MAP[p1Card.variantId] : null;
+    const p2Variant = p2Card.variantId ? CARD_MAP[p2Card.variantId] : null;
+
+    // ── Negation / immunity checks ────────────────────────────
+    // negate_opp from current card: each player can negate the other
+    const p1NegatesP2 = p1Variant?.effectType === "negate_opp" ||
+      game.activeEffects.some((e) => (e.type === "negate_opp" || e.type === "negate_opp_next") && e.forPlayerId === p1.id);
+    const p2NegatesP1 = p2Variant?.effectType === "negate_opp" ||
+      game.activeEffects.some((e) => (e.type === "negate_opp" || e.type === "negate_opp_next") && e.forPlayerId === p2.id);
+
+    // immune: player ignores effects applied to them by opponent
+    const p1Immune = p1Variant?.effectType === "immune" ||
+      game.activeEffects.some((e) => (e.type === "immune" || e.type === "immune_next") && e.forPlayerId === p1.id);
+    const p2Immune = p2Variant?.effectType === "immune" ||
+      game.activeEffects.some((e) => (e.type === "immune" || e.type === "immune_next") && e.forPlayerId === p2.id);
+
+    // p1's effect is active unless p2 negates it
+    const p1EffActive = !p2NegatesP1;
+    const p2EffActive = !p1NegatesP2;
+
+    // ── Value bonuses from active effects (applied before resolveCards) ──
+    function applyValueBonus(card: Card, bonus: number): Card {
+      if (bonus === 0) return card;
+      if (card.type === CardType.ELEMENT)
+        return { ...card, value: Math.max(1, card.value + bonus) } as Card;
+      if (card.type === CardType.DIAMOND)
+        return { ...card, value: Math.max(1, card.value + bonus) } as Card;
+      return card;
+    }
+
+    const p1ValueBonus = game.activeEffects
+      .filter((e) => ["next_value_bonus","persistent_value_bonus","persistent_value_bonus_perm"].includes(e.type) && e.forPlayerId === p1.id)
+      .reduce((s, e) => s + (e.value ?? 0), 0);
+    const p2ValueBonus = game.activeEffects
+      .filter((e) => ["next_value_bonus","persistent_value_bonus","persistent_value_bonus_perm"].includes(e.type) && e.forPlayerId === p2.id)
+      .reduce((s, e) => s + (e.value ?? 0), 0);
+    const p1ValuePenalty = p2Immune ? 0 : game.activeEffects
+      .filter((e) => e.type === "opp_value_penalty" && e.forPlayerId === p2.id)
+      .reduce((s, e) => s + (e.value ?? 0), 0);
+    const p2ValuePenalty = p1Immune ? 0 : game.activeEffects
+      .filter((e) => e.type === "opp_value_penalty" && e.forPlayerId === p1.id)
+      .reduce((s, e) => s + (e.value ?? 0), 0);
+
+    // value_bonus_and_tie_wins also contributes value bonus
+    const p1ValueBonusAndTie = (p1EffActive && p1Variant?.effectType === "value_bonus_and_tie_wins") ? (p1Variant.effectParam ?? 0) : 0;
+    const p2ValueBonusAndTie = (p2EffActive && p2Variant?.effectType === "value_bonus_and_tie_wins") ? (p2Variant.effectParam ?? 0) : 0;
+
+    const p1CardEff = applyValueBonus(p1Card, p1ValueBonus + p1ValueBonusAndTie - p1ValuePenalty);
+    const p2CardEff = applyValueBonus(p2Card, p2ValueBonus + p2ValueBonusAndTie - p2ValuePenalty);
+
+    const resolution = resolveCards(p1CardEff, p2CardEff);
+
+    // ── Outcome modifications (tie_wins, lose_becomes_tie) ────
+    let effectiveWinnerIndex = resolution.winnerIndex;
+    let effectiveOutcome     = resolution.outcome;
+    let effectiveReason      = resolution.reason;
+
+    if (effectiveWinnerIndex === null && !resolution.needsTiebreak) {
+      // Tie: check tie_wins
+      const p1TieWins = (p1EffActive && (p1Variant?.effectType === "tie_wins" || p1Variant?.effectType === "value_bonus_and_tie_wins")) ||
+        game.activeEffects.some((e) => e.type === "persistent_tie_wins" && e.forPlayerId === p1.id);
+      const p2TieWins = (p2EffActive && (p2Variant?.effectType === "tie_wins" || p2Variant?.effectType === "value_bonus_and_tie_wins")) ||
+        game.activeEffects.some((e) => e.type === "persistent_tie_wins" && e.forPlayerId === p2.id);
+      if (p1TieWins && !p2TieWins) {
+        effectiveWinnerIndex = 0;
+        effectiveOutcome     = RoundOutcome.PLAYER_ONE_WINS;
+        effectiveReason      = WinReason.CARD_EFFECT_TIE_WIN;
+      } else if (p2TieWins && !p1TieWins) {
+        effectiveWinnerIndex = 1;
+        effectiveOutcome     = RoundOutcome.PLAYER_TWO_WINS;
+        effectiveReason      = WinReason.CARD_EFFECT_TIE_WIN;
+      }
+    } else if (effectiveWinnerIndex === 1 && !p2Immune && p1EffActive && p1Variant?.effectType === "lose_becomes_tie") {
+      // p1 lost but has lose_becomes_tie
+      effectiveWinnerIndex = null;
+      effectiveOutcome     = RoundOutcome.TIE;
+      effectiveReason      = WinReason.CARD_EFFECT_TIE_WIN;
+    } else if (effectiveWinnerIndex === 0 && !p1Immune && p2EffActive && p2Variant?.effectType === "lose_becomes_tie") {
+      effectiveWinnerIndex = null;
+      effectiveOutcome     = RoundOutcome.TIE;
+      effectiveReason      = WinReason.CARD_EFFECT_TIE_WIN;
+    }
 
     // ── Special pre-result side effects ──────────────────────
 
@@ -213,10 +333,221 @@ export class GameManager {
       return;
     }
 
-    // Score the round
+    // ── Score the round ───────────────────────────────────────
     let winnerId: string | null = null;
-    if (resolution.winnerIndex === 0) { p1.score++; winnerId = p1.id; }
-    if (resolution.winnerIndex === 1) { p2.score++; winnerId = p2.id; }
+
+    // Helper to discard N random cards from a player's hand
+    const discardRandom = (player: ServerPlayer, n: number) => {
+      const count = Math.min(n, player.hand.length);
+      for (let i = 0; i < count; i++) {
+        const idx  = Math.floor(Math.random() * player.hand.length);
+        const card = player.hand.splice(idx, 1)[0];
+        player.discard.push(card);
+      }
+    };
+
+    if (effectiveWinnerIndex === 0) {
+      const scoreLocked = game.activeEffects.some((e) => e.type === "opp_score_lock" && e.forPlayerId === p2.id);
+      if (!scoreLocked) {
+        p1.score++;
+        if (p1EffActive && p1Variant?.effectType === "score_bonus_win")
+          p1.score += (p1Variant.effectParam ?? 1);
+        if (p1EffActive && p1Variant?.effectType === "first_win_bonus" && !p1.firstWinUsed) {
+          p1.score += (p1Variant.effectParam ?? 1);
+          p1.firstWinUsed = true;
+        }
+      }
+      winnerId = p1.id;
+      // opp_discard_win
+      if (!p2Immune && p1EffActive && p1Variant?.effectType === "opp_discard_win")
+        discardRandom(p2, p1Variant.effectParam ?? 1);
+      if (!p2Immune && p1EffActive && p1Variant?.effectType === "opp_discard_all_win")
+        discardRandom(p2, p2.hand.length);
+      // opp_skip_draw_win → penalize opponent's next draw fully
+      if (!p2Immune && p1EffActive && p1Variant?.effectType === "opp_skip_draw_win")
+        p2.drawModifier -= 99;
+      // opp_score_lock_win
+      if (!p2Immune && p1EffActive && p1Variant?.effectType === "opp_score_lock_win") {
+        game.activeEffects.push({ type: "opp_score_lock", forPlayerId: p1.id, roundsRemaining: p1Variant.effectParam ?? 1 });
+      }
+    } else if (effectiveWinnerIndex === 1) {
+      // point_block_lose: if p1 has this and lost, p2 doesn't score
+      const pointBlocked = !p1Immune && p1EffActive && p1Variant?.effectType === "point_block_lose";
+      const scoreLocked  = game.activeEffects.some((e) => e.type === "opp_score_lock" && e.forPlayerId === p1.id);
+      if (!pointBlocked && !scoreLocked) {
+        p2.score++;
+        if (p2EffActive && p2Variant?.effectType === "score_bonus_win")
+          p2.score += (p2Variant.effectParam ?? 1);
+        if (p2EffActive && p2Variant?.effectType === "first_win_bonus" && !p2.firstWinUsed) {
+          p2.score += (p2Variant.effectParam ?? 1);
+          p2.firstWinUsed = true;
+        }
+      }
+      winnerId = p2.id;
+      if (!p1Immune && p2EffActive && p2Variant?.effectType === "opp_discard_win")
+        discardRandom(p1, p2Variant.effectParam ?? 1);
+      if (!p1Immune && p2EffActive && p2Variant?.effectType === "opp_discard_all_win")
+        discardRandom(p1, p1.hand.length);
+      if (!p1Immune && p2EffActive && p2Variant?.effectType === "opp_skip_draw_win")
+        p1.drawModifier -= 99;
+      if (!p1Immune && p2EffActive && p2Variant?.effectType === "opp_score_lock_win") {
+        game.activeEffects.push({ type: "opp_score_lock", forPlayerId: p2.id, roundsRemaining: p2Variant.effectParam ?? 1 });
+      }
+    }
+
+    // ── score_after: always gain N (regardless of outcome) ───
+    if (p1EffActive && p1Variant?.effectType === "score_after")
+      p1.score += (p1Variant.effectParam ?? 1);
+    if (p2EffActive && p2Variant?.effectType === "score_after")
+      p2.score += (p2Variant.effectParam ?? 1);
+
+    // ── Draw effects ──────────────────────────────────────────
+    const isTieRound = effectiveWinnerIndex === null;
+    const p1Won      = effectiveWinnerIndex === 0;
+    const p2Won      = effectiveWinnerIndex === 1;
+
+    // p1 draw bonuses
+    if (p1EffActive) {
+      if (p1Variant?.effectType === "draw_after")
+        p1.drawModifier += (p1Variant.effectParam ?? 1);
+      if (p1Variant?.effectType === "draw_on_win" && p1Won)
+        p1.drawModifier += (p1Variant.effectParam ?? 1);
+      if (p1Variant?.effectType === "draw_on_lose" && p2Won)
+        p1.drawModifier += (p1Variant.effectParam ?? 1);
+      if (p1Variant?.effectType === "draw_on_tie" && isTieRound)
+        p1.drawModifier += (p1Variant.effectParam ?? 1);
+    }
+    // p2 draw bonuses
+    if (p2EffActive) {
+      if (p2Variant?.effectType === "draw_after")
+        p2.drawModifier += (p2Variant.effectParam ?? 1);
+      if (p2Variant?.effectType === "draw_on_win" && p2Won)
+        p2.drawModifier += (p2Variant.effectParam ?? 1);
+      if (p2Variant?.effectType === "draw_on_lose" && p1Won)
+        p2.drawModifier += (p2Variant.effectParam ?? 1);
+      if (p2Variant?.effectType === "draw_on_tie" && isTieRound)
+        p2.drawModifier += (p2Variant.effectParam ?? 1);
+    }
+    // opp draw penalties from p1's card
+    if (!p2Immune && p1EffActive) {
+      if (p1Variant?.effectType === "opp_draw_penalty")
+        p2.drawModifier -= (p1Variant.effectParam ?? 1);
+      if (p1Variant?.effectType === "opp_skip_draw_after")
+        p2.drawModifier -= 99;
+      if (p1Variant?.effectType === "opp_skip_draw_lose" && p2Won)
+        p2.drawModifier -= 99;
+      if (p1Variant?.effectType === "opp_draw_penalty_on_tie" && isTieRound)
+        p2.drawModifier -= (p1Variant.effectParam ?? 1);
+      if (p1Variant?.effectType === "opp_discard_lose" && p2Won)
+        discardRandom(p2, p1Variant.effectParam ?? 1);
+      if (p1Variant?.effectType === "opp_discard_after")
+        discardRandom(p2, p1Variant.effectParam ?? 1);
+    }
+    // opp draw penalties from p2's card
+    if (!p1Immune && p2EffActive) {
+      if (p2Variant?.effectType === "opp_draw_penalty")
+        p1.drawModifier -= (p2Variant.effectParam ?? 1);
+      if (p2Variant?.effectType === "opp_skip_draw_after")
+        p1.drawModifier -= 99;
+      if (p2Variant?.effectType === "opp_skip_draw_lose" && p1Won)
+        p1.drawModifier -= 99;
+      if (p2Variant?.effectType === "opp_draw_penalty_on_tie" && isTieRound)
+        p1.drawModifier -= (p2Variant.effectParam ?? 1);
+      if (p2Variant?.effectType === "opp_discard_lose" && p1Won)
+        discardRandom(p1, p2Variant.effectParam ?? 1);
+      if (p2Variant?.effectType === "opp_discard_after")
+        discardRandom(p1, p2Variant.effectParam ?? 1);
+    }
+
+    // ── Queue persistent active effects ───────────────────────
+    const pushEffect = (e: ActiveEffect) => game.activeEffects.push(e);
+
+    if (p1EffActive && p1Variant) {
+      switch (p1Variant.effectType) {
+        case "persistent_tie_wins":
+          if (!game.activeEffects.some((e) => e.type === "persistent_tie_wins" && e.forPlayerId === p1.id))
+            pushEffect({ type: "persistent_tie_wins", forPlayerId: p1.id, roundsRemaining: -1 });
+          break;
+        case "next_value_bonus":
+          pushEffect({ type: "next_value_bonus", forPlayerId: p1.id, roundsRemaining: 1, value: p1Variant.effectParam ?? 1 });
+          break;
+        case "persistent_value_bonus":
+          pushEffect({ type: "persistent_value_bonus", forPlayerId: p1.id, roundsRemaining: 2, value: p1Variant.effectParam ?? 1 });
+          break;
+        case "persistent_value_bonus_perm":
+          pushEffect({ type: "persistent_value_bonus_perm", forPlayerId: p1.id, roundsRemaining: -1, value: p1Variant.effectParam ?? 1 });
+          break;
+        case "value_bonus_on_tie":
+          if (isTieRound)
+            pushEffect({ type: "next_value_bonus", forPlayerId: p1.id, roundsRemaining: 1, value: p1Variant.effectParam ?? 1 });
+          break;
+        case "opp_value_penalty":
+          if (!p2Immune)
+            pushEffect({ type: "opp_value_penalty", forPlayerId: p1.id, roundsRemaining: 1, value: p1Variant.effectParam ?? 1 });
+          break;
+        case "opp_score_lock":
+          if (!p2Immune)
+            pushEffect({ type: "opp_score_lock", forPlayerId: p2.id, roundsRemaining: p1Variant.effectParam ?? 1 });
+          break;
+        case "opp_no_special":
+          if (!p2Immune)
+            pushEffect({ type: "opp_no_special", forPlayerId: p1.id, roundsRemaining: p1Variant.effectParam ?? 1 });
+          break;
+        case "opp_type_restrict":
+          if (!p2Immune)
+            pushEffect({ type: "opp_type_restrict", forPlayerId: p1.id, roundsRemaining: p1Variant.effectParam ?? 1, restrictType: "same" });
+          break;
+        case "negate_opp_next":
+          pushEffect({ type: "negate_opp_next", forPlayerId: p1.id, roundsRemaining: 1 });
+          break;
+        case "immune_next":
+          pushEffect({ type: "immune_next", forPlayerId: p1.id, roundsRemaining: 1 });
+          break;
+      }
+    }
+    if (p2EffActive && p2Variant) {
+      switch (p2Variant.effectType) {
+        case "persistent_tie_wins":
+          if (!game.activeEffects.some((e) => e.type === "persistent_tie_wins" && e.forPlayerId === p2.id))
+            pushEffect({ type: "persistent_tie_wins", forPlayerId: p2.id, roundsRemaining: -1 });
+          break;
+        case "next_value_bonus":
+          pushEffect({ type: "next_value_bonus", forPlayerId: p2.id, roundsRemaining: 1, value: p2Variant.effectParam ?? 1 });
+          break;
+        case "persistent_value_bonus":
+          pushEffect({ type: "persistent_value_bonus", forPlayerId: p2.id, roundsRemaining: 2, value: p2Variant.effectParam ?? 1 });
+          break;
+        case "persistent_value_bonus_perm":
+          pushEffect({ type: "persistent_value_bonus_perm", forPlayerId: p2.id, roundsRemaining: -1, value: p2Variant.effectParam ?? 1 });
+          break;
+        case "value_bonus_on_tie":
+          if (isTieRound)
+            pushEffect({ type: "next_value_bonus", forPlayerId: p2.id, roundsRemaining: 1, value: p2Variant.effectParam ?? 1 });
+          break;
+        case "opp_value_penalty":
+          if (!p1Immune)
+            pushEffect({ type: "opp_value_penalty", forPlayerId: p2.id, roundsRemaining: 1, value: p2Variant.effectParam ?? 1 });
+          break;
+        case "opp_score_lock":
+          if (!p1Immune)
+            pushEffect({ type: "opp_score_lock", forPlayerId: p1.id, roundsRemaining: p2Variant.effectParam ?? 1 });
+          break;
+        case "opp_no_special":
+          if (!p1Immune)
+            pushEffect({ type: "opp_no_special", forPlayerId: p2.id, roundsRemaining: p2Variant.effectParam ?? 1 });
+          break;
+        case "opp_type_restrict":
+          if (!p1Immune)
+            pushEffect({ type: "opp_type_restrict", forPlayerId: p2.id, roundsRemaining: p2Variant.effectParam ?? 1, restrictType: "same" });
+          break;
+        case "negate_opp_next":
+          pushEffect({ type: "negate_opp_next", forPlayerId: p2.id, roundsRemaining: 1 });
+          break;
+        case "immune_next":
+          pushEffect({ type: "immune_next", forPlayerId: p2.id, roundsRemaining: 1 });
+          break;
+      }
+    }
 
     const voidedCardOf =
       resolution.voidedIndex !== undefined
@@ -227,8 +558,8 @@ export class GameManager {
       roundNumber:   game.round,
       playerOneCard: p1Card,
       playerTwoCard: p2Card,
-      outcome:       resolution.outcome,
-      reason:        resolution.reason,
+      outcome:       effectiveOutcome,
+      reason:        effectiveReason,
       winnerId,
       scoreAfter:    { [p1.id]: p1.score, [p2.id]: p2.score },
       voidedCardOf,
@@ -473,13 +804,16 @@ export class GameManager {
     const opp  = game.players[selfIdx === 0 ? 1 : 0];
 
     const selfView: SelfView = {
-      id:          self.id,
-      username:    self.username,
-      score:       self.score,
-      hand:        self.hand,
-      deckCount:   self.deck.length,
-      discardPile: self.discard,
-      hasPlayed:   game.plays.has(self.id),
+      id:           self.id,
+      username:     self.username,
+      score:        self.score,
+      hand:         self.hand,
+      deckCount:    self.deck.length,
+      discardPile:  self.discard,
+      hasPlayed:    game.plays.has(self.id),
+      activeEffects: game.activeEffects
+        .filter((e) => e.forPlayerId === self.id)
+        .map(({ type, roundsRemaining, value }) => ({ type, roundsRemaining, value })),
     };
 
     const oppView: OpponentView = {

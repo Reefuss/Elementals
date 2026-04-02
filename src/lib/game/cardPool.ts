@@ -16,6 +16,12 @@ export interface CardVariant {
   artTheme:     string;
   setId:        string;
   maxPerDeck:   number;
+  /** Human-readable effect shown on the card */
+  effect:       string;
+  /** Engine dispatch key — "complex_*" = shown in UI but not yet active */
+  effectType:   string;
+  effectParam?: number;
+  effectParam2?: number;
 }
 
 // ─────────────────────────────────────────────
@@ -26,12 +32,196 @@ const RARITY_MAX: Record<Rarity, number> = {
   common: 3, uncommon: 3, rare: 2, epic: 1, legendary: 1,
 };
 
+// ── Effect table ──────────────────────────────────────────────────────────────
+// effectType constants (prefixed for clarity in engine dispatch):
+//   "none"                     — no effect
+//   "draw_on_lose:N"           — draw N if you lose
+//   "draw_on_win:N"            — draw N if you win
+//   "draw_on_tie:N"            — draw N if tie
+//   "draw_after:N"             — always draw N after round
+//   "opp_discard_after:N"      — opponent discards N after round (regardless of outcome)
+//   "opp_skip_draw_after"      — opponent skips next draw
+//   "score_bonus_win:N"        — gain +N extra score if win
+//   "score_after:N"            — always gain N score after round
+//   "tie_wins"                 — ties become wins for you this round
+//   "persistent_tie_wins"      — wins ties for rest of match
+//   "lose_becomes_tie"         — losses become ties for you this round
+//   "point_block_lose"         — if you lose, opponent scores 0
+//   "opp_draw_penalty:N"       — opponent draws N less next round
+//   "opp_discard_win:N"        — opponent discards N if you win
+//   "opp_discard_lose:N"       — opponent discards N if you lose
+//   "opp_discard_all_win"      — opponent discards entire hand if you win
+//   "immune"                   — ignore opponent's card effect this round
+//   "immune_next"              — immune to effects next round
+//   "next_value_bonus:N"       — +N to your card next round
+//   "persistent_value_bonus:N" — +N for 2 rounds
+//   "persistent_value_bonus_perm:N" — +N permanent (rest of match)
+//   "value_bonus_and_tie_wins:N" — +N value AND tie wins
+//   "value_bonus_on_tie:N"     — +N next round if this round was a tie
+//   "opp_value_penalty:N"      — opponent's card -N next round
+//   "opp_type_restrict:N"      — opponent can't repeat same type for N rounds
+//   "opp_score_lock:N"         — opponent can't score for N rounds
+//   "opp_score_lock_win:N"     — opponent can't score N rounds if you win
+//   "opp_no_special:N"         — opponent can't play specials for N rounds
+//   "first_win_bonus:N"        — first win in match gives +N extra
+//   "negate_opp"               — negate opponent's card effect this round
+//   "negate_opp_next"          — negate opponent's card effect next round
+//   "opp_skip_draw_win"        — opponent skips draw if you win (they lose)
+//   "opp_skip_draw_lose"       — opponent skips draw if you lose (they win)
+//   "opp_draw_penalty_on_tie:N"— opponent draws N less if this round ties
+//   "complex_*"                — described but not yet implemented
+
+type FxEntry = { effect: string; effectType: string; effectParam?: number; effectParam2?: number };
+
+const CARD_EFFECTS: Record<string, FxEntry> = {
+  // ══ ROCK ═════════════════════════════════════════════════════════════════════
+  s01: { effect: "If you lose, opponent skips their next draw.",           effectType: "opp_skip_draw_lose" },
+  s02: { effect: "If you win, opponent discards their lowest-value card.", effectType: "complex_opp_discard_lowest" },
+  s03: { effect: "On tie, opponent draws nothing next turn.",              effectType: "opp_draw_penalty_on_tie", effectParam: 99 },
+  s04: { effect: "No effect.",                                             effectType: "none" },
+  s05: { effect: "If you lose, draw 1 card.",                              effectType: "draw_on_lose", effectParam: 1 },
+  s06: { effect: "Reveal 1 random card from opponent's hand.",             effectType: "complex_reveal_one" },
+  s07: { effect: "On tie, your next card gains +1 value.",                 effectType: "value_bonus_on_tie", effectParam: 1 },
+  s08: { effect: "Opponent cannot play the same card type next round.",    effectType: "opp_type_restrict", effectParam: 1 },
+  s09: { effect: "If you win, opponent skips their next draw.",            effectType: "opp_skip_draw_win" },
+  s10: { effect: "If you win, opponent discards 1 random card.",           effectType: "opp_discard_win", effectParam: 1 },
+  s11: { effect: "Immune to removal and discard effects.",                 effectType: "immune" },
+  s12: { effect: "Next round, your card gains +2 value.",                  effectType: "next_value_bonus", effectParam: 2 },
+  s13: { effect: "If you win, opponent discards 2 random cards.",          effectType: "opp_discard_win", effectParam: 2 },
+  s14: { effect: "Opponent cannot play special cards next round.",         effectType: "opp_no_special", effectParam: 1 },
+  s15: { effect: "Both players discard their hands and redraw 3 cards.",  effectType: "complex_both_redraw" },
+  s16: { effect: "If you win, destroy opponent's special card.",           effectType: "complex_destroy_special" },
+  s17: { effect: "Opponent discards their hand and redraws 2 cards.",      effectType: "complex_opp_redraw" },
+  s18: { effect: "If you would lose, it becomes a tie instead.",           effectType: "lose_becomes_tie" },
+  s19: { effect: "Opponent must replay the same card next round.",         effectType: "complex_opp_replay_same" },
+  s20: { effect: "If you win, gain +2 points instead of +1.",              effectType: "score_bonus_win", effectParam: 1 },
+  s21: { effect: "Opponent cannot win next round — tie is the maximum.",   effectType: "opp_score_lock", effectParam: 1 },
+  s22: { effect: "Immune to all card effects this round.",                 effectType: "immune" },
+  s23: { effect: "Double your card's value this round.",                   effectType: "complex_double_value" },
+  s24: { effect: "Opponent cannot play special cards for 2 rounds.",       effectType: "opp_no_special", effectParam: 2 },
+  s25: { effect: "If you lose, replay the round once.",                    effectType: "complex_replay_on_lose" },
+  s26: { effect: "Reset both players' hands to 3 new cards.",              effectType: "complex_both_hand_reset" },
+  s27: { effect: "You win all ties for the rest of the match.",            effectType: "persistent_tie_wins" },
+  s28: { effect: "If you win, opponent discards their entire hand.",       effectType: "opp_discard_all_win" },
+
+  // ══ SCISSORS ═════════════════════════════════════════════════════════════════
+  m01: { effect: "If tie, you win instead.",                               effectType: "tie_wins" },
+  m02: { effect: "Opponent draws 1 less card next turn.",                  effectType: "opp_draw_penalty", effectParam: 1 },
+  m03: { effect: "Draw 1 card after this round.",                          effectType: "draw_after", effectParam: 1 },
+  m04: { effect: "Opponent reveals their card slightly early.",            effectType: "complex_early_reveal" },
+  m05: { effect: "No effect.",                                             effectType: "none" },
+  m06: { effect: "If you lose, opponent discards 1 random card.",         effectType: "opp_discard_lose", effectParam: 1 },
+  m07: { effect: "Opponent's next card loses 2 value.",                    effectType: "opp_value_penalty", effectParam: 2 },
+  m08: { effect: "If you win, opponent discards 1 card.",                  effectType: "opp_discard_win", effectParam: 1 },
+  m09: { effect: "If you win, draw 2 cards.",                              effectType: "draw_on_win", effectParam: 2 },
+  m10: { effect: "Opponent cannot play the same card type next round.",    effectType: "opp_type_restrict", effectParam: 1 },
+  m11: { effect: "Ignore opponent's card effect this round.",              effectType: "immune" },
+  m12: { effect: "No effect.",                                             effectType: "none" },
+  m13: { effect: "+1 to your card's value; win ties instead of replaying.",effectType: "value_bonus_and_tie_wins", effectParam: 1 },
+  m14: { effect: "Double your card's value this round.",                   effectType: "complex_double_value" },
+  m15: { effect: "If you win, draw 1 card.",                               effectType: "draw_on_win", effectParam: 1 },
+  m16: { effect: "If you win, destroy opponent's highest-value card.",     effectType: "complex_destroy_highest" },
+  m17: { effect: "If you win, opponent's played card is removed from the match.", effectType: "complex_void_opp_on_win" },
+  m18: { effect: "If you win, opponent skips their entire next turn.",     effectType: "complex_skip_opp_turn" },
+  m19: { effect: "Opponent cannot draw any cards next turn.",              effectType: "opp_draw_penalty", effectParam: 99 },
+  m20: { effect: "Opponent discards half their hand (rounded down).",      effectType: "complex_opp_discard_half" },
+  m21: { effect: "Play 2 cards this round; take the better result.",       effectType: "complex_twin_fang" },
+  m22: { effect: "If you win, opponent discards their entire hand.",       effectType: "opp_discard_all_win" },
+  m23: { effect: "If you win, next round is automatically a tie.",         effectType: "complex_auto_tie_next" },
+  m24: { effect: "This card is always treated as +8 value.",               effectType: "none" },
+  m25: { effect: "If you win, opponent's played card is permanently removed.", effectType: "complex_void_opp_on_win" },
+  m26: { effect: "You cannot lose this round.",                            effectType: "complex_cannot_lose" },
+  m27: { effect: "If you win, gain +2 points instead of +1.",              effectType: "score_bonus_win", effectParam: 1 },
+  m28: { effect: "All your cards gain +2 value for the rest of the match.", effectType: "persistent_value_bonus_perm", effectParam: 2 },
+
+  // ══ PAPER ═════════════════════════════════════════════════════════════════════
+  t01: { effect: "See opponent's card after lock-in, before reveal.",      effectType: "complex_peek" },
+  t02: { effect: "Opponent draws 1 less card next turn.",                  effectType: "opp_draw_penalty", effectParam: 1 },
+  t03: { effect: "Opponent's next draw comes from their discard pile.",    effectType: "complex_opp_discard_draw" },
+  t04: { effect: "No effect — pure bluff.",                                effectType: "none" },
+  t05: { effect: "If you lose, draw 1 card.",                              effectType: "draw_on_lose", effectParam: 1 },
+  t06: { effect: "On tie, draw +1 card.",                                  effectType: "draw_on_tie", effectParam: 1 },
+  t07: { effect: "On tie, both players automatically replay the same cards.", effectType: "complex_replay_tie" },
+  t08: { effect: "Draw 1 card, then discard 1 card.",                      effectType: "complex_draw_discard" },
+  t09: { effect: "If you lose, opponent gains no point.",                  effectType: "point_block_lose" },
+  t10: { effect: "Next round, your card gains +2 value.",                  effectType: "next_value_bonus", effectParam: 2 },
+  t11: { effect: "Opponent cannot see your card until reveal.",            effectType: "complex_hide" },
+  t12: { effect: "Opponent cannot play the same card type next round.",    effectType: "opp_type_restrict", effectParam: 1 },
+  t13: { effect: "If you win, opponent discards 1 random card.",           effectType: "opp_discard_win", effectParam: 1 },
+  t14: { effect: "View opponent's full hand.",                             effectType: "complex_view_hand" },
+  t15: { effect: "Win ties instead of replaying.",                         effectType: "tie_wins" },
+  t16: { effect: "No effect.",                                             effectType: "none" },
+  t17: { effect: "No effect.",                                             effectType: "none" },
+  t18: { effect: "If you lose, opponent's played card is removed from the match.", effectType: "complex_remove_opp_on_lose" },
+  t19: { effect: "Negate opponent's card effect.",                         effectType: "negate_opp" },
+  t20: { effect: "For 2 rounds, your cards gain +2 value.",               effectType: "persistent_value_bonus", effectParam: 2 },
+  t21: { effect: "Draw until you have 5 cards in hand (once per match).", effectType: "complex_draw_to_five" },
+  t22: { effect: "If you win, gain +2 points instead of +1.",              effectType: "score_bonus_win", effectParam: 1 },
+  t23: { effect: "After reveal, copy opponent's card value (not type).",   effectType: "complex_copy_value" },
+  t24: { effect: "Opponent's next card has no effect.",                    effectType: "negate_opp_next" },
+  t25: { effect: "You cannot lose ties for the rest of the match.",        effectType: "persistent_tie_wins" },
+  t26: { effect: "Your first win this match gives +2 points.",             effectType: "first_win_bonus", effectParam: 1 },
+  t27: { effect: "If you win, opponent cannot score next round.",          effectType: "opp_score_lock_win", effectParam: 1 },
+  t28: { effect: "Once: replay any card from your discard pile.",          effectType: "complex_discard_replay" },
+
+  // ══ BLOCK ════════════════════════════════════════════════════════════════════
+  b01: { effect: "Cancel round — no points awarded.",                      effectType: "none" },
+  b02: { effect: "Cancel round + draw 1 card.",                            effectType: "draw_after", effectParam: 1 },
+  b03: { effect: "Cancel round + opponent discards 1 random card.",        effectType: "opp_discard_after", effectParam: 1 },
+  b04: { effect: "Cancel round + immune to effects next round.",           effectType: "immune_next" },
+  b05: { effect: "Cancel round + opponent cannot score next round.",       effectType: "opp_score_lock", effectParam: 1 },
+  b06: { effect: "Cancel round + opponent skips their next draw.",         effectType: "opp_skip_draw_after" },
+  b07: { effect: "Cancel round + all opponent effects are negated next round.", effectType: "negate_opp_next" },
+  b08: { effect: "Cancel round + reflect opponent's card effect back at them.", effectType: "complex_reflect" },
+  b09: { effect: "Cancel round + remove opponent's played card from the match.", effectType: "complex_void_opp" },
+  b10: { effect: "Cancel round + gain 1 point.",                           effectType: "score_after", effectParam: 1 },
+
+  // ══ RAINBOW ══════════════════════════════════════════════════════════════════
+  r01: { effect: "Choose your element AFTER both cards are revealed.",     effectType: "complex_choose_after" },
+  r02: { effect: "All your cards gain +2 this round.",                     effectType: "complex_all_plus2" },
+  r03: { effect: "Choose the best outcome after both cards are revealed.", effectType: "complex_choose_outcome" },
+  r04: { effect: "Opponent cannot see your card until after reveal.",      effectType: "complex_hide" },
+  r05: { effect: "Choose ANY element after reveal — works against any type.", effectType: "complex_choose_any" },
+  r06: { effect: "If you win, gain +2 points instead of +1.",              effectType: "score_bonus_win", effectParam: 1 },
+
+  // ══ RESHUFFLE ════════════════════════════════════════════════════════════════
+  rs01: { effect: "Reverse the winner — the loser wins instead.",           effectType: "complex_reverse_winner" },
+  rs02: { effect: "Draw 2 cards immediately after reshuffling.",            effectType: "draw_after", effectParam: 2 },
+  rs03: { effect: "Reset both players' hands and redraw 3 each.",          effectType: "complex_both_redraw" },
+  rs04: { effect: "Replay your last played card automatically.",            effectType: "complex_replay_last" },
+  rs05: { effect: "Replay this round with the same cards.",                 effectType: "complex_replay_same" },
+  rs06: { effect: "Swap outcomes — your win becomes a loss and vice versa.", effectType: "complex_swap_outcomes" },
+
+  // ══ DISCARD TRAP ═════════════════════════════════════════════════════════════
+  dt01: { effect: "Void opponent's played card — removed from the match.",  effectType: "none" },
+  dt02: { effect: "Void opponent's played card + cancel their effect.",     effectType: "none" },
+  dt03: { effect: "Void opponent's played card + negate their next effect.", effectType: "negate_opp_next" },
+  dt04: { effect: "Void opponent's played card + steal 1 card from their hand.", effectType: "complex_steal" },
+  dt05: { effect: "Void opponent's played card + lock their next card (they must replay it).", effectType: "complex_lock_card" },
+  dt06: { effect: "Void opponent's played card + cancel all effects this round.", effectType: "none" },
+
+  // ══ REVIVE ═══════════════════════════════════════════════════════════════════
+  rv01: { effect: "Sacrifice this round: pick 1 card back from your discard pile.", effectType: "none" },
+  rv02: { effect: "Sacrifice this round: pick 1 from discard + draw 1 card.", effectType: "draw_after", effectParam: 1 },
+  rv03: { effect: "If you lose, replay the round — otherwise revive as normal.", effectType: "complex_replay_on_lose" },
+  rv04: { effect: "Sacrifice this round: pick any card back (including voided cards).", effectType: "none" },
+
+  // ══ DIAMOND ══════════════════════════════════════════════════════════════════
+  d01: { effect: "Beats all element cards. Higher value wins vs other diamonds.", effectType: "none" },
+  d02: { effect: "Beats all element cards. Higher value wins vs other diamonds.", effectType: "none" },
+  d03: { effect: "Beats all element cards. Higher value wins vs other diamonds.", effectType: "none" },
+  d04: { effect: "Beats all element cards. Higher value wins vs other diamonds.", effectType: "none" },
+  d05: { effect: "Beats all element and special cards except Block.",       effectType: "none" },
+  d06: { effect: "Ignore opponent's effect and apply it to them instead.", effectType: "complex_reflect" },
+};
+
 function el(
   id: string, element: ElementKey, value: 3 | 5 | 8,
   rarity: Rarity, displayName: string, artTheme: string, flavorText: string
 ): CardVariant {
+  const fx = CARD_EFFECTS[id] ?? { effect: "No effect.", effectType: "none" };
   return { id, type: "element", element, value, rarity, displayName,
-    artTheme, flavorText, setId: "base", maxPerDeck: RARITY_MAX[rarity] };
+    artTheme, flavorText, ...fx, setId: "base", maxPerDeck: RARITY_MAX[rarity] };
 }
 
 function sp(
@@ -39,8 +229,9 @@ function sp(
   rarity: Rarity, displayName: string, artTheme: string,
   flavorText: string, maxPerDeck: number
 ): CardVariant {
+  const fx = CARD_EFFECTS[id] ?? { effect: "No effect.", effectType: "none" };
   return { id, type: "special", specialType, rarity, displayName,
-    artTheme, flavorText, setId: "base", maxPerDeck };
+    artTheme, flavorText, ...fx, setId: "base", maxPerDeck };
 }
 
 function dm(
@@ -48,8 +239,9 @@ function dm(
   rarity: Rarity, displayName: string, artTheme: string,
   flavorText: string
 ): CardVariant {
+  const fx = CARD_EFFECTS[id] ?? { effect: "Beats all element cards.", effectType: "none" };
   return { id, type: "diamond", value, rarity, displayName,
-    artTheme, flavorText, setId: "base", maxPerDeck: 1 };
+    artTheme, flavorText, ...fx, setId: "base", maxPerDeck: 1 };
 }
 
 // ─────────────────────────────────────────────

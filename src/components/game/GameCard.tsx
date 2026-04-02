@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Card, CardType, Element, SpecialType } from "@/lib/game/types";
+import { CARD_MAP } from "@/lib/game/cardPool";
 import { SoundEngine } from "@/lib/sound/engine";
 
 // ─────────────────────────────────────────────
@@ -268,10 +269,10 @@ interface GameCardProps {
 }
 
 const cardSizes = {
-  xs: { outer: "w-12 h-16",  icon: "w-5 h-5",   name: "text-[7px]",  val: "text-xs" },
-  sm: { outer: "w-20 h-28",  icon: "w-8 h-8",   name: "text-[9px]",  val: "text-sm" },
-  md: { outer: "w-28 h-40",  icon: "w-12 h-12",  name: "text-xs",    val: "text-lg" },
-  lg: { outer: "w-36 h-52",  icon: "w-16 h-16",  name: "text-sm",    val: "text-2xl" },
+  xs: { outer: "w-12 h-16",  icon: "w-5 h-5",   name: "text-[7px]",  val: "text-xs",   effect: "" },
+  sm: { outer: "w-20 h-28",  icon: "w-8 h-8",   name: "text-[9px]",  val: "text-sm",   effect: "" },
+  md: { outer: "w-28 h-48",  icon: "w-10 h-10",  name: "text-[9px]", val: "text-lg",   effect: "text-[6.5px]" },
+  lg: { outer: "w-36 h-60",  icon: "w-13 h-13",  name: "text-xs",    val: "text-2xl",  effect: "text-[8px]" },
 };
 
 export function GameCard({
@@ -284,8 +285,9 @@ export function GameCard({
   className,
   animateIn = "none",
 }: GameCardProps) {
-  const theme = getCardTheme(card);
-  const dims  = cardSizes[size];
+  const theme      = getCardTheme(card);
+  const dims       = cardSizes[size];
+  const effectText = card.variantId ? (CARD_MAP[card.variantId]?.effect ?? "") : "";
 
   const isRainbow     = card.type === CardType.SPECIAL && card.specialType === SpecialType.RAINBOW;
   const isBlock       = card.type === CardType.SPECIAL && card.specialType === SpecialType.BLOCK;
@@ -409,16 +411,26 @@ export function GameCard({
         {isDiamond    && <DiamondIcon    className={cn(dims.icon, theme.iconColor)} />}
       </div>
 
-      {/* Bottom label */}
-      <div className={cn(
-        "w-full text-center font-display leading-none",
-        dims.name, theme.nameColor
-      )}>
-        {card.type === CardType.ELEMENT
-          ? `${theme.label} +${card.value}`
-          : isDiamond
-          ? `${theme.label} ×${card.value}`
-          : theme.label}
+      {/* Bottom label + effect */}
+      <div className="w-full flex flex-col items-center gap-0.5">
+        <div className={cn(
+          "w-full text-center font-display leading-none",
+          dims.name, theme.nameColor
+        )}>
+          {card.type === CardType.ELEMENT
+            ? `${theme.label} +${card.value}`
+            : isDiamond
+            ? `${theme.label} ×${card.value}`
+            : theme.label}
+        </div>
+        {dims.effect && effectText && (
+          <p className={cn(
+            "w-full text-center leading-tight line-clamp-3 opacity-60 px-0.5",
+            dims.effect, theme.nameColor
+          )}>
+            {effectText}
+          </p>
+        )}
       </div>
     </motion.div>
   );

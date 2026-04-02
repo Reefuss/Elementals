@@ -7,10 +7,42 @@ import { getThemeStyle } from "@/lib/game/artThemes";
 import { useDeckStore, SavedDeck } from "@/store/deckStore";
 import { useCollectionStore } from "@/store/collectionStore";
 import { cn } from "@/lib/utils";
+import { GameCard } from "@/components/game/GameCard";
+import { Card, CardType, Element, SpecialType } from "@/lib/game/types";
 
 // ─────────────────────────────────────────────
 //  Rarity config
 // ─────────────────────────────────────────────
+
+// ─────────────────────────────────────────────
+//  Convert collection CardVariant → runtime Card for display
+// ─────────────────────────────────────────────
+
+function variantToCard(v: CardVariant): Card {
+  if (v.type === "element") {
+    return {
+      id:        v.id,
+      type:      CardType.ELEMENT,
+      element:   v.element as Element,
+      value:     v.value as 3 | 5 | 8,
+      variantId: v.id,
+    };
+  }
+  if (v.type === "special") {
+    return {
+      id:          v.id,
+      type:        CardType.SPECIAL,
+      specialType: v.specialType as SpecialType,
+      variantId:   v.id,
+    };
+  }
+  return {
+    id:        v.id,
+    type:      CardType.DIAMOND,
+    value:     v.value!,
+    variantId: v.id,
+  };
+}
 
 const RARITY_LABEL: Record<Rarity, string> = {
   common: "C", uncommon: "U", rare: "R", epic: "E", legendary: "L",
@@ -73,6 +105,49 @@ function CardChip({ card, qty, onAdd, onRemove, canAdd }: {
         </div>
       ) : (
         <span className="text-xs text-white/30 shrink-0">×{qty}</span>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+//  Card grid item (deck pool)
+// ─────────────────────────────────────────────
+
+function CardGridItem({ card, ownedQty, inDeck, canAdd, onAdd, onRemove }: {
+  card: CardVariant; ownedQty: number; inDeck: number;
+  canAdd: boolean; onAdd?: () => void; onRemove?: () => void;
+}) {
+  const displayCard = variantToCard(card);
+  return (
+    <div className={cn("flex flex-col items-center gap-1.5", ownedQty === 0 && "opacity-25 pointer-events-none")}>
+      <div className="relative">
+        <GameCard card={displayCard} size="md" onClick={canAdd ? onAdd : undefined} />
+        {inDeck > 0 && (
+          <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-indigo-600 border border-indigo-400
+            flex items-center justify-center text-[10px] font-bold text-white">
+            {inDeck}
+          </div>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        <button onClick={onRemove} disabled={!inDeck}
+          className={cn(
+            "w-6 h-6 rounded-full text-sm flex items-center justify-center transition-colors",
+            inDeck ? "bg-white/10 hover:bg-red-500/20 text-white/60 hover:text-red-400" : "bg-white/5 text-white/15 cursor-not-allowed"
+          )}>
+          −
+        </button>
+        <button onClick={onAdd} disabled={!canAdd}
+          className={cn(
+            "w-6 h-6 rounded-full text-sm flex items-center justify-center transition-colors",
+            canAdd ? "bg-white/10 hover:bg-indigo-500/20 text-white/60 hover:text-indigo-400" : "bg-white/5 text-white/15 cursor-not-allowed"
+          )}>
+          +
+        </button>
+      </div>
+      {ownedQty > 0 && (
+        <p className="text-[9px] text-white/30">×{ownedQty} owned · max {card.maxPerDeck}</p>
       )}
     </div>
   );
@@ -279,25 +354,22 @@ function DeckEditor({ deck, owned, onSave, onDelete, onBack, onSetActive, isActi
 
       {/* Card pool */}
       <div className="glass rounded-2xl p-4 border border-white/[0.08]">
-        <p className="text-xs text-white/40 uppercase tracking-widest mb-3">Add Cards</p>
-        <div className="flex flex-col divide-y divide-white/[0.04]">
+        <p className="text-xs text-white/40 uppercase tracking-widest mb-4">Add Cards</p>
+        <div className="grid grid-cols-3 gap-3 justify-items-center">
           {poolSorted.map((card) => {
             const ownedQty = owned[card.id] ?? 0;
             const inDeck   = cards[card.id] ?? 0;
             const canAdd   = ownedQty > 0 && inDeck < card.maxPerDeck && total < 25 && inDeck < ownedQty;
             return (
-              <div key={card.id} className={cn("py-1", ownedQty === 0 && "opacity-25")}>
-                <CardChip card={card} qty={inDeck}
-                  onAdd={canAdd ? () => addCard(card) : undefined}
-                  onRemove={inDeck > 0 ? () => removeCard(card.id) : undefined}
-                  canAdd={canAdd}
-                />
-                {ownedQty > 0 && (
-                  <p className="text-[9px] text-white/25 pl-9">
-                    Owned ×{ownedQty} · Max {card.maxPerDeck}/deck
-                  </p>
-                )}
-              </div>
+              <CardGridItem
+                key={card.id}
+                card={card}
+                ownedQty={ownedQty}
+                inDeck={inDeck}
+                canAdd={canAdd}
+                onAdd={() => addCard(card)}
+                onRemove={inDeck > 0 ? () => removeCard(card.id) : undefined}
+              />
             );
           })}
         </div>

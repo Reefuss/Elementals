@@ -64,6 +64,9 @@ export enum WinReason {
   REVIVE_MUTUAL       = "REVIVE_MUTUAL",
   RESHUFFLE           = "RESHUFFLE",
   RESHUFFLE_MUTUAL    = "RESHUFFLE_MUTUAL",
+  // Card effects
+  CARD_EFFECT_TIE_WIN = "CARD_EFFECT_TIE_WIN",
+  CARD_EFFECT_BLOCK   = "CARD_EFFECT_BLOCK",
 }
 
 // ─────────────────────────────────────────────
@@ -71,23 +74,26 @@ export enum WinReason {
 // ─────────────────────────────────────────────
 
 export interface ElementCard {
-  id:      string;
-  type:    CardType.ELEMENT;
-  element: Element;
-  value:   3 | 5 | 8;
+  id:        string;
+  type:      CardType.ELEMENT;
+  element:   Element;
+  value:     3 | 5 | 8;
+  variantId?: string;
 }
 
 export interface SpecialCard {
   id:          string;
   type:        CardType.SPECIAL;
   specialType: SpecialType;
+  variantId?:  string;
 }
 
 export interface DiamondCard {
   id:    string;
   type:  CardType.DIAMOND;
   /** Diamond value — beats all element cards; higher wins against other diamonds */
-  value: number;
+  value:     number;
+  variantId?: string;
 }
 
 export type Card = ElementCard | SpecialCard | DiamondCard;
@@ -121,19 +127,36 @@ export interface MatchResult {
 //  Player views (server-side full / client-safe partial)
 // ─────────────────────────────────────────────
 
+// ─────────────────────────────────────────────
+//  Active card effects (per-round tracking)
+// ─────────────────────────────────────────────
+
+export interface ActiveEffect {
+  type:            string;
+  forPlayerId:     string;  // who the effect applies to
+  roundsRemaining: number;  // rounds left; -1 = permanent
+  value?:          number;  // primary numeric param
+  value2?:         number;  // secondary numeric param
+  restrictType?:   string;  // card type restriction (for opp_type_restrict)
+}
+
 /** Full server-side player state — never sent to the client as-is */
 export interface ServerPlayer {
-  id:        string;
-  username:  string;
-  socketId:  string;
-  deck:      Card[];
-  hand:      Card[];
+  id:           string;
+  username:     string;
+  socketId:     string;
+  deck:         Card[];
+  hand:         Card[];
   /** Cards played and discarded this game (normal discard) */
-  discard:   Card[];
+  discard:      Card[];
   /** Cards permanently removed from the game (by Discard Trap) */
-  voided:    Card[];
-  score:     number;
-  connected: boolean;
+  voided:       Card[];
+  score:        number;
+  connected:    boolean;
+  /** Extra draws queued for next round (positive) or draw penalty (negative) */
+  drawModifier: number;
+  /** Whether a first-win bonus has already fired this match */
+  firstWinUsed: boolean;
 }
 
 /** Safe player info sent to the opponent */
@@ -150,13 +173,14 @@ export interface OpponentView {
 
 /** Full view of yourself */
 export interface SelfView {
-  id:          string;
-  username:    string;
-  score:       number;
-  hand:        Card[];
-  deckCount:   number;
-  discardPile: Card[];
-  hasPlayed:   boolean;
+  id:            string;
+  username:      string;
+  score:         number;
+  hand:          Card[];
+  deckCount:     number;
+  discardPile:   Card[];
+  hasPlayed:     boolean;
+  activeEffects: { type: string; roundsRemaining: number; value?: number }[];
 }
 
 // ─────────────────────────────────────────────
@@ -210,4 +234,6 @@ export interface ServerGame {
     /** cardId chosen, keyed by playerId */
     picked: Map<string, string>;
   } | null;
+  /** Active card effects that persist across rounds */
+  activeEffects: ActiveEffect[];
 }
