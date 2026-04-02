@@ -5,8 +5,8 @@
  * only the server uses it to mutate authoritative state.
  *
  * Priority order (highest first):
- *   1. DISCARD_TRAP
- *   2. BLOCK
+ *   1. BLOCK
+ *   2. DISCARD_TRAP
  *   3. REVIVE
  *   4. RESHUFFLE
  *   5. DIAMOND
@@ -64,7 +64,10 @@ export interface RoundResolution {
  * p1Card belongs to players[0], p2Card to players[1].
  *
  * Priority (highest → lowest):
- *   DISCARD_TRAP > BLOCK > REVIVE > RESHUFFLE > DIAMOND > RAINBOW > ELEMENT
+ *   BLOCK > DISCARD_TRAP > REVIVE > RESHUFFLE > DIAMOND > RAINBOW > ELEMENT
+ *
+ * Block, Reshuffle, and Trap activate before the opponent's card
+ * unless the opponent also played a Block or it results in a tie.
  */
 export function resolveCards(p1Card: Card, p2Card: Card): RoundResolution {
   const p1IsTrap     = isSpecial(p1Card, SpecialType.DISCARD_TRAP);
@@ -80,7 +83,13 @@ export function resolveCards(p1Card: Card, p2Card: Card): RoundResolution {
   const p1IsRainbow  = isSpecial(p1Card, SpecialType.RAINBOW);
   const p2IsRainbow  = isSpecial(p2Card, SpecialType.RAINBOW);
 
-  // ── Priority 1: DISCARD_TRAP ──────────────────────────────
+  // ── Priority 1: BLOCK ─────────────────────────────────────
+  // Block cancels the round regardless of what the opponent played.
+  if (p1IsBlock || p2IsBlock) {
+    return tie(WinReason.BLOCK_NEGATES);
+  }
+
+  // ── Priority 2: DISCARD_TRAP ──────────────────────────────
   if (p1IsTrap && p2IsTrap) {
     return tie(WinReason.DISCARD_TRAP_MUTUAL);
   }
@@ -89,11 +98,6 @@ export function resolveCards(p1Card: Card, p2Card: Card): RoundResolution {
   }
   if (p2IsTrap) {
     return { ...win(1, WinReason.DISCARD_TRAP), voidedIndex: 0 };
-  }
-
-  // ── Priority 2: BLOCK ─────────────────────────────────────
-  if (p1IsBlock || p2IsBlock) {
-    return tie(WinReason.BLOCK_NEGATES);
   }
 
   // ── Priority 3: REVIVE ────────────────────────────────────
@@ -124,15 +128,13 @@ export function resolveCards(p1Card: Card, p2Card: Card): RoundResolution {
   }
 
   // ── Priority 4: RESHUFFLE ─────────────────────────────────
+  // Reshuffle activates before the opponent's card — the round is a tie.
+  // The reshuffle mechanic (hand reset) is still applied in gameManager.
   if (p1IsReshuffle && p2IsReshuffle) {
     return tie(WinReason.RESHUFFLE_MUTUAL);
   }
-  if (p1IsReshuffle) {
-    // p1 reshuffles, opponent wins round
-    return win(1, WinReason.RESHUFFLE);
-  }
-  if (p2IsReshuffle) {
-    return win(0, WinReason.RESHUFFLE);
+  if (p1IsReshuffle || p2IsReshuffle) {
+    return tie(WinReason.RESHUFFLE);
   }
 
   // ── Priority 5: DIAMOND ───────────────────────────────────
@@ -269,6 +271,7 @@ export function resultMessage(
       case WinReason.SAME_VALUE_TIE:    return { headline: "Tie!", sub: "Same element, same power." };
       case WinReason.DISCARD_TRAP_MUTUAL: return { headline: "Mutual Trap!", sub: "Both cards voided." };
       case WinReason.REVIVE_MUTUAL:     return { headline: "Both Revive", sub: "Each player picks a card back." };
+      case WinReason.RESHUFFLE:         return { headline: "Reshuffle!", sub: "Hand reset — no points awarded." };
       case WinReason.RESHUFFLE_MUTUAL:  return { headline: "Both Reshuffle", sub: "Hands reshuffled, draw 3." };
       case WinReason.DIAMOND_TIE:       return { headline: "Diamond Tie", sub: "Equal diamond values." };
       default:                          return { headline: "Tie!", sub: "No points this round." };
