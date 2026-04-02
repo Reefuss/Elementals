@@ -258,14 +258,15 @@ function getCardTheme(card: Card): CardTheme {
 // ─────────────────────────────────────────────
 
 interface GameCardProps {
-  card:      Card;
-  selected?: boolean;
-  disabled?: boolean;
-  played?:   boolean;
-  size?:     "xs" | "sm" | "md" | "lg";
-  onClick?:  () => void;
-  className?: string;
-  animateIn?: "bottom" | "top" | "none";
+  card:        Card;
+  selected?:   boolean;
+  disabled?:   boolean;
+  played?:     boolean;
+  size?:       "xs" | "sm" | "md" | "lg";
+  showEffect?: boolean;
+  onClick?:    () => void;
+  className?:  string;
+  animateIn?:  "bottom" | "top" | "none";
 }
 
 const cardSizes = {
@@ -277,13 +278,14 @@ const cardSizes = {
 
 export function GameCard({
   card,
-  selected  = false,
-  disabled  = false,
-  played    = false,
-  size      = "md",
+  selected    = false,
+  disabled    = false,
+  played      = false,
+  size        = "md",
+  showEffect  = false,
   onClick,
   className,
-  animateIn = "none",
+  animateIn   = "none",
 }: GameCardProps) {
   const theme      = getCardTheme(card);
   const dims       = cardSizes[size];
@@ -423,10 +425,10 @@ export function GameCard({
             ? `${theme.label} ×${card.value}`
             : theme.label}
         </div>
-        {dims.effect && effectText && (
+        {(dims.effect || showEffect) && effectText && (
           <p className={cn(
             "w-full text-center leading-tight line-clamp-3 opacity-60 px-0.5",
-            dims.effect, theme.nameColor
+            dims.effect || "text-[6px]", theme.nameColor
           )}>
             {effectText}
           </p>
