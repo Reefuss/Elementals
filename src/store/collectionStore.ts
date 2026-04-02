@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { CardVariant, DEFAULT_COLLECTION } from "@/lib/game/cardPool";
+import { CardVariant, DEFAULT_COLLECTION, STARTER_RARES } from "@/lib/game/cardPool";
 
 interface CollectionStore {
   /** variantId → quantity owned */
@@ -38,6 +38,12 @@ export const useCollectionStore = create<CollectionStore>()(
         const merged  = { ...current };
         for (const [id, qty] of Object.entries(DEFAULT_COLLECTION)) {
           if ((merged[id] ?? 0) < qty) merged[id] = qty;
+        }
+        // Grant 1 random +8 rare if the player has none of the starter rares yet.
+        const hasRare = STARTER_RARES.some((id) => (merged[id] ?? 0) > 0);
+        if (!hasRare) {
+          const pick = STARTER_RARES[Math.floor(Math.random() * STARTER_RARES.length)];
+          merged[pick] = 1;
         }
         set({ owned: merged, initialized: true });
       },
