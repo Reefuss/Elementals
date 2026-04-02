@@ -63,81 +63,73 @@ export interface RoundResolution {
  * Resolve a round given the two played cards.
  * p1Card belongs to players[0], p2Card to players[1].
  *
- * Priority (highest → lowest):
- *   BLOCK > DISCARD_TRAP > REVIVE > RESHUFFLE > DIAMOND > RAINBOW > ELEMENT
+ * Card categories:
+ *   Utility = Block, Trap, Revive, Reshuffle
+ *   Attack  = Element, Diamond
  *
- * Block, Reshuffle, and Trap activate before the opponent's card
- * unless the opponent also played a Block or it results in a tie.
+ * Resolution rules:
+ *   Utility vs Utility   → always TIE (specific mechanics still fire)
+ *   Attack  vs Block     → TIE
+ *   Attack  vs Trap      → TIE, attack card voided
+ *   Attack  vs Revive    → Attack WINS, revive pick fires
+ *   Attack  vs Reshuffle → Attack WINS, reshuffle fires
+ *   Attack  vs Attack    → normal element / diamond resolution
  */
 export function resolveCards(p1Card: Card, p2Card: Card): RoundResolution {
-  const p1IsTrap     = isSpecial(p1Card, SpecialType.DISCARD_TRAP);
-  const p2IsTrap     = isSpecial(p2Card, SpecialType.DISCARD_TRAP);
-  const p1IsBlock    = isSpecial(p1Card, SpecialType.BLOCK);
-  const p2IsBlock    = isSpecial(p2Card, SpecialType.BLOCK);
-  const p1IsRevive   = isSpecial(p1Card, SpecialType.REVIVE);
-  const p2IsRevive   = isSpecial(p2Card, SpecialType.REVIVE);
+  const p1IsBlock     = isSpecial(p1Card, SpecialType.BLOCK);
+  const p2IsBlock     = isSpecial(p2Card, SpecialType.BLOCK);
+  const p1IsTrap      = isSpecial(p1Card, SpecialType.DISCARD_TRAP);
+  const p2IsTrap      = isSpecial(p2Card, SpecialType.DISCARD_TRAP);
+  const p1IsRevive    = isSpecial(p1Card, SpecialType.REVIVE);
+  const p2IsRevive    = isSpecial(p2Card, SpecialType.REVIVE);
   const p1IsReshuffle = isSpecial(p1Card, SpecialType.RESHUFFLE);
   const p2IsReshuffle = isSpecial(p2Card, SpecialType.RESHUFFLE);
-  const p1IsDiamond  = p1Card.type === CardType.DIAMOND;
-  const p2IsDiamond  = p2Card.type === CardType.DIAMOND;
-  const p1IsRainbow  = isSpecial(p1Card, SpecialType.RAINBOW);
-  const p2IsRainbow  = isSpecial(p2Card, SpecialType.RAINBOW);
+  const p1IsUtility   = p1IsBlock || p1IsTrap || p1IsRevive || p1IsReshuffle;
+  const p2IsUtility   = p2IsBlock || p2IsTrap || p2IsRevive || p2IsReshuffle;
+  const p1IsDiamond   = p1Card.type === CardType.DIAMOND;
+  const p2IsDiamond   = p2Card.type === CardType.DIAMOND;
+  const p1IsRainbow   = isSpecial(p1Card, SpecialType.RAINBOW);
+  const p2IsRainbow   = isSpecial(p2Card, SpecialType.RAINBOW);
 
-  // ── Priority 1: BLOCK ─────────────────────────────────────
-  // Block cancels the round regardless of what the opponent played.
-  if (p1IsBlock || p2IsBlock) {
+  // ── UTILITY vs UTILITY: always TIE ───────────────────────
+  if (p1IsUtility && p2IsUtility) {
+    // Both Revive
+    if (p1IsRevive && p2IsRevive) {
+      return {
+        outcome: RoundOutcome.TIE, reason: WinReason.REVIVE_MUTUAL,
+        winnerIndex: null, needsTiebreak: false,
+        needsRevivePick: true, revivePickFor: [0, 1],
+      };
+    }
+    // One Revive — mechanic still fires, round is a tie
+    if (p1IsRevive) return { ...tie(WinReason.BLOCK_NEGATES), needsRevivePick: true, revivePickFor: [0] };
+    if (p2IsRevive) return { ...tie(WinReason.BLOCK_NEGATES), needsRevivePick: true, revivePickFor: [1] };
+    // Both Reshuffle
+    if (p1IsReshuffle && p2IsReshuffle) return tie(WinReason.RESHUFFLE_MUTUAL);
+    // One Reshuffle — mechanic still fires, round is a tie
+    if (p1IsReshuffle || p2IsReshuffle) return tie(WinReason.RESHUFFLE);
+    // Both Trap — mutual void
+    if (p1IsTrap && p2IsTrap) return tie(WinReason.DISCARD_TRAP_MUTUAL);
+    // All other utility vs utility (block vs trap, block vs block, etc.)
     return tie(WinReason.BLOCK_NEGATES);
   }
 
-  // ── Priority 2: DISCARD_TRAP ──────────────────────────────
-  if (p1IsTrap && p2IsTrap) {
-    return tie(WinReason.DISCARD_TRAP_MUTUAL);
-  }
-  if (p1IsTrap) {
-    return { ...win(0, WinReason.DISCARD_TRAP), voidedIndex: 1 };
-  }
-  if (p2IsTrap) {
-    return { ...win(1, WinReason.DISCARD_TRAP), voidedIndex: 0 };
-  }
-
-  // ── Priority 3: REVIVE ────────────────────────────────────
-  if (p1IsRevive && p2IsRevive) {
-    return {
-      outcome:         RoundOutcome.TIE,
-      reason:          WinReason.REVIVE_MUTUAL,
-      winnerIndex:     null,
-      needsTiebreak:   false,
-      needsRevivePick: true,
-      revivePickFor:   [0, 1],
-    };
-  }
-  if (p1IsRevive) {
-    // p1 sacrifices round to pick from discard
-    return {
-      ...win(1, WinReason.REVIVE_FORFEIT),
-      needsRevivePick: true,
-      revivePickFor:   [0],
-    };
-  }
-  if (p2IsRevive) {
-    return {
-      ...win(0, WinReason.REVIVE_FORFEIT),
-      needsRevivePick: true,
-      revivePickFor:   [1],
-    };
+  // ── UTILITY vs ATTACK (one side is utility) ──────────────
+  if (p1IsUtility || p2IsUtility) {
+    // Trap: TIE and void the opponent's attack card
+    if (p1IsTrap) return { ...tie(WinReason.DISCARD_TRAP), voidedIndex: 1 };
+    if (p2IsTrap) return { ...tie(WinReason.DISCARD_TRAP), voidedIndex: 0 };
+    // Block: TIE
+    if (p1IsBlock || p2IsBlock) return tie(WinReason.BLOCK_NEGATES);
+    // Revive: attack wins, revive pick still fires
+    if (p1IsRevive) return { ...win(1, WinReason.REVIVE_FORFEIT), needsRevivePick: true, revivePickFor: [0] };
+    if (p2IsRevive) return { ...win(0, WinReason.REVIVE_FORFEIT), needsRevivePick: true, revivePickFor: [1] };
+    // Reshuffle: attack wins, reshuffle mechanic still fires
+    if (p1IsReshuffle) return win(1, WinReason.RESHUFFLE);
+    if (p2IsReshuffle) return win(0, WinReason.RESHUFFLE);
   }
 
-  // ── Priority 4: RESHUFFLE ─────────────────────────────────
-  // Reshuffle activates before the opponent's card — the round is a tie.
-  // The reshuffle mechanic (hand reset) is still applied in gameManager.
-  if (p1IsReshuffle && p2IsReshuffle) {
-    return tie(WinReason.RESHUFFLE_MUTUAL);
-  }
-  if (p1IsReshuffle || p2IsReshuffle) {
-    return tie(WinReason.RESHUFFLE);
-  }
-
-  // ── Priority 5: DIAMOND ───────────────────────────────────
+  // ── ATTACK vs ATTACK ──────────────────────────────────────
   if (p1IsDiamond && p2IsDiamond) {
     const v1 = (p1Card as { value: number }).value;
     const v2 = (p2Card as { value: number }).value;
@@ -148,21 +140,18 @@ export function resolveCards(p1Card: Card, p2Card: Card): RoundResolution {
   if (p1IsDiamond) return win(0, WinReason.DIAMOND);
   if (p2IsDiamond) return win(1, WinReason.DIAMOND);
 
-  // ── Priority 6: RAINBOW ───────────────────────────────────
+  // Rainbow (kept for safety; no rainbow cards in current pool)
   if (p1IsRainbow && p2IsRainbow) {
     return {
-      outcome:         RoundOutcome.TIE,
-      reason:          WinReason.RAINBOW_TIEBREAK,
-      winnerIndex:     null,
-      needsTiebreak:   true,
-      needsRevivePick: false,
-      revivePickFor:   [],
+      outcome: RoundOutcome.TIE, reason: WinReason.RAINBOW_TIEBREAK,
+      winnerIndex: null, needsTiebreak: true,
+      needsRevivePick: false, revivePickFor: [],
     };
   }
   if (p1IsRainbow) return win(0, WinReason.RAINBOW_BEATS);
   if (p2IsRainbow) return win(1, WinReason.RAINBOW_BEATS);
 
-  // ── Priority 7: ELEMENT ───────────────────────────────────
+  // Element vs Element
   if (p1Card.type === CardType.ELEMENT && p2Card.type === CardType.ELEMENT) {
     if (p1Card.element === p2Card.element) {
       if (p1Card.value > p2Card.value) return win(0, WinReason.HIGHER_VALUE);
@@ -173,7 +162,7 @@ export function resolveCards(p1Card: Card, p2Card: Card): RoundResolution {
     return win(1, WinReason.ELEMENT_BEATS);
   }
 
-  // Fallback (should not occur with valid state)
+  // Fallback
   return tie(WinReason.SAME_VALUE_TIE);
 }
 
@@ -268,6 +257,7 @@ export function resultMessage(
   if (result.winnerId === null) {
     switch (result.reason) {
       case WinReason.BLOCK_NEGATES:     return { headline: "Blocked!", sub: "No points awarded." };
+      case WinReason.DISCARD_TRAP:      return { headline: "Trapped!", sub: "Opponent's card removed from the match." };
       case WinReason.SAME_VALUE_TIE:    return { headline: "Tie!", sub: "Same element, same power." };
       case WinReason.DISCARD_TRAP_MUTUAL: return { headline: "Mutual Trap!", sub: "Both cards voided." };
       case WinReason.REVIVE_MUTUAL:     return { headline: "Both Revive", sub: "Each player picks a card back." };

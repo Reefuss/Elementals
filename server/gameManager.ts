@@ -620,9 +620,9 @@ export class GameManager {
     const cardInDiscard = player.discard.find((c) => c.id === cardId);
     if (!cardInDiscard) return { error: "Card not in discard pile." };
 
-    // Move card from discard back to hand
+    // Move card from discard to top of deck (drawn at start of next round)
     player.discard = player.discard.filter((c) => c.id !== cardId);
-    player.hand.push(cardInDiscard);
+    player.deck.push(cardInDiscard);
     game.revivePick.picked.set(playerId, cardId);
 
     // Check if all required players have picked
