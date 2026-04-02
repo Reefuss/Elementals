@@ -175,17 +175,16 @@ export default function GamePage() {
     };
 
     const onUp = async (e: PointerEvent) => {
-      const rect = dropZoneRect.current;
-      const pad  = 40; // generous hit area
-      const over = rect &&
-        e.clientX >= rect.left  - pad && e.clientX <= rect.right  + pad &&
-        e.clientY >= rect.top   - pad && e.clientY <= rect.bottom + pad;
+      // Accept any drop in the middle third of the screen (vertically)
+      const midTop    = window.innerHeight * 0.25;
+      const midBottom = window.innerHeight * 0.75;
+      const over = e.clientY >= midTop && e.clientY <= midBottom;
 
       setDragState(null);
       if (over) {
         await handlePlayCard();
       } else {
-        selectCardRef.current(dragState.cardId); // keep it selected if missed
+        selectCardRef.current(dragState.cardId);
       }
     };
 
@@ -425,51 +424,43 @@ export default function GamePage() {
               className="fixed inset-0 z-[100] pointer-events-none bg-black/65"
             />
 
-            {/* Drop zone glow ring */}
-            {dropZoneRect.current && (() => {
-              const r = dropZoneRect.current!;
-              return (
-                <motion.div
-                  key="drop-zone-ring"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  style={{
-                    position: "fixed",
-                    left:   r.left   - 12,
-                    top:    r.top    - 12,
-                    width:  r.width  + 24,
-                    height: r.height + 24,
-                    zIndex: 101,
-                    borderRadius: 22,
-                    pointerEvents: "none",
-                  }}
+            {/* Drop zone — middle third of screen */}
+            <motion.div
+              key="drop-zone-ring"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                position: "fixed",
+                left: "5%",
+                top: "25%",
+                width: "90%",
+                height: "50%",
+                zIndex: 101,
+                borderRadius: 28,
+                pointerEvents: "none",
+              }}
+            >
+              <motion.div
+                animate={{ boxShadow: [
+                  "0 0 0 2px rgba(129,140,248,0.5), 0 0 30px 6px rgba(129,140,248,0.2)",
+                  "0 0 0 2px rgba(129,140,248,1),   0 0 60px 12px rgba(129,140,248,0.5)",
+                  "0 0 0 2px rgba(129,140,248,0.5), 0 0 30px 6px rgba(129,140,248,0.2)",
+                ]}}
+                transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute inset-0 rounded-[28px]"
+              />
+              <div className="absolute inset-0 rounded-[28px] bg-indigo-500/[0.06]" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <motion.span
+                  animate={{ opacity: [0.4, 0.9, 0.4] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                  className="text-sm text-indigo-300 font-semibold tracking-widest uppercase"
                 >
-                  {/* Outer pulsing ring */}
-                  <motion.div
-                    animate={{ boxShadow: [
-                      "0 0 0 2px rgba(129,140,248,0.6), 0 0 20px 4px rgba(129,140,248,0.3)",
-                      "0 0 0 2px rgba(129,140,248,1),   0 0 40px 8px rgba(129,140,248,0.6)",
-                      "0 0 0 2px rgba(129,140,248,0.6), 0 0 20px 4px rgba(129,140,248,0.3)",
-                    ]}}
-                    transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute inset-0 rounded-[22px]"
-                  />
-                  {/* Inner fill */}
-                  <div className="absolute inset-0 rounded-[22px] bg-indigo-500/10" />
-                  {/* Label */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <motion.span
-                      animate={{ opacity: [0.5, 1, 0.5] }}
-                      transition={{ duration: 1, repeat: Infinity }}
-                      className="text-xs text-indigo-300 font-semibold tracking-widest uppercase"
-                    >
-                      Drop here
-                    </motion.span>
-                  </div>
-                </motion.div>
-              );
-            })()}
+                  Drop here
+                </motion.span>
+              </div>
+            </motion.div>
 
             {/* Ghost card following pointer */}
             <motion.div
