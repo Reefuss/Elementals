@@ -80,6 +80,55 @@ function autoBuildDeck(owned: Record<string, number>): Record<string, number> {
 }
 
 // ─────────────────────────────────────────────
+//  Deck slot mini card (In Deck section only)
+// ─────────────────────────────────────────────
+
+const SLOT_STYLE: Record<string, { bg: string; iconColor: string; icon: string; border: string }> = {
+  ROCK:         { bg: "bg-[#1f1400]", iconColor: "text-amber-500",   icon: "✊", border: "border-amber-700/40" },
+  SCISSORS:     { bg: "bg-[#05101e]", iconColor: "text-blue-400",    icon: "✌", border: "border-blue-700/40"  },
+  PAPER:        { bg: "bg-[#160a1f]", iconColor: "text-purple-400",  icon: "✋", border: "border-purple-700/40"},
+  BLOCK:        { bg: "bg-[#151520]", iconColor: "text-indigo-400",  icon: "🛡", border: "border-indigo-700/40"},
+  RAINBOW:      { bg: "bg-[#1a0d30]", iconColor: "text-white",       icon: "🌈", border: "border-purple-500/30"},
+  RESHUFFLE:    { bg: "bg-[#0a1f1a]", iconColor: "text-emerald-400", icon: "↺", border: "border-emerald-700/40"},
+  DISCARD_TRAP: { bg: "bg-[#1f0a0a]", iconColor: "text-red-400",     icon: "⊗", border: "border-red-700/40"  },
+  REVIVE:       { bg: "bg-[#1a1000]", iconColor: "text-amber-400",   icon: "↑", border: "border-amber-600/40" },
+  DIAMOND:      { bg: "bg-[#0a1a2a]", iconColor: "text-cyan-300",    icon: "◆", border: "border-cyan-600/40"  },
+};
+
+function getSlotStyle(card: CardVariant) {
+  if (card.element)       return SLOT_STYLE[card.element] ?? SLOT_STYLE.ROCK;
+  if (card.specialType)   return SLOT_STYLE[card.specialType] ?? SLOT_STYLE.BLOCK;
+  if (card.type === "diamond") return SLOT_STYLE.DIAMOND;
+  return SLOT_STYLE.BLOCK;
+}
+
+function DeckSlotCard({ card, onRemove }: { card: CardVariant; onRemove: () => void }) {
+  const s = getSlotStyle(card);
+  const valueLabel = card.value ? `+${card.value}` : null;
+
+  return (
+    <motion.button
+      whileTap={{ scale: 0.92 }}
+      onClick={onRemove}
+      className={cn(
+        "relative w-full rounded-xl border flex flex-col items-center justify-center gap-0.5 overflow-hidden group",
+        s.bg, s.border,
+        "aspect-[2/3]"
+      )}
+    >
+      <span className={cn("text-sm leading-none", s.iconColor)}>{s.icon}</span>
+      {valueLabel && (
+        <span className="text-[8px] font-bold text-white/50 leading-none">{valueLabel}</span>
+      )}
+      {/* Remove overlay */}
+      <div className="absolute inset-0 bg-red-500/0 group-hover:bg-red-500/20 group-active:bg-red-500/30 transition-colors rounded-xl flex items-center justify-center">
+        <span className="text-red-400 text-base font-bold opacity-0 group-hover:opacity-100 transition-opacity">×</span>
+      </div>
+    </motion.button>
+  );
+}
+
+// ─────────────────────────────────────────────
 //  Card grid item — "Add Cards" pool
 // ─────────────────────────────────────────────
 
@@ -310,7 +359,7 @@ function DeckEditor({ deck, owned, onSave, onDelete, onBack, onSetActive, isActi
         </div>
       )}
 
-      {/* ── In Deck — visual xs card grid ── */}
+      {/* ── In Deck — compact slot grid ── */}
       <div className="glass rounded-2xl p-4 border border-white/[0.08]">
         <p className="text-xs text-white/40 uppercase tracking-widest mb-3">
           In Deck <span className="text-white/20 normal-case font-normal">· tap to remove</span>
@@ -321,33 +370,14 @@ function DeckEditor({ deck, owned, onSave, onDelete, onBack, onSetActive, isActi
             No cards yet — use Auto Build or add from the pool below.
           </p>
         ) : (
-          <div className="grid grid-cols-5 gap-2">
-            {deckCardList.map((card, idx) => {
-              const displayCard = variantToCard(card);
-              return (
-                <motion.div
-                  key={`${card.id}-${idx}`}
-                  layout
-                  initial={{ opacity: 0, scale: 0.85 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.85 }}
-                  transition={{ duration: 0.15 }}
-                  className="relative group"
-                >
-                  <GameCard card={displayCard} size="xs" onClick={() => removeCard(card.id)} />
-                  {/* Remove overlay on hover/tap */}
-                  <div className="absolute inset-0 rounded-2xl bg-red-500/0 group-hover:bg-red-500/15
-                    flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all pointer-events-none">
-                    <span className="text-red-400 text-lg font-bold">×</span>
-                  </div>
-                </motion.div>
-              );
-            })}
+          <div className="grid grid-cols-5 gap-1.5">
+            {deckCardList.map((card, idx) => (
+              <DeckSlotCard key={`${card.id}-${idx}`} card={card} onRemove={() => removeCard(card.id)} />
+            ))}
             {/* Empty slots */}
             {Array.from({ length: Math.max(0, 25 - deckCardList.length) }).map((_, i) => (
               <div key={`empty-${i}`}
-                className="rounded-2xl border-2 border-dashed border-white/[0.06] bg-white/[0.01]"
-                style={{ aspectRatio: "3/4.5" }} />
+                className="w-full aspect-[2/3] rounded-xl border border-dashed border-white/[0.07] bg-white/[0.01]" />
             ))}
           </div>
         )}
