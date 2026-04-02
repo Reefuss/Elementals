@@ -97,7 +97,7 @@ interface BattleArenaProps {
 
 export function BattleArena({
   phase, round, msLeft, selfHasPlayed, opponentHasPlayed,
-  lastResult, selfId,
+  selfPlayedCard, lastResult, selfId,
 }: BattleArenaProps) {
   const isRevealing = phase === GamePhase.REVEALING;
   const isPlaying   = phase === GamePhase.PLAYING;
@@ -128,12 +128,16 @@ export function BattleArena({
   const p1Card = lastResult?.playerOneCard;
   const p2Card = lastResult?.playerTwoCard;
 
+  // Determine which result card belongs to self (self may be player 1 or 2)
+  const selfIsP1 = !p1Card || !selfPlayedCard || p1Card.id === selfPlayedCard.id;
+  const selfCard = selfIsP1 ? p1Card : p2Card;
+  const oppCard  = selfIsP1 ? p2Card : p1Card;
+
   const selfWon = isRevealing && lastResult?.winnerId === selfId;
   const oppWon  = isRevealing && lastResult?.winnerId !== null && lastResult?.winnerId !== selfId;
   const tied    = isRevealing && lastResult?.winnerId === null;
 
-  // Winner card for glow color (self = p1Card assumption)
-  const winnerCard = selfWon ? p1Card : oppWon ? p2Card : undefined;
+  const winnerCard = selfWon ? selfCard : oppWon ? oppCard : undefined;
 
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-3">
@@ -191,7 +195,7 @@ export function BattleArena({
           </AnimatePresence>
 
           <AnimatePresence mode="wait">
-            {isRevealing && p2Card ? (
+            {isRevealing && oppCard ? (
               <motion.div
                 key="opp-reveal"
                 initial={{ rotateY: 90, scale: 0.9 }}
@@ -200,14 +204,14 @@ export function BattleArena({
                   : { rotateY: 0, scale: 1 }
                 }
                 style={revealStep >= 4 && oppWon
-                  ? { filter: `drop-shadow(${elementGlow(p2Card)})` }
+                  ? { filter: `drop-shadow(${elementGlow(oppCard)})` }
                   : revealStep >= 4 && !tied
                   ? { filter: "grayscale(0.5)" }
                   : {}
                 }
                 transition={{ type: "spring", stiffness: 260, damping: 22, delay: revealStep < 2 ? 0.2 : 0 }}
               >
-                <GameCard card={p2Card} size="md" />
+                <GameCard card={oppCard} size="md" />
               </motion.div>
             ) : opponentHasPlayed ? (
               <motion.div
@@ -281,7 +285,7 @@ export function BattleArena({
           </AnimatePresence>
 
           <AnimatePresence mode="wait">
-            {isRevealing && p1Card ? (
+            {isRevealing && selfCard ? (
               <motion.div
                 key="self-reveal"
                 initial={{ rotateY: 90, scale: 0.9 }}
@@ -290,14 +294,14 @@ export function BattleArena({
                   : { rotateY: 0, scale: 1 }
                 }
                 style={revealStep >= 4 && selfWon
-                  ? { filter: `drop-shadow(${elementGlow(p1Card)})` }
+                  ? { filter: `drop-shadow(${elementGlow(selfCard)})` }
                   : revealStep >= 4 && !tied
                   ? { filter: "grayscale(0.5)" }
                   : {}
                 }
                 transition={{ type: "spring", stiffness: 260, damping: 22, delay: revealStep < 3 ? 0.75 : 0 }}
               >
-                <GameCard card={p1Card} size="md" />
+                <GameCard card={selfCard} size="md" />
               </motion.div>
             ) : selfHasPlayed ? (
               <motion.div
