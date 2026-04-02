@@ -2,8 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ALL_CARDS, CardVariant, Rarity, validateDeck, DECK_RULES } from "@/lib/game/cardPool";
-import { getThemeStyle } from "@/lib/game/artThemes";
+import { ALL_CARDS, CARD_MAP, CardVariant, Rarity, validateDeck, DECK_RULES } from "@/lib/game/cardPool";
 import { useDeckStore, SavedDeck } from "@/store/deckStore";
 import { useCollectionStore } from "@/store/collectionStore";
 import { cn } from "@/lib/utils";
@@ -11,107 +10,77 @@ import { GameCard } from "@/components/game/GameCard";
 import { Card, CardType, Element, SpecialType } from "@/lib/game/types";
 
 // ─────────────────────────────────────────────
-//  Rarity config
-// ─────────────────────────────────────────────
-
-// ─────────────────────────────────────────────
-//  Convert collection CardVariant → runtime Card for display
+//  Helpers
 // ─────────────────────────────────────────────
 
 function variantToCard(v: CardVariant): Card {
   if (v.type === "element") {
-    return {
-      id:        v.id,
-      type:      CardType.ELEMENT,
-      element:   v.element as Element,
-      value:     v.value as 3 | 5 | 8,
-      variantId: v.id,
-    };
+    return { id: v.id, type: CardType.ELEMENT, element: v.element as Element, value: v.value as 3|5|8, variantId: v.id };
   }
   if (v.type === "special") {
-    return {
-      id:          v.id,
-      type:        CardType.SPECIAL,
-      specialType: v.specialType as SpecialType,
-      variantId:   v.id,
-    };
+    return { id: v.id, type: CardType.SPECIAL, specialType: v.specialType as SpecialType, variantId: v.id };
   }
-  return {
-    id:        v.id,
-    type:      CardType.DIAMOND,
-    value:     v.value!,
-    variantId: v.id,
-  };
+  return { id: v.id, type: CardType.DIAMOND, value: v.value!, variantId: v.id };
 }
-
-const RARITY_LABEL: Record<Rarity, string> = {
-  common: "C", uncommon: "U", rare: "R", epic: "E", legendary: "L",
-};
-const RARITY_BADGE: Record<Rarity, string> = {
-  common:    "text-white/35 border-white/15",
-  uncommon:  "text-teal-300 border-teal-400/40",
-  rare:      "text-blue-300 border-blue-400/50",
-  epic:      "text-purple-300 border-purple-400/60",
-  legendary: "text-amber-300 border-amber-400/70",
-};
-
-const elementIcon: Record<string, string>  = { ROCK: "✊", SCISSORS: "✌", PAPER: "✋" };
 
 function cardTotal(cards: Record<string, number>) {
   return Object.values(cards).reduce((s, n) => s + n, 0);
 }
 
 // ─────────────────────────────────────────────
-//  Tiny card chip (for deck contents list)
+//  Auto-build: 7 rock + 7 scissors + 7 paper (highest rarity), fill rest with utility
 // ─────────────────────────────────────────────
 
-function CardChip({ card, qty, onAdd, onRemove, canAdd }: {
-  card: CardVariant; qty: number;
-  onAdd?: () => void; onRemove?: () => void; canAdd?: boolean;
-}) {
-  const theme = getThemeStyle(card.artTheme);
-  const icon  = card.element ? elementIcon[card.element]
-    : card.specialType === "BLOCK" ? "🛡" : "🌈";
+const RARITY_ORDER: Rarity[] = ["legendary", "epic", "rare", "uncommon", "common"];
+const ri = (r: Rarity) => RARITY_ORDER.indexOf(r);
 
-  return (
-    <div className="flex items-center gap-2 py-1">
-      <div className={cn(
-        "w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0",
-        `bg-gradient-to-b ${theme.bgFrom} ${theme.bgTo}`,
-        "border", RARITY_BADGE[card.rarity].split(" ")[1]
-      )}>
-        <span className={theme.textColor}>{icon}</span>
-      </div>
-      <span className="text-sm text-white flex-1 truncate">{card.displayName}</span>
-      <span className={cn("text-[9px] font-bold border rounded px-1 shrink-0", RARITY_BADGE[card.rarity])}>
-        {RARITY_LABEL[card.rarity]}
-      </span>
-      {onRemove && onAdd ? (
-        <div className="flex items-center gap-1 shrink-0">
-          <button onClick={onRemove}
-            className="w-5 h-5 rounded-full bg-white/10 hover:bg-red-500/20 text-white/50 hover:text-red-400 text-xs transition-colors flex items-center justify-center">
-            −
-          </button>
-          <span className="text-sm text-white w-4 text-center">{qty}</span>
-          <button onClick={onAdd} disabled={!canAdd}
-            className={cn(
-              "w-5 h-5 rounded-full text-xs transition-colors flex items-center justify-center",
-              canAdd
-                ? "bg-white/10 hover:bg-indigo-500/20 text-white/50 hover:text-indigo-400"
-                : "bg-white/5 text-white/15 cursor-not-allowed"
-            )}>
-            +
-          </button>
-        </div>
-      ) : (
-        <span className="text-xs text-white/30 shrink-0">×{qty}</span>
-      )}
-    </div>
-  );
+function autoBuildDeck(owned: Record<string, number>): Record<string, number> {
+  const result: Record<string, number> = {};
+
+  const pickElement = (element: string, target: number) => {
+    const candidates = ALL_CARDS
+      .filter((c) => c.type === "element" && c.element === element && (owned[c.id] ?? 0) > 0)
+      .sort((a, b) => ri(a.rarity) - ri(b.rarity));
+
+    let picked = 0;
+    for (const card of candidates) {
+      if (picked >= target) break;
+      const available = Math.min(owned[card.id] ?? 0, card.maxPerDeck);
+      const toAdd = Math.min(available, target - picked);
+      if (toAdd > 0) { result[card.id] = (result[card.id] ?? 0) + toAdd; picked += toAdd; }
+    }
+  };
+
+  pickElement("ROCK",     7);
+  pickElement("SCISSORS", 7);
+  pickElement("PAPER",    7);
+
+  // Fill remaining 4 slots: specials first (highest rarity), then elements
+  const remaining = () => 25 - cardTotal(result);
+  const utility = ALL_CARDS
+    .filter((c) => (owned[c.id] ?? 0) > 0)
+    .sort((a, b) => {
+      if (a.type === "special" && b.type !== "special") return -1;
+      if (b.type === "special" && a.type !== "special") return 1;
+      if (a.type === "diamond" && b.type !== "diamond") return -1;
+      if (b.type === "diamond" && a.type !== "diamond") return 1;
+      return ri(a.rarity) - ri(b.rarity);
+    });
+
+  for (const card of utility) {
+    if (remaining() <= 0) break;
+    const inDeck    = result[card.id] ?? 0;
+    const available = Math.min(owned[card.id] ?? 0, card.maxPerDeck) - inDeck;
+    if (available <= 0) continue;
+    const toAdd = Math.min(available, remaining());
+    result[card.id] = inDeck + toAdd;
+  }
+
+  return result;
 }
 
 // ─────────────────────────────────────────────
-//  Card grid item (deck pool)
+//  Card grid item — "Add Cards" pool
 // ─────────────────────────────────────────────
 
 function CardGridItem({ card, ownedQty, inDeck, canAdd, onAdd, onRemove }: {
@@ -132,17 +101,13 @@ function CardGridItem({ card, ownedQty, inDeck, canAdd, onAdd, onRemove }: {
       </div>
       <div className="flex items-center gap-2">
         <button onClick={onRemove} disabled={!inDeck}
-          className={cn(
-            "w-6 h-6 rounded-full text-sm flex items-center justify-center transition-colors",
-            inDeck ? "bg-white/10 hover:bg-red-500/20 text-white/60 hover:text-red-400" : "bg-white/5 text-white/15 cursor-not-allowed"
-          )}>
+          className={cn("w-6 h-6 rounded-full text-sm flex items-center justify-center transition-colors",
+            inDeck ? "bg-white/10 hover:bg-red-500/20 text-white/60 hover:text-red-400" : "bg-white/5 text-white/15 cursor-not-allowed")}>
           −
         </button>
         <button onClick={onAdd} disabled={!canAdd}
-          className={cn(
-            "w-6 h-6 rounded-full text-sm flex items-center justify-center transition-colors",
-            canAdd ? "bg-white/10 hover:bg-indigo-500/20 text-white/60 hover:text-indigo-400" : "bg-white/5 text-white/15 cursor-not-allowed"
-          )}>
+          className={cn("w-6 h-6 rounded-full text-sm flex items-center justify-center transition-colors",
+            canAdd ? "bg-white/10 hover:bg-indigo-500/20 text-white/60 hover:text-indigo-400" : "bg-white/5 text-white/15 cursor-not-allowed")}>
           +
         </button>
       </div>
@@ -187,19 +152,16 @@ function DeckListScreen({ decks, activeDeckId, onSelect, onCreate }: {
                 isActive ? "border-indigo-500/40 bg-indigo-500/5" : "border-white/[0.08] hover:border-white/15"
               )}
             >
-              <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center text-base shrink-0",
+              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-base shrink-0",
                 "bg-gradient-to-b from-indigo-900/60 to-slate-900/60 border",
-                isActive ? "border-indigo-500/40" : "border-white/10"
-              )}>
+                isActive ? "border-indigo-500/40" : "border-white/10")}>
                 {isActive ? "✦" : "○"}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-white truncate">{deck.name}</p>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-xs text-white/40">{total}/25</span>
-                  {validation.valid
-                    ? <span className="text-xs text-indigo-400">Ready</span>
+                  {validation.valid ? <span className="text-xs text-indigo-400">Ready</span>
                     : <span className="text-xs text-red-400">Invalid</span>}
                   {isActive && (
                     <span className="text-xs text-indigo-300 border border-indigo-500/30 rounded-full px-1.5">Active</span>
@@ -211,7 +173,6 @@ function DeckListScreen({ decks, activeDeckId, onSelect, onCreate }: {
           );
         })
       )}
-
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={onCreate}
@@ -234,8 +195,8 @@ function DeckEditor({ deck, owned, onSave, onDelete, onBack, onSetActive, isActi
   onDelete: () => void; onBack: () => void;
   onSetActive: () => void; isActive: boolean;
 }) {
-  const [cards,    setCards]    = useState<Record<string, number>>({ ...deck.cards });
-  const [renaming, setRenaming] = useState(false);
+  const [cards,     setCards]     = useState<Record<string, number>>({ ...deck.cards });
+  const [renaming,  setRenaming]  = useState(false);
   const [nameInput, setNameInput] = useState(deck.name);
   const { renameDeck } = useDeckStore();
 
@@ -244,9 +205,9 @@ function DeckEditor({ deck, owned, onSave, onDelete, onBack, onSetActive, isActi
 
   const addCard = (card: CardVariant) => {
     const current = cards[card.id] ?? 0;
-    if (total >= DECK_RULES.maxCards)        return;
-    if (current >= card.maxPerDeck)          return;
-    if (current >= (owned[card.id] ?? 0))    return;
+    if (total >= DECK_RULES.maxCards)     return;
+    if (current >= card.maxPerDeck)       return;
+    if (current >= (owned[card.id] ?? 0)) return;
     setCards((prev) => ({ ...prev, [card.id]: current + 1 }));
   };
 
@@ -264,10 +225,18 @@ function DeckEditor({ deck, owned, onSave, onDelete, onBack, onSetActive, isActi
     setRenaming(false);
   };
 
-  // Sort pool: owned first, then by element, then rarity index
-  const RARITY_ORDER: Rarity[] = ["common", "uncommon", "rare", "epic", "legendary"];
-  const ri = (r: Rarity) => RARITY_ORDER.indexOf(r);
+  const handleAutoBuild = () => {
+    setCards(autoBuildDeck(owned));
+  };
 
+  // Expand deck into ordered individual card slots for the "In Deck" grid
+  const deckCardList: CardVariant[] = [];
+  for (const card of ALL_CARDS) {
+    const qty = cards[card.id] ?? 0;
+    for (let i = 0; i < qty; i++) deckCardList.push(card);
+  }
+
+  // Sort pool: owned first, then by type/element, then rarity
   const poolSorted = [...ALL_CARDS].sort((a, b) => {
     const aOwned = (owned[a.id] ?? 0) > 0 ? 0 : 1;
     const bOwned = (owned[b.id] ?? 0) > 0 ? 0 : 1;
@@ -281,7 +250,7 @@ function DeckEditor({ deck, owned, onSave, onDelete, onBack, onSetActive, isActi
     <div className="flex flex-col gap-4">
       {/* Header */}
       <div className="glass rounded-2xl p-4 border border-white/[0.08] flex items-center justify-between gap-3">
-        <button onClick={onBack} className="text-white/40 hover:text-white transition-colors text-sm">
+        <button onClick={onBack} className="text-white/40 hover:text-white transition-colors text-sm shrink-0">
           ‹ Back
         </button>
         {renaming ? (
@@ -294,21 +263,32 @@ function DeckEditor({ deck, owned, onSave, onDelete, onBack, onSetActive, isActi
             {deck.name} ✎
           </button>
         )}
-        <button onClick={onDelete} className="text-red-400/50 hover:text-red-400 transition-colors text-xs">
+        <button onClick={onDelete} className="text-red-400/50 hover:text-red-400 transition-colors text-xs shrink-0">
           Delete
         </button>
       </div>
 
-      {/* Stats + active */}
-      <div className="flex items-center justify-between">
-        <span className={cn("text-sm font-medium",
+      {/* Stats row: count · Auto Build · Set Active */}
+      <div className="flex items-center justify-between gap-2">
+        <span className={cn("text-sm font-medium shrink-0",
           total === 25 ? "text-white" : total > 25 ? "text-red-400" : "text-white/50")}>
-          {total} / 25 cards
+          {total} / 25
         </span>
+
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={handleAutoBuild}
+          className="flex-1 py-1.5 px-3 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20
+            border border-indigo-500/30 text-indigo-300 hover:text-indigo-200
+            text-xs font-semibold transition-colors"
+        >
+          ✦ Auto Build
+        </motion.button>
+
         {isActive
-          ? <span className="text-xs text-indigo-300 border border-indigo-500/30 rounded-full px-2.5 py-1">Active Deck</span>
+          ? <span className="text-xs text-indigo-300 border border-indigo-500/30 rounded-full px-2.5 py-1 shrink-0">Active</span>
           : <button onClick={onSetActive}
-              className="text-xs text-indigo-400 hover:text-indigo-300 border border-indigo-500/30 rounded-full px-2.5 py-1 transition-colors">
+              className="text-xs text-indigo-400 hover:text-indigo-300 border border-indigo-500/30 rounded-full px-2.5 py-1 transition-colors shrink-0">
               Set Active
             </button>
         }
@@ -322,7 +302,7 @@ function DeckEditor({ deck, owned, onSave, onDelete, onBack, onSetActive, isActi
       </div>
 
       {/* Validation errors */}
-      {!validation.valid && (
+      {!validation.valid && total > 0 && (
         <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-3 flex flex-col gap-0.5">
           {validation.errors.map((e) => (
             <p key={e} className="text-xs text-red-400">{e}</p>
@@ -330,29 +310,50 @@ function DeckEditor({ deck, owned, onSave, onDelete, onBack, onSetActive, isActi
         </div>
       )}
 
-      {/* Deck contents */}
+      {/* ── In Deck — visual xs card grid ── */}
       <div className="glass rounded-2xl p-4 border border-white/[0.08]">
-        <p className="text-xs text-white/40 uppercase tracking-widest mb-3">In Deck</p>
-        {Object.entries(cards).filter(([, qty]) => qty > 0).length === 0 ? (
-          <p className="text-xs text-white/20 text-center py-4">No cards added yet</p>
+        <p className="text-xs text-white/40 uppercase tracking-widest mb-3">
+          In Deck <span className="text-white/20 normal-case font-normal">· tap to remove</span>
+        </p>
+
+        {deckCardList.length === 0 ? (
+          <p className="text-xs text-white/20 text-center py-6">
+            No cards yet — use Auto Build or add from the pool below.
+          </p>
         ) : (
-          <div className="flex flex-col divide-y divide-white/[0.04]">
-            {ALL_CARDS.filter((c) => (cards[c.id] ?? 0) > 0).map((card) => (
-              <CardChip key={card.id} card={card} qty={cards[card.id]}
-                onRemove={() => removeCard(card.id)}
-                onAdd={() => addCard(card)}
-                canAdd={
-                  total < 25 &&
-                  (cards[card.id] ?? 0) < card.maxPerDeck &&
-                  (cards[card.id] ?? 0) < (owned[card.id] ?? 0)
-                }
-              />
+          <div className="grid grid-cols-5 gap-2">
+            {deckCardList.map((card, idx) => {
+              const displayCard = variantToCard(card);
+              return (
+                <motion.div
+                  key={`${card.id}-${idx}`}
+                  layout
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.85 }}
+                  transition={{ duration: 0.15 }}
+                  className="relative group"
+                >
+                  <GameCard card={displayCard} size="xs" onClick={() => removeCard(card.id)} />
+                  {/* Remove overlay on hover/tap */}
+                  <div className="absolute inset-0 rounded-2xl bg-red-500/0 group-hover:bg-red-500/15
+                    flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all pointer-events-none">
+                    <span className="text-red-400 text-lg font-bold">×</span>
+                  </div>
+                </motion.div>
+              );
+            })}
+            {/* Empty slots */}
+            {Array.from({ length: Math.max(0, 25 - deckCardList.length) }).map((_, i) => (
+              <div key={`empty-${i}`}
+                className="rounded-2xl border-2 border-dashed border-white/[0.06] bg-white/[0.01]"
+                style={{ aspectRatio: "3/4.5" }} />
             ))}
           </div>
         )}
       </div>
 
-      {/* Card pool */}
+      {/* ── Add Cards pool ── */}
       <div className="glass rounded-2xl p-4 border border-white/[0.08]">
         <p className="text-xs text-white/40 uppercase tracking-widest mb-4">Add Cards</p>
         <div className="grid grid-cols-3 gap-3 justify-items-center">
@@ -402,9 +403,9 @@ export default function DecksPage() {
   const { decks, activeDeckId, createDeck, updateDeck, deleteDeck, setActiveDeck } = useDeckStore();
   const owned = useCollectionStore((s) => s.owned);
 
-  const [editing,     setEditing]     = useState<SavedDeck | null>(null);
-  const [showCreate,  setShowCreate]  = useState(false);
-  const [newName,     setNewName]     = useState("");
+  const [editing,    setEditing]    = useState<SavedDeck | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newName,    setNewName]    = useState("");
 
   const handleCreate = () => {
     const name = newName.trim() || `Deck ${decks.length + 1}`;
@@ -419,7 +420,7 @@ export default function DecksPage() {
       <div className="mb-6">
         <h1 className="font-display text-2xl font-bold text-white">Decks</h1>
         <p className="text-sm text-white/40 mt-1">
-          {decks.length} deck{decks.length !== 1 ? "s" : ""} · 20 cards required
+          {decks.length} deck{decks.length !== 1 ? "s" : ""} · 25 cards required
         </p>
       </div>
 

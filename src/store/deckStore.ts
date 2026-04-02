@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { DEFAULT_COLLECTION } from "@/lib/game/cardPool";
 
 export interface SavedDeck {
   id: string;
@@ -38,7 +37,7 @@ export const useDeckStore = create<DeckStore>()(
         const deck: SavedDeck = {
           id:        makeId(),
           name,
-          cards:     { ...DEFAULT_COLLECTION },
+          cards:     {},
           createdAt: now,
           updatedAt: now,
         };
