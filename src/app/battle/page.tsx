@@ -265,12 +265,6 @@ export default function BattlePage() {
                   </div>
                 </div>
 
-                {/* Playing as */}
-                <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/5 border border-white/10">
-                  <span className="text-[10px] text-white/40 uppercase tracking-widest">Playing as</span>
-                  <span className="text-sm font-semibold text-white">{username || getStoredUsername()}</span>
-                </div>
-
                 {/* Deck check */}
                 {!hasAnyDeck ? (
                   <div className="flex flex-col gap-2">

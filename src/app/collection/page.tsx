@@ -3,40 +3,28 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { ALL_CARDS, CardVariant, Rarity } from "@/lib/game/cardPool";
-import { getThemeStyle } from "@/lib/game/artThemes";
 import { useCollectionStore } from "@/store/collectionStore";
 import { CardDetailModal } from "@/components/game/CardDetailModal";
+import { GameCard } from "@/components/game/GameCard";
+import { Card, CardType, Element, SpecialType } from "@/lib/game/types";
 import { cn } from "@/lib/utils";
 
-// ─────────────────────────────────────────────
-//  Rarity config
-// ─────────────────────────────────────────────
-
-const RARITY_LABEL: Record<Rarity, string> = {
-  common: "C", uncommon: "U", rare: "R", epic: "E", legendary: "L", diamond: "◆",
-};
-const RARITY_BADGE: Record<Rarity, string> = {
-  common:    "text-white/35 border-white/15",
-  uncommon:  "text-teal-300 border-teal-400/40",
-  rare:      "text-blue-300 border-blue-400/50",
-  epic:      "text-purple-300 border-purple-400/60",
-  legendary: "text-amber-300 border-amber-400/70",
-  diamond:   "text-cyan-200 border-cyan-300/70",
-};
-const RARITY_GLOW: Record<Rarity, string> = {
-  common:    "",
-  uncommon:  "0 0 14px 2px rgba(45,212,191,0.25)",
-  rare:      "0 0 20px 4px rgba(99,102,241,0.40)",
-  epic:      "0 0 30px 6px rgba(168,85,247,0.50)",
-  legendary: "0 0 40px 10px rgba(251,191,36,0.60)",
-  diamond:   "0 0 50px 14px rgba(34,211,238,0.70)",
-};
 
 const elementIcon: Record<string, string> = { ROCK: "✊", SCISSORS: "✌", PAPER: "✋" };
 
 type FilterRarity  = "all" | Rarity;
 type FilterElement = "all" | "ROCK" | "SCISSORS" | "PAPER" | "special";
 type FilterOwned   = "all" | "owned" | "unowned";
+
+function variantToCard(v: CardVariant): Card {
+  if (v.type === "element") {
+    return { id: v.id, type: CardType.ELEMENT, element: v.element as Element, value: v.value as 3|5|8|12|15, variantId: v.id };
+  }
+  if (v.type === "special") {
+    return { id: v.id, type: CardType.SPECIAL, specialType: v.specialType as SpecialType, variantId: v.id };
+  }
+  return { id: v.id, type: CardType.DIAMOND, value: v.value!, variantId: v.id };
+}
 
 // ─────────────────────────────────────────────
 //  Card grid item
@@ -45,63 +33,18 @@ type FilterOwned   = "all" | "owned" | "unowned";
 function CollectionCard({ card, qty, onClick }: {
   card: CardVariant; qty: number; onClick: () => void;
 }) {
-  const owned  = qty > 0;
-  const theme  = getThemeStyle(card.artTheme);
-  const icon   = card.element
-    ? elementIcon[card.element]
-    : card.specialType === "BLOCK" ? "🛡" : "🌈";
-
-  const isLegendary = card.rarity === "legendary";
-
+  const owned = qty > 0;
   return (
-    <motion.button
-      whileTap={{ scale: 0.95 }}
-      onClick={onClick}
-      className={cn(
-        "relative flex flex-col items-center justify-between rounded-2xl border p-2 overflow-hidden",
-        `bg-gradient-to-b ${theme.bgFrom} ${theme.bgTo}`,
-        "aspect-[3/4] w-full",
-        owned ? RARITY_BADGE[card.rarity].split(" ")[1] : "border-white/[0.07]",
-        !owned && "opacity-35 grayscale"
-      )}
-      style={{ boxShadow: owned ? (RARITY_GLOW[card.rarity] || undefined) : undefined }}
-    >
-      {/* Legendary shimmer */}
-      {isLegendary && owned && (
-        <motion.div
-          className="absolute inset-0 pointer-events-none"
-          animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          style={{
-            background: "linear-gradient(90deg, transparent 0%, rgba(251,191,36,0.1) 50%, transparent 100%)",
-            backgroundSize: "200% 100%",
-          }}
-        />
-      )}
-
-      {/* Rarity badge */}
-      <div className="flex items-center justify-between w-full z-10">
-        {card.value && <span className="text-[8px] font-bold text-white/50">+{card.value}</span>}
-        <span className={cn("ml-auto text-[8px] font-bold border rounded px-0.5", RARITY_BADGE[card.rarity])}>
-          {RARITY_LABEL[card.rarity]}
-        </span>
+    <div className={cn("relative cursor-pointer", !owned && "opacity-35 grayscale")} onClick={onClick}>
+      <div className="w-full aspect-[3/4]">
+        <GameCard card={variantToCard(card)} size="sm" className="!w-full !h-full" />
       </div>
-
-      {/* Icon */}
-      <span className={cn("text-3xl z-10", theme.textColor)}>{icon}</span>
-
-      {/* Name */}
-      <p className="text-[7px] text-white/45 truncate w-full text-center z-10 leading-tight">
-        {card.displayName}
-      </p>
-
-      {/* Owned quantity badge */}
-      {qty > 0 && (
+      {qty > 1 && (
         <div className="absolute top-1 left-1 w-4 h-4 rounded-full bg-black/60 text-[8px] font-bold text-white flex items-center justify-center z-20">
           {qty}
         </div>
       )}
-    </motion.button>
+    </div>
   );
 }
 

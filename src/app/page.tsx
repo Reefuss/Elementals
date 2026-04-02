@@ -168,16 +168,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Quick tiles */}
-        <div className="flex gap-3">
-          <QuickTile icon="⚔️" label="Battle" sub="Find a match"
-            onClick={() => router.push("/battle")}
-            accent="hover:border-indigo-500/30" />
-          <QuickTile icon="🃏" label="Collection" sub="View cards"
-            onClick={() => router.push("/collection")}
-            accent="hover:border-purple-500/30" />
-        </div>
-
         {/* Featured pack */}
         <PackCard />
 

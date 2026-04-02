@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { ALL_CARDS, CARD_MAP, CardVariant, Rarity, validateDeck, DECK_RULES } from "@/lib/game/cardPool";
 import { useDeckStore, SavedDeck } from "@/store/deckStore";
 import { useCollectionStore } from "@/store/collectionStore";
@@ -389,6 +390,7 @@ function DeckEditor({ deck, owned, onSave, onDelete, onBack, onSetActive, isActi
 // ─────────────────────────────────────────────
 
 export default function DecksPage() {
+  const router = useRouter();
   const { decks, activeDeckId, createDeck, updateDeck, deleteDeck, setActiveDeck } = useDeckStore();
   const owned = useCollectionStore((s) => s.owned);
 
@@ -407,6 +409,12 @@ export default function DecksPage() {
   return (
     <div className="min-h-full px-4 py-6 max-w-md mx-auto">
       <div className="mb-6">
+        <button
+          onClick={() => router.push("/battle")}
+          className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors mb-3"
+        >
+          ← Back to Battle
+        </button>
         <h1 className="font-display text-2xl font-bold text-white">Decks</h1>
         <p className="text-sm text-white/40 mt-1">
           {decks.length} deck{decks.length !== 1 ? "s" : ""} · 25 cards required

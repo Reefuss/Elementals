@@ -39,9 +39,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* ── Top bar ── */}
       <div className="shrink-0 border-b border-white/[0.06]">
         <div className="max-w-[800px] mx-auto flex items-center justify-between px-4 py-2">
-          <span className="font-display text-sm font-bold tracking-widest text-white/60 uppercase">
+          <Link href="/" className="font-display text-sm font-bold tracking-widest text-white/60 uppercase hover:text-white/90 transition-colors">
             Elementals
-          </span>
+          </Link>
           <div className="flex items-center gap-3">
             {/* Coins */}
             <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">
