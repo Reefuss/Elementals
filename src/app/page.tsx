@@ -136,12 +136,14 @@ function QuickTile({ icon, label, sub, onClick, accent }: {
 
 export default function HomePage() {
   const router         = useRouter();
-  const initCollection = useCollectionStore((s) => s.initialize);
-  const resetMissions  = useMissionStore((s) => s.resetIfNewDay);
+  const initCollection   = useCollectionStore((s) => s.initialize);
+  const resetMissions    = useMissionStore((s) => s.resetIfNewDay);
+  const grantStarterCoins = usePlayerStore((s) => s.grantStarterCoins);
 
   useEffect(() => {
     initCollection();
     resetMissions();
+    grantStarterCoins();
   }, []);
 
   return (

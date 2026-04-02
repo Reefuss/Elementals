@@ -10,6 +10,7 @@ import {
 import { getThemeStyle } from "@/lib/game/artThemes";
 import { usePlayerStore } from "@/store/playerStore";
 import { useCollectionStore } from "@/store/collectionStore";
+import { CardDetailModal } from "@/components/game/CardDetailModal";
 import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────
@@ -36,26 +37,34 @@ const RARITY_GLOW: Record<Rarity, string> = {
   legendary: "0 0 40px 10px rgba(251,191,36,0.60)",
 };
 
-const elementIcon: Record<string, string> = { SUN: "☀", MOON: "☽", STAR: "★" };
+const elementIcon: Record<string, string> = { ROCK: "✊", SCISSORS: "✌", PAPER: "✋" };
 
 // ─────────────────────────────────────────────
 //  Card face — artTheme-driven visuals
 // ─────────────────────────────────────────────
 
-function MiniCard({ card, className }: { card: CardVariant; className?: string }) {
+function MiniCard({ card, className, onClick }: {
+  card: CardVariant; className?: string; onClick?: () => void;
+}) {
   const theme = getThemeStyle(card.artTheme);
   const icon  = card.element
     ? elementIcon[card.element]
-    : card.specialType === "BLOCK" ? "🛡" : "🌈";
+    : card.specialType === "BLOCK" ? "🛡"
+    : card.specialType === "RESHUFFLE" ? "↺"
+    : card.specialType === "DISCARD_TRAP" ? "⊗"
+    : card.specialType === "REVIVE" ? "↑"
+    : "🌈";
 
   const isLegendary = card.rarity === "legendary";
 
   return (
     <div
+      onClick={onClick}
       className={cn(
         "relative flex flex-col items-center justify-between rounded-2xl border p-2 overflow-hidden",
         `bg-gradient-to-b ${theme.bgFrom} ${theme.bgTo}`,
         RARITY_BADGE[card.rarity].split(" ")[1],
+        onClick && "cursor-pointer",
         className
       )}
       style={{ boxShadow: RARITY_GLOW[card.rarity] || undefined }}
@@ -84,12 +93,19 @@ function MiniCard({ card, className }: { card: CardVariant; className?: string }
       </div>
 
       {/* Icon */}
-      <span className={cn("text-3xl z-10", theme.textColor)}>{icon}</span>
+      <span className={cn("text-2xl z-10", theme.textColor)}>{icon}</span>
 
       {/* Name */}
-      <p className="text-[8px] text-white/50 truncate w-full text-center z-10 leading-tight">
+      <p className="text-[7px] text-white/50 truncate w-full text-center z-10 leading-tight">
         {card.displayName}
       </p>
+
+      {/* Effect text */}
+      {card.effect && card.effect !== "No effect." && card.effect !== "No effect — pure bluff." && (
+        <p className="text-[6px] text-white/30 text-center z-10 leading-tight line-clamp-2 mt-0.5">
+          {card.effect}
+        </p>
+      )}
     </div>
   );
 }
@@ -182,6 +198,7 @@ function PackOpening({
   const [phase, setPhase]           = useState<"shake" | "burst" | "reveal">("shake");
   const [revealIndex, setReveal]    = useState(-1);
   const [allDone, setAllDone]       = useState(false);
+  const [preview, setPreview]       = useState<CardVariant | null>(null);
 
   // Shake → burst → first card
   useEffect(() => {
@@ -255,7 +272,8 @@ function PackOpening({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className="relative w-24 h-32"
+                className="relative w-24 h-32 cursor-pointer"
+                onClick={() => setPreview(card)}
               >
                 <MiniCard card={card} className="w-full h-full" />
                 {isDupe && (
@@ -267,6 +285,14 @@ function PackOpening({
             );
           })}
         </div>
+
+        {preview && (
+          <CardDetailModal
+            card={preview}
+            owned={owned[preview.id] ?? 0}
+            onClose={() => setPreview(null)}
+          />
+        )}
 
         <div className="flex flex-col items-center gap-1 mb-8 text-xs text-white/40">
           <span>+{PITY_POINTS_PER_PACK} pity points earned</span>
@@ -395,8 +421,9 @@ function PityShop() {
   const addCards   = useCollectionStore((s) => s.addCards);
   const owned      = useCollectionStore((s) => s.owned);
 
-  const [filter, setFilter] = useState<Rarity | "all">("all");
-  const [toast, setToast]   = useState<string | null>(null);
+  const [filter,  setFilter]  = useState<Rarity | "all">("all");
+  const [toast,   setToast]   = useState<string | null>(null);
+  const [preview, setPreview] = useState<CardVariant | null>(null);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -448,16 +475,30 @@ function PityShop() {
             <motion.div
               key={card.id}
               whileTap={{ scale: 0.95 }}
-              onClick={() => canAfford && handleBuy(card)}
               className={cn(
-                "flex flex-col items-center gap-1 cursor-pointer",
-                (!canAfford) && "opacity-50 cursor-not-allowed"
+                "flex flex-col items-center gap-1",
+                (!canAfford) && "opacity-50"
               )}
             >
-              <MiniCard card={card} className="w-full aspect-[3/4]" />
+              <MiniCard
+                card={card}
+                className="w-full aspect-[3/4]"
+                onClick={() => setPreview(card)}
+              />
               <div className="flex items-center gap-1">
-                <span className="text-purple-400 text-[9px]">★</span>
-                <span className="text-[9px] font-bold text-white/50">{cost}</span>
+                <button
+                  onClick={() => canAfford && handleBuy(card)}
+                  disabled={!canAfford}
+                  className={cn(
+                    "flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] transition-colors",
+                    canAfford
+                      ? "bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 cursor-pointer"
+                      : "text-white/25 cursor-not-allowed"
+                  )}
+                >
+                  <span className="text-purple-400">★</span>
+                  <span className="font-bold">{cost}</span>
+                </button>
                 {ownedQty > 0 && (
                   <span className="text-[9px] text-white/25">×{ownedQty}</span>
                 )}
@@ -466,6 +507,14 @@ function PityShop() {
           );
         })}
       </div>
+
+      {preview && (
+        <CardDetailModal
+          card={preview}
+          owned={owned[preview.id] ?? 0}
+          onClose={() => setPreview(null)}
+        />
+      )}
 
       <AnimatePresence>
         {toast && (

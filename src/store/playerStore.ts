@@ -12,6 +12,7 @@ interface PlayerStore {
   coins: number;
   pityPoints: number;
   stats: PlayerStats;
+  coinBonusGranted: boolean;
 
   addCoins(amount: number): void;
   /** Returns false if insufficient funds. */
@@ -21,14 +22,17 @@ interface PlayerStore {
   spendPityPoints(amount: number): boolean;
   /** Call after a match ends. Returns coins earned. */
   recordMatch(won: boolean): number;
+  /** One-time 1000-coin grant for existing users upgrading to new economy. */
+  grantStarterCoins(): void;
 }
 
 export const usePlayerStore = create<PlayerStore>()(
   persist(
     (set, get) => ({
-      coins:      STARTING_COINS,
-      pityPoints: 0,
-      stats:      { wins: 0, losses: 0, gamesPlayed: 0 },
+      coins:            STARTING_COINS,
+      pityPoints:       0,
+      stats:            { wins: 0, losses: 0, gamesPlayed: 0 },
+      coinBonusGranted: false,
 
       addCoins: (amount) =>
         set((s) => ({ coins: s.coins + amount })),
@@ -46,6 +50,11 @@ export const usePlayerStore = create<PlayerStore>()(
         if (get().pityPoints < amount) return false;
         set((s) => ({ pityPoints: s.pityPoints - amount }));
         return true;
+      },
+
+      grantStarterCoins: () => {
+        if (get().coinBonusGranted) return;
+        set((s) => ({ coins: s.coins + 1000, coinBonusGranted: true }));
       },
 
       recordMatch: (won) => {

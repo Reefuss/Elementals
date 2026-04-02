@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { ALL_CARDS, CardVariant, Rarity } from "@/lib/game/cardPool";
 import { getThemeStyle } from "@/lib/game/artThemes";
 import { useCollectionStore } from "@/store/collectionStore";
+import { CardDetailModal } from "@/components/game/CardDetailModal";
 import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────
@@ -102,88 +103,6 @@ function CollectionCard({ card, qty, onClick }: {
   );
 }
 
-// ─────────────────────────────────────────────
-//  Card preview modal
-// ─────────────────────────────────────────────
-
-function CardPreview({ card, qty, onClose }: {
-  card: CardVariant; qty: number; onClose: () => void;
-}) {
-  const theme = getThemeStyle(card.artTheme);
-  const icon  = card.element
-    ? elementIcon[card.element]
-    : card.specialType === "BLOCK" ? "🛡" : "🌈";
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-6"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.7, opacity: 0 }}
-        animate={{ scale: 1,   opacity: 1 }}
-        exit={{ scale: 0.85,   opacity: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 24 }}
-        onClick={(e) => e.stopPropagation()}
-        className="flex flex-col items-center gap-5"
-      >
-        {/* Large card */}
-        <div
-          className={cn(
-            "w-44 h-60 rounded-3xl border-2 p-4 flex flex-col items-center justify-between overflow-hidden relative",
-            `bg-gradient-to-b ${theme.bgFrom} ${theme.bgTo}`,
-            RARITY_BADGE[card.rarity].split(" ")[1]
-          )}
-          style={{ boxShadow: RARITY_GLOW[card.rarity] || "none" }}
-        >
-          {card.rarity === "legendary" && (
-            <motion.div
-              className="absolute inset-0 pointer-events-none"
-              animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
-              style={{
-                background: "linear-gradient(90deg, transparent, rgba(251,191,36,0.12), transparent)",
-                backgroundSize: "200% 100%",
-              }}
-            />
-          )}
-          <div className="flex items-center justify-between w-full z-10">
-            {card.value && <span className="text-xs font-bold text-white/60">+{card.value}</span>}
-            <span className={cn("ml-auto text-[10px] font-bold border rounded px-1.5 py-0.5", RARITY_BADGE[card.rarity])}>
-              {RARITY_LABEL[card.rarity]}
-            </span>
-          </div>
-          <span className={cn("text-6xl z-10", theme.textColor)}>{icon}</span>
-          <p className="text-xs text-white/60 text-center z-10">{card.displayName}</p>
-        </div>
-
-        {/* Info card */}
-        <div className="glass rounded-2xl p-5 w-full max-w-xs border border-white/10 text-center">
-          <p className="font-display text-lg font-bold text-white">{card.displayName}</p>
-          <p className={cn("text-xs mt-0.5 capitalize", RARITY_BADGE[card.rarity].split(" ")[0])}>
-            {card.rarity} · {card.type}
-          </p>
-          <p className="text-xs text-white/30 italic mt-2 leading-relaxed">"{card.flavorText}"</p>
-          <div className="mt-4 flex justify-center gap-6 text-sm">
-            <div>
-              <p className="font-bold text-white">{qty}</p>
-              <p className="text-white/40 text-xs">Owned</p>
-            </div>
-            <div>
-              <p className="font-bold text-white">{card.maxPerDeck}</p>
-              <p className="text-white/40 text-xs">Max/Deck</p>
-            </div>
-          </div>
-        </div>
-
-        <button onClick={onClose} className="text-xs text-white/30 hover:text-white/50 transition-colors">
-          Close
-        </button>
-      </motion.div>
-    </motion.div>
-  );
-}
 
 // ─────────────────────────────────────────────
 //  Page
@@ -316,11 +235,13 @@ export default function CollectionPage() {
         </div>
       )}
 
-      <AnimatePresence>
-        {preview && (
-          <CardPreview card={preview} qty={owned[preview.id] ?? 0} onClose={() => setPreview(null)} />
-        )}
-      </AnimatePresence>
+      {preview && (
+        <CardDetailModal
+          card={preview}
+          owned={owned[preview.id] ?? 0}
+          onClose={() => setPreview(null)}
+        />
+      )}
     </div>
   );
 }

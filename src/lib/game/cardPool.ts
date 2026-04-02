@@ -457,19 +457,19 @@ export const PACK_TYPES: PackType[] = [
 // ─────────────────────────────────────────────
 
 export const DEFAULT_COLLECTION: Record<string, number> = {
-  // Rock: 3 common, 2 uncommon, 1 rare
-  s01: 3, s09: 2, s17: 1,
-  // Scissors: 3 common + 1, 2 uncommon, 1 rare
-  m01: 3, m02: 1, m09: 2, m17: 1,
-  // Paper: 3 common, 2 uncommon, 2 rare
-  t01: 3, t09: 2, t17: 2,
-  // Block ×2, Reshuffle ×2, Revive ×1  (5 specials, total = 25)
-  b01: 2,
-  rs01: 2,
-  rv01: 1,
+  // Rock — 7 common/uncommon cards
+  s01: 3, s02: 3, s07: 1,
+  // Scissors — 7 common/uncommon cards
+  m01: 3, m02: 3, m07: 1,
+  // Paper — 7 common/uncommon cards
+  t01: 3, t02: 3, t07: 1,
+  // Block ×2, Reshuffle ×2
+  b01: 2, rs01: 2,
+  // 1 rare element card (Stonefist — Rock rare)
+  s13: 1,
 };
 
-export const STARTING_COINS       = 500;
+export const STARTING_COINS       = 1000;
 export const PITY_POINTS_PER_PACK = 10;
 export const COINS_WIN            = 100;
 export const COINS_LOSS           = 30;

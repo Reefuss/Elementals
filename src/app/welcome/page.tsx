@@ -7,6 +7,7 @@ import { setStoredUsername } from "@/lib/utils";
 import { useGameStore } from "@/store/gameStore";
 import { useCollectionStore } from "@/store/collectionStore";
 import { useMissionStore } from "@/store/missionStore";
+import { usePlayerStore } from "@/store/playerStore";
 import { cn } from "@/lib/utils";
 
 type Stage = "title" | "name";
@@ -14,8 +15,9 @@ type Stage = "title" | "name";
 export default function WelcomePage() {
   const router          = useRouter();
   const setUsername     = useGameStore((s) => s.setUsername);
-  const initCollection  = useCollectionStore((s) => s.initialize);
-  const resetMissions   = useMissionStore((s) => s.resetIfNewDay);
+  const initCollection    = useCollectionStore((s) => s.initialize);
+  const resetMissions     = useMissionStore((s) => s.resetIfNewDay);
+  const grantStarterCoins = usePlayerStore((s) => s.grantStarterCoins);
 
   const [stage,       setStage]       = useState<Stage>("title");
   const [name,        setName]        = useState("");
@@ -44,6 +46,7 @@ export default function WelcomePage() {
     setUsername(trimmed);
     initCollection();
     resetMissions();
+    grantStarterCoins();
 
     // Small delay for the transition to feel intentional
     setTimeout(() => router.replace("/"), 400);
