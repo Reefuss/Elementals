@@ -21,7 +21,7 @@ function variantToDisplayCard(v: CardVariant): Card {
       id:        v.id,
       type:      CardType.ELEMENT,
       element:   v.element as Element,
-      value:     v.value as 3 | 5 | 8,
+      value:     v.value as 3 | 5 | 8 | 12,
       variantId: v.id,
     };
   }

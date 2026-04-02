@@ -15,7 +15,7 @@ import { Card, CardType, Element, SpecialType } from "@/lib/game/types";
 
 function variantToCard(v: CardVariant): Card {
   if (v.type === "element") {
-    return { id: v.id, type: CardType.ELEMENT, element: v.element as Element, value: v.value as 3|5|8, variantId: v.id };
+    return { id: v.id, type: CardType.ELEMENT, element: v.element as Element, value: v.value as 3|5|8|12, variantId: v.id };
   }
   if (v.type === "special") {
     return { id: v.id, type: CardType.SPECIAL, specialType: v.specialType as SpecialType, variantId: v.id };
