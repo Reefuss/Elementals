@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 // ─────────────────────────────────────────────
 
 const RARITY_LABEL: Record<Rarity, string> = {
-  common: "C", uncommon: "U", rare: "R", epic: "E", legendary: "L",
+  common: "C", uncommon: "U", rare: "R", epic: "E", legendary: "L", diamond: "◆",
 };
 const RARITY_BADGE: Record<Rarity, string> = {
   common:    "text-white/35 border-white/15",
@@ -21,6 +21,7 @@ const RARITY_BADGE: Record<Rarity, string> = {
   rare:      "text-blue-300 border-blue-400/50",
   epic:      "text-purple-300 border-purple-400/60",
   legendary: "text-amber-300 border-amber-400/70",
+  diamond:   "text-cyan-200 border-cyan-300/70",
 };
 const RARITY_GLOW: Record<Rarity, string> = {
   common:    "",
@@ -28,6 +29,7 @@ const RARITY_GLOW: Record<Rarity, string> = {
   rare:      "0 0 20px 4px rgba(99,102,241,0.40)",
   epic:      "0 0 30px 6px rgba(168,85,247,0.50)",
   legendary: "0 0 40px 10px rgba(251,191,36,0.60)",
+  diamond:   "0 0 50px 14px rgba(34,211,238,0.70)",
 };
 
 const elementIcon: Record<string, string> = { ROCK: "✊", SCISSORS: "✌", PAPER: "✋" };
@@ -108,7 +110,7 @@ function CollectionCard({ card, qty, onClick }: {
 //  Page
 // ─────────────────────────────────────────────
 
-const RARITY_ORDER: Rarity[] = ["common", "uncommon", "rare", "epic", "legendary"];
+const RARITY_ORDER: Rarity[] = ["common", "uncommon", "rare", "epic", "legendary", "diamond"];
 
 export default function CollectionPage() {
   const owned = useCollectionStore((s) => s.owned);

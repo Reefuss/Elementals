@@ -21,7 +21,7 @@ export function createDeck(): Card[] {
         id:      uuidv4(),
         type:    CardType.ELEMENT,
         element: entry.element as Element,
-        value:   entry.value as 3 | 5 | 8 | 12,
+        value:   entry.value as 3 | 5 | 8 | 12 | 15,
       };
       return card;
     }
@@ -49,7 +49,7 @@ export function buildDeckFromCards(savedCards: Record<string, number>): Card[] {
           id:        uuidv4(),
           type:      CardType.ELEMENT,
           element:   variant.element as Element,
-          value:     variant.value as 3 | 5 | 8 | 12,
+          value:     variant.value as 3 | 5 | 8 | 12 | 15,
           variantId: variantId,
         };
         deck.push(card);

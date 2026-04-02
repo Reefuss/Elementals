@@ -1,6 +1,6 @@
 // Elementals — full collectible card pool
 
-export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
+export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary" | "diamond";
 export type ElementKey = "ROCK" | "PAPER" | "SCISSORS";
 export type SpecialKey = "BLOCK" | "RAINBOW" | "RESHUFFLE" | "DISCARD_TRAP" | "REVIVE";
 
@@ -29,7 +29,7 @@ export interface CardVariant {
 // ─────────────────────────────────────────────
 
 const RARITY_MAX: Record<Rarity, number> = {
-  common: 3, uncommon: 3, rare: 2, epic: 1, legendary: 1,
+  common: 3, uncommon: 3, rare: 2, epic: 1, legendary: 1, diamond: 1,
 };
 
 // ── Effect table ──────────────────────────────────────────────────────────────
@@ -216,7 +216,7 @@ const CARD_EFFECTS: Record<string, FxEntry> = {
 };
 
 function el(
-  id: string, element: ElementKey, value: 3 | 5 | 8 | 12,
+  id: string, element: ElementKey, value: 3 | 5 | 8 | 12 | 15,
   rarity: Rarity, displayName: string, artTheme: string, flavorText: string
 ): CardVariant {
   const fx = CARD_EFFECTS[id] ?? { effect: "No effect.", effectType: "none" };
@@ -257,28 +257,28 @@ export const ALL_CARDS: CardVariant[] = [
   el("s04","ROCK",3,"common",   "Flint Chip",        "rock_titan",   "Sparked fire for the first time."),
   el("s05","ROCK",3,"common",   "Rubble",            "rock_solid",   "What's left after the wall falls."),
   el("s06","ROCK",3,"common",   "River Stone",       "rock_forge",   "Patient. Polished."),
-  el("s07","ROCK",3,"uncommon", "Fieldstone",        "rock_ancient", "Pulled from the earth by bare hands."),
-  el("s08","ROCK",3,"uncommon", "Quarry Block",      "rock_titan",   "Cut with effort. Placed with care."),
+  el("s07","ROCK",5,"uncommon", "Fieldstone",        "rock_ancient", "Pulled from the earth by bare hands."),
+  el("s08","ROCK",5,"uncommon", "Quarry Block",      "rock_titan",   "Cut with effort. Placed with care."),
   el("s09","ROCK",5,"uncommon", "Boulder",           "rock_solid",   "Immovable. Until it isn't."),
   el("s10","ROCK",5,"uncommon", "Obsidian Shard",    "rock_forge",   "Born in fire. Sharper than steel."),
   el("s11","ROCK",5,"uncommon", "Granite Fist",      "rock_ancient", "The mountain's preferred weapon."),
   el("s12","ROCK",5,"uncommon", "Iron Ore",          "rock_titan",   "Potential, unrefined."),
-  el("s13","ROCK",5,"rare",     "Stonefist",         "rock_solid",   "The punch that ended the argument."),
-  el("s14","ROCK",5,"rare",     "Basalt Column",     "rock_forge",   "Geometric. Natural. Inevitable."),
-  el("s15","ROCK",5,"rare",     "Tectonic Plate",    "rock_ancient", "Slow. Unstoppable."),
-  el("s16","ROCK",5,"rare",     "Warhammer Head",    "rock_titan",   "The handle broke. The head did not."),
+  el("s13","ROCK",8,"rare",     "Stonefist",         "rock_solid",   "The punch that ended the argument."),
+  el("s14","ROCK",8,"rare",     "Basalt Column",     "rock_forge",   "Geometric. Natural. Inevitable."),
+  el("s15","ROCK",8,"rare",     "Tectonic Plate",    "rock_ancient", "Slow. Unstoppable."),
+  el("s16","ROCK",8,"rare",     "Warhammer Head",    "rock_titan",   "The handle broke. The head did not."),
   el("s17","ROCK",8,"rare",     "Avalanche",         "rock_solid",   "There was a mountain here."),
   el("s18","ROCK",8,"rare",     "Monolith",          "rock_forge",   "They built temples around it."),
   el("s19","ROCK",8,"rare",     "Seismic Core",      "rock_ancient", "The earth's heartbeat."),
-  el("s20","ROCK",8,"epic",     "Titan's Knuckle",   "rock_titan",   "Left an impression."),
-  el("s21","ROCK",8,"epic",     "Continental Shelf", "rock_solid",   "The ocean floor calls it ceiling."),
-  el("s22","ROCK",8,"epic",     "Bedrock",           "rock_forge",   "You can't dig deeper than this."),
-  el("s23","ROCK",8,"epic",     "Crust Fragment",    "rock_ancient", "A piece of the planet's skin."),
-  el("s24","ROCK",8,"epic",     "Petrified Giant",   "rock_titan",   "It was moving once."),
-  el("s25","ROCK",8,"epic",     "Obsidian Throne",   "rock_solid",   "Forged where magma meets silence."),
-  el("s26","ROCK",12,"legendary","Pangaea Shard",      "rock_forge",   "From when there was only one land."),
-  el("s27","ROCK",12,"legendary","The Unmoved",        "rock_ancient", "Everything else moved around it."),
-  el("s28","ROCK",12,"legendary","Terra Absolute",     "rock_titan",   "The ground beneath all grounds."),
+  el("s20","ROCK",12,"epic",    "Titan's Knuckle",   "rock_titan",   "Left an impression."),
+  el("s21","ROCK",12,"epic",    "Continental Shelf", "rock_solid",   "The ocean floor calls it ceiling."),
+  el("s22","ROCK",12,"epic",    "Bedrock",           "rock_forge",   "You can't dig deeper than this."),
+  el("s23","ROCK",12,"epic",    "Crust Fragment",    "rock_ancient", "A piece of the planet's skin."),
+  el("s24","ROCK",12,"epic",    "Petrified Giant",   "rock_titan",   "It was moving once."),
+  el("s25","ROCK",12,"epic",    "Obsidian Throne",   "rock_solid",   "Forged where magma meets silence."),
+  el("s26","ROCK",15,"legendary","Pangaea Shard",     "rock_forge",   "From when there was only one land."),
+  el("s27","ROCK",15,"legendary","The Unmoved",       "rock_ancient", "Everything else moved around it."),
+  el("s28","ROCK",15,"legendary","Terra Absolute",    "rock_titan",   "The ground beneath all grounds."),
 
   // ══ SCISSORS — 28 cards ═════════════════════════════════════════════════
   el("m01","SCISSORS",3,"common",   "Nail Scissors",     "scissors_sharp",  "Precise. Personal."),
@@ -287,28 +287,28 @@ export const ALL_CARDS: CardVariant[] = [
   el("m04","SCISSORS",3,"common",   "Fraying Edge",      "scissors_void",   "Still cuts. Barely."),
   el("m05","SCISSORS",3,"common",   "Pinking Shear",     "scissors_sharp",  "The zigzag serves a purpose."),
   el("m06","SCISSORS",3,"common",   "Snipped Thread",    "scissors_blade",  "The loose end, dealt with."),
-  el("m07","SCISSORS",3,"uncommon", "Garden Shears",     "scissors_swift",  "Trims what overreaches."),
-  el("m08","SCISSORS",3,"uncommon", "Barber's Blade",    "scissors_void",   "A clean cut. No discussion."),
+  el("m07","SCISSORS",5,"uncommon", "Garden Shears",     "scissors_swift",  "Trims what overreaches."),
+  el("m08","SCISSORS",5,"uncommon", "Barber's Blade",    "scissors_void",   "A clean cut. No discussion."),
   el("m09","SCISSORS",5,"uncommon", "Tailor's Shears",   "scissors_sharp",  "Fabric yields without complaint."),
   el("m10","SCISSORS",5,"uncommon", "Hedge Trimmer",     "scissors_blade",  "The boundary is where you say it is."),
   el("m11","SCISSORS",5,"uncommon", "Surgical Scissors", "scissors_swift",  "Makes the incision. Then leaves."),
   el("m12","SCISSORS",5,"uncommon", "Sheet Metal Snips", "scissors_void",   "Industrial. Unforgiving."),
-  el("m13","SCISSORS",5,"rare",     "Fencing Foil",      "scissors_sharp",  "Tip before the blade."),
-  el("m14","SCISSORS",5,"rare",     "Shear Force",       "scissors_blade",  "Two edges meeting at one point."),
-  el("m15","SCISSORS",5,"rare",     "Katana Edge",       "scissors_swift",  "The draw is half the cut."),
-  el("m16","SCISSORS",5,"rare",     "Cold Chisel",       "scissors_void",   "Hammered into the gap."),
+  el("m13","SCISSORS",8,"rare",     "Fencing Foil",      "scissors_sharp",  "Tip before the blade."),
+  el("m14","SCISSORS",8,"rare",     "Shear Force",       "scissors_blade",  "Two edges meeting at one point."),
+  el("m15","SCISSORS",8,"rare",     "Katana Edge",       "scissors_swift",  "The draw is half the cut."),
+  el("m16","SCISSORS",8,"rare",     "Cold Chisel",       "scissors_void",   "Hammered into the gap."),
   el("m17","SCISSORS",8,"rare",     "War Scythe",        "scissors_sharp",  "Repurposed for a different harvest."),
   el("m18","SCISSORS",8,"rare",     "Guillotine Blade",  "scissors_blade",  "Clean. Final."),
   el("m19","SCISSORS",8,"rare",     "Razor Judgement",   "scissors_swift",  "No hesitation."),
-  el("m20","SCISSORS",8,"epic",     "Splitting Edge",    "scissors_void",   "It divided the atom once."),
-  el("m21","SCISSORS",8,"epic",     "Twin Fang",         "scissors_sharp",  "Forged as one. Used as two."),
-  el("m22","SCISSORS",8,"epic",     "The Severance",     "scissors_blade",  "Some bonds are meant to break."),
-  el("m23","SCISSORS",8,"epic",     "Blade of Ends",     "scissors_swift",  "Everything terminates somewhere."),
-  el("m24","SCISSORS",8,"epic",     "Infinite Cut",      "scissors_void",   "Still in motion."),
-  el("m25","SCISSORS",8,"epic",     "Rift Shear",        "scissors_sharp",  "Cuts through more than matter."),
-  el("m26","SCISSORS",12,"legendary","Scissor Absolute",  "scissors_blade",  "The cut that cannot be undone."),
-  el("m27","SCISSORS",12,"legendary","Final Snip",        "scissors_swift",  "What comes after can't come back."),
-  el("m28","SCISSORS",12,"legendary","Edge Eternal",      "scissors_void",   "Still sharp. Always."),
+  el("m20","SCISSORS",12,"epic",    "Splitting Edge",    "scissors_void",   "It divided the atom once."),
+  el("m21","SCISSORS",12,"epic",    "Twin Fang",         "scissors_sharp",  "Forged as one. Used as two."),
+  el("m22","SCISSORS",12,"epic",    "The Severance",     "scissors_blade",  "Some bonds are meant to break."),
+  el("m23","SCISSORS",12,"epic",    "Blade of Ends",     "scissors_swift",  "Everything terminates somewhere."),
+  el("m24","SCISSORS",12,"epic",    "Infinite Cut",      "scissors_void",   "Still in motion."),
+  el("m25","SCISSORS",12,"epic",    "Rift Shear",        "scissors_sharp",  "Cuts through more than matter."),
+  el("m26","SCISSORS",15,"legendary","Scissor Absolute",  "scissors_blade",  "The cut that cannot be undone."),
+  el("m27","SCISSORS",15,"legendary","Final Snip",        "scissors_swift",  "What comes after can't come back."),
+  el("m28","SCISSORS",15,"legendary","Edge Eternal",      "scissors_void",   "Still sharp. Always."),
 
   // ══ PAPER — 28 cards ════════════════════════════════════════════════════
   el("t01","PAPER",3,"common",   "Sticky Note",       "paper_scroll",  "Written. Forgotten. Found."),
@@ -317,28 +317,28 @@ export const ALL_CARDS: CardVariant[] = [
   el("t04","PAPER",3,"common",   "Blank Page",        "paper_void",    "Potential, unwritten."),
   el("t05","PAPER",3,"common",   "Folded Note",       "paper_scroll",  "Passed under the table."),
   el("t06","PAPER",3,"common",   "Paper Crane",       "paper_parchment","It took patience."),
-  el("t07","PAPER",3,"uncommon", "Carbon Copy",       "paper_arcane",  "The duplicate that outlasted the original."),
-  el("t08","PAPER",3,"uncommon", "Parchment Scrap",   "paper_void",    "Old enough to matter."),
+  el("t07","PAPER",5,"uncommon", "Carbon Copy",       "paper_arcane",  "The duplicate that outlasted the original."),
+  el("t08","PAPER",5,"uncommon", "Parchment Scrap",   "paper_void",    "Old enough to matter."),
   el("t09","PAPER",5,"uncommon", "Legal Brief",       "paper_scroll",  "Every word considered."),
   el("t10","PAPER",5,"uncommon", "Blueprint",         "paper_parchment","The plan behind the thing."),
   el("t11","PAPER",5,"uncommon", "Sealed Letter",     "paper_arcane",  "The contents changed everything."),
   el("t12","PAPER",5,"uncommon", "Wanted Poster",     "paper_void",    "Someone is looking for you."),
-  el("t13","PAPER",5,"rare",     "Printed Manifesto", "paper_scroll",  "The words that started it."),
-  el("t14","PAPER",5,"rare",     "Ancient Map",       "paper_parchment","It was right. They just couldn't read it."),
-  el("t15","PAPER",5,"rare",     "Signed Decree",     "paper_arcane",  "Once sealed, no one argued."),
-  el("t16","PAPER",5,"rare",     "Ink Flood",         "paper_void",    "Too many words at once."),
+  el("t13","PAPER",8,"rare",     "Printed Manifesto", "paper_scroll",  "The words that started it."),
+  el("t14","PAPER",8,"rare",     "Ancient Map",       "paper_parchment","It was right. They just couldn't read it."),
+  el("t15","PAPER",8,"rare",     "Signed Decree",     "paper_arcane",  "Once sealed, no one argued."),
+  el("t16","PAPER",8,"rare",     "Ink Flood",         "paper_void",    "Too many words at once."),
   el("t17","PAPER",8,"rare",     "Burning Scroll",    "paper_scroll",  "The library remembered."),
   el("t18","PAPER",8,"rare",     "Dead Sea Fragment", "paper_parchment","Two thousand years old. Still relevant."),
   el("t19","PAPER",8,"rare",     "Writ of Authority", "paper_arcane",  "Signed by someone no one questions."),
-  el("t20","PAPER",8,"epic",     "Codex Eternis",     "paper_void",    "Every law. Every word. One book."),
-  el("t21","PAPER",8,"epic",     "Infinite Scroll",   "paper_scroll",  "Still unrolling."),
-  el("t22","PAPER",8,"epic",     "The Proclamation",  "paper_parchment","When it was read, the world changed."),
-  el("t23","PAPER",8,"epic",     "Arcane Tome",       "paper_arcane",  "You can read it. You can't understand it."),
-  el("t24","PAPER",8,"epic",     "Sealed Grimoire",   "paper_void",    "The seal is why it still exists."),
-  el("t25","PAPER",8,"epic",     "Paper Absolute",    "paper_scroll",  "Wraps the world."),
-  el("t26","PAPER",12,"legendary","First Written Word", "paper_parchment","Before this, everything was silence."),
-  el("t27","PAPER",12,"legendary","The Final Draft",    "paper_arcane",  "Nothing changes after this."),
-  el("t28","PAPER",12,"legendary","Word Eternal",       "paper_void",    "Written once. True forever."),
+  el("t20","PAPER",12,"epic",    "Codex Eternis",     "paper_void",    "Every law. Every word. One book."),
+  el("t21","PAPER",12,"epic",    "Infinite Scroll",   "paper_scroll",  "Still unrolling."),
+  el("t22","PAPER",12,"epic",    "The Proclamation",  "paper_parchment","When it was read, the world changed."),
+  el("t23","PAPER",12,"epic",    "Arcane Tome",       "paper_arcane",  "You can read it. You can't understand it."),
+  el("t24","PAPER",12,"epic",    "Sealed Grimoire",   "paper_void",    "The seal is why it still exists."),
+  el("t25","PAPER",12,"epic",    "Paper Absolute",    "paper_scroll",  "Wraps the world."),
+  el("t26","PAPER",15,"legendary","First Written Word", "paper_parchment","Before this, everything was silence."),
+  el("t27","PAPER",15,"legendary","The Final Draft",    "paper_arcane",  "Nothing changes after this."),
+  el("t28","PAPER",15,"legendary","Word Eternal",       "paper_void",    "Written once. True forever."),
 
   // ══ BLOCK — 10 cards ════════════════════════════════════════════════════
   sp("b01","BLOCK","common",    "Null Ward",         "block_null",       "It stops everything. Even hope.",      3),
@@ -352,13 +352,13 @@ export const ALL_CARDS: CardVariant[] = [
   sp("b09","BLOCK","epic",      "Oblivion Wall",     "block_null",       "No one has seen the other side.",      1),
   sp("b10","BLOCK","legendary", "Eschaton Guard",    "block_stone",      "The last shield at the end of time.",  1),
 
-  // ══ RAINBOW (diamonds) — 6 cards ════════════════════════════════════════
-  dm("r01", 10, "rare",      "Spectrum Shard",    "rainbow_prismatic", "A small piece of everything."),
-  dm("r02", 12, "rare",      "Chromatic Surge",   "rainbow_prismatic", "Every frequency, at once."),
-  dm("r03", 14, "epic",      "Prism Gate",        "rainbow_prismatic", "Walk through, become color."),
-  dm("r04", 16, "epic",      "Iris Veil",         "rainbow_prismatic", "The goddess wears the sky."),
-  dm("r05", 18, "legendary", "Bifrost Bridge",    "rainbow_prismatic", "All realms, connected."),
-  dm("r06", 20, "legendary", "Prismatic Genesis", "rainbow_prismatic", "The first light, split."),
+  // ══ RAINBOW (diamonds) — 6 cards ══════���════════════════════════���════════
+  dm("r01", 20, "diamond", "Spectrum Shard",    "rainbow_prismatic", "A small piece of everything."),
+  dm("r02", 20, "diamond", "Chromatic Surge",   "rainbow_prismatic", "Every frequency, at once."),
+  dm("r03", 20, "diamond", "Prism Gate",        "rainbow_prismatic", "Walk through, become color."),
+  dm("r04", 20, "diamond", "Iris Veil",         "rainbow_prismatic", "The goddess wears the sky."),
+  dm("r05", 20, "diamond", "Bifrost Bridge",    "rainbow_prismatic", "All realms, connected."),
+  dm("r06", 20, "diamond", "Prismatic Genesis", "rainbow_prismatic", "The first light, split."),
 
   // ══ RESHUFFLE — 6 cards ═════════════════════════════════════════════════
   sp("rs01","RESHUFFLE","common",   "Tide Turn",         "reshuffle_flow",  "The current shifts. So do you.",      2),
@@ -383,12 +383,12 @@ export const ALL_CARDS: CardVariant[] = [
   sp("rv04","REVIVE","legendary","Eternal Recall",   "revive_light", "Nothing is ever truly gone.",            1),
 
   // ══ DIAMOND — 6 cards ═══════════════════════════════════════════════════
-  dm("d01", 10, "rare",      "Diamond Shard",     "diamond_prismatic", "A fragment of absolute clarity."),
-  dm("d02", 12, "rare",      "Crystal Core",      "diamond_prismatic", "Compressed under infinite pressure."),
-  dm("d03", 14, "epic",      "Faceted Aegis",     "diamond_prismatic", "Cuts through everything it touches."),
-  dm("d04", 16, "epic",      "Prism Absolute",    "diamond_prismatic", "Light enters. Truth exits."),
-  dm("d05", 18, "legendary", "Eternal Diamond",   "diamond_prismatic", "Formed at the birth of the universe."),
-  dm("d06", 20, "legendary", "The Apex Crystal",  "diamond_prismatic", "Harder than any element. Any law."),
+  dm("d01", 20, "diamond", "Diamond Shard",     "diamond_prismatic", "A fragment of absolute clarity."),
+  dm("d02", 20, "diamond", "Crystal Core",      "diamond_prismatic", "Compressed under infinite pressure."),
+  dm("d03", 20, "diamond", "Faceted Aegis",     "diamond_prismatic", "Cuts through everything it touches."),
+  dm("d04", 20, "diamond", "Prism Absolute",    "diamond_prismatic", "Light enters. Truth exits."),
+  dm("d05", 20, "diamond", "Eternal Diamond",   "diamond_prismatic", "Formed at the birth of the universe."),
+  dm("d06", 20, "diamond", "The Apex Crystal",  "diamond_prismatic", "Harder than any element. Any law."),
 ];
 
 export const CARD_MAP: Record<string, CardVariant> = Object.fromEntries(

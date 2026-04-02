@@ -77,7 +77,7 @@ export interface ElementCard {
   id:        string;
   type:      CardType.ELEMENT;
   element:   Element;
-  value:     3 | 5 | 8 | 12;
+  value:     3 | 5 | 8 | 12 | 15;
   variantId?: string;
 }
 

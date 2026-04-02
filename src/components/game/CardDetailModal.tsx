@@ -13,6 +13,7 @@ const RARITY_BADGE: Record<Rarity, string> = {
   rare:      "text-blue-300 border-blue-400/50",
   epic:      "text-purple-300 border-purple-400/60",
   legendary: "text-amber-300 border-amber-400/70",
+  diamond:   "text-cyan-200 border-cyan-300/70",
 };
 
 function variantToDisplayCard(v: CardVariant): Card {
@@ -21,7 +22,7 @@ function variantToDisplayCard(v: CardVariant): Card {
       id:        v.id,
       type:      CardType.ELEMENT,
       element:   v.element as Element,
-      value:     v.value as 3 | 5 | 8 | 12,
+      value:     v.value as 3 | 5 | 8 | 12 | 15,
       variantId: v.id,
     };
   }
