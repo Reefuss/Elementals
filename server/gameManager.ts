@@ -234,8 +234,6 @@ export class GameManager {
       if (bonus === 0) return card;
       if (card.type === CardType.ELEMENT)
         return { ...card, value: Math.max(1, card.value + bonus) } as Card;
-      if (card.type === CardType.DIAMOND)
-        return { ...card, value: Math.max(1, card.value + bonus) } as Card;
       return card;
     }
 

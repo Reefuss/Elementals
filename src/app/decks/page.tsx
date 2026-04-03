@@ -18,10 +18,7 @@ function variantToCard(v: CardVariant): Card {
   if (v.type === "element") {
     return { id: v.id, type: CardType.ELEMENT, element: v.element as Element, value: v.value as 3|5|8|12|15, variantId: v.id };
   }
-  if (v.type === "special") {
-    return { id: v.id, type: CardType.SPECIAL, specialType: v.specialType as SpecialType, variantId: v.id };
-  }
-  return { id: v.id, type: CardType.DIAMOND, value: v.value!, variantId: v.id };
+  return { id: v.id, type: CardType.SPECIAL, specialType: v.specialType as SpecialType, variantId: v.id };
 }
 
 function cardTotal(cards: Record<string, number>) {
@@ -32,7 +29,7 @@ function cardTotal(cards: Record<string, number>) {
 //  Auto-build: 7 rock + 7 scissors + 7 paper (highest rarity), fill rest with utility
 // ─────────────────────────────────────────────
 
-const RARITY_ORDER: Rarity[] = ["diamond", "legendary", "epic", "rare", "uncommon", "common"];
+const RARITY_ORDER: Rarity[] = ["legendary", "epic", "rare", "uncommon", "common"];
 const ri = (r: Rarity) => RARITY_ORDER.indexOf(r);
 
 function autoBuildDeck(owned: Record<string, number>): Record<string, number> {
@@ -67,8 +64,6 @@ function autoBuildDeck(owned: Record<string, number>): Record<string, number> {
     .sort((a, b) => {
       if (a.type === "special" && b.type !== "special") return -1;
       if (b.type === "special" && a.type !== "special") return 1;
-      if (a.type === "diamond" && b.type !== "diamond") return -1;
-      if (b.type === "diamond" && a.type !== "diamond") return 1;
       return ri(a.rarity) - ri(b.rarity);
     });
 

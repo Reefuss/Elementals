@@ -19,7 +19,6 @@ export enum SpecialType {
 export enum CardType {
   ELEMENT = "ELEMENT",
   SPECIAL = "SPECIAL",
-  DIAMOND = "DIAMOND",
 }
 
 export enum GamePhase {
@@ -53,10 +52,6 @@ export enum WinReason {
   RAINBOW_TIEBREAK    = "RAINBOW_TIEBREAK",
   // Block
   BLOCK_NEGATES       = "BLOCK_NEGATES",
-  // Diamond
-  DIAMOND             = "DIAMOND",
-  DIAMOND_VALUE       = "DIAMOND_VALUE",
-  DIAMOND_TIE         = "DIAMOND_TIE",
   // Special actions
   DISCARD_TRAP        = "DISCARD_TRAP",
   DISCARD_TRAP_MUTUAL = "DISCARD_TRAP_MUTUAL",
@@ -88,15 +83,7 @@ export interface SpecialCard {
   variantId?:  string;
 }
 
-export interface DiamondCard {
-  id:    string;
-  type:  CardType.DIAMOND;
-  /** Diamond value — beats all element cards; higher wins against other diamonds */
-  value:     number;
-  variantId?: string;
-}
-
-export type Card = ElementCard | SpecialCard | DiamondCard;
+export type Card = ElementCard | SpecialCard;
 
 // ─────────────────────────────────────────────
 //  Round / match results

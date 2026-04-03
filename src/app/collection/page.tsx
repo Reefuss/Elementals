@@ -20,10 +20,7 @@ function variantToCard(v: CardVariant): Card {
   if (v.type === "element") {
     return { id: v.id, type: CardType.ELEMENT, element: v.element as Element, value: v.value as 3|5|8|12|15, variantId: v.id };
   }
-  if (v.type === "special") {
-    return { id: v.id, type: CardType.SPECIAL, specialType: v.specialType as SpecialType, variantId: v.id };
-  }
-  return { id: v.id, type: CardType.DIAMOND, value: v.value!, variantId: v.id };
+  return { id: v.id, type: CardType.SPECIAL, specialType: v.specialType as SpecialType, variantId: v.id };
 }
 
 // ─────────────────────────────────────────────
@@ -53,7 +50,7 @@ function CollectionCard({ card, qty, onClick }: {
 //  Page
 // ─────────────────────────────────────────────
 
-const RARITY_ORDER: Rarity[] = ["common", "uncommon", "rare", "epic", "legendary", "diamond"];
+const RARITY_ORDER: Rarity[] = ["common", "uncommon", "rare", "epic", "legendary"];
 
 export default function CollectionPage() {
   const owned = useCollectionStore((s) => s.owned);

@@ -110,22 +110,6 @@ function ReviveIcon({ className }: { className?: string }) {
   );
 }
 
-function DiamondIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 64 64" fill="none" className={className}>
-      <polygon
-        points="32,4 58,24 32,60 6,24"
-        fill="currentColor"
-        opacity="0.85"
-      />
-      <polygon
-        points="32,4 58,24 32,32"
-        fill="rgba(255,255,255,0.2)"
-      />
-    </svg>
-  );
-}
-
 // ─────────────────────────────────────────────
 //  Theme per card type
 // ─────────────────────────────────────────────
@@ -141,18 +125,6 @@ interface CardTheme {
 }
 
 function getCardTheme(card: Card): CardTheme {
-  if (card.type === CardType.DIAMOND) {
-    return {
-      bg:         "bg-gradient-to-b from-[#0a1a2a] to-[#050d15]",
-      border:     "border-cyan-400/50",
-      iconColor:  "text-cyan-300",
-      nameColor:  "text-cyan-200",
-      glow:       "shadow-[0_0_20px_4px_rgba(34,211,238,0.5)]",
-      valueColor: "text-cyan-300",
-      label:      "Diamond",
-    };
-  }
-
   if (card.type === CardType.SPECIAL) {
     switch (card.specialType) {
       case SpecialType.RAINBOW:
@@ -296,7 +268,6 @@ export function GameCard({
   const isReshuffle   = card.type === CardType.SPECIAL && card.specialType === SpecialType.RESHUFFLE;
   const isTrap        = card.type === CardType.SPECIAL && card.specialType === SpecialType.DISCARD_TRAP;
   const isRevive      = card.type === CardType.SPECIAL && card.specialType === SpecialType.REVIVE;
-  const isDiamond     = card.type === CardType.DIAMOND;
 
   const initial =
     animateIn === "bottom" ? { y: 80, opacity: 0 } :
@@ -333,16 +304,6 @@ export function GameCard({
         <div className="absolute inset-0 rounded-2xl opacity-20 rainbow-shimmer pointer-events-none" />
       )}
 
-      {/* Diamond shimmer overlay */}
-      {isDiamond && (
-        <motion.div
-          animate={{ opacity: [0.1, 0.3, 0.1] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute inset-0 rounded-2xl pointer-events-none"
-          style={{ background: "linear-gradient(135deg, transparent 30%, rgba(34,211,238,0.2) 50%, transparent 70%)" }}
-        />
-      )}
-
       {/* Selection ring */}
       {selected && (
         <motion.div
@@ -360,7 +321,6 @@ export function GameCard({
                   "border-emerald-400":  isReshuffle,
                   "border-red-400":      isTrap,
                   "border-amber-400":    isRevive,
-                  "border-cyan-400":     isDiamond,
                 })
           )}
         />
@@ -376,15 +336,6 @@ export function GameCard({
           +{card.value}
         </div>
       )}
-      {isDiamond && (
-        <div className={cn(
-          "absolute top-2 left-2 text-[10px] font-bold leading-none px-1.5 py-0.5 rounded",
-          "bg-black/40",
-          theme.valueColor
-        )}>
-          {card.value}
-        </div>
-      )}
 
       {/* Type label (top-right) */}
       <div className={cn(
@@ -392,7 +343,6 @@ export function GameCard({
         theme.nameColor
       )}>
         {card.type === CardType.ELEMENT ? card.element.slice(0, 3)
-          : isDiamond ? "DMD"
           : isRainbow ? "RBW"
           : isBlock   ? "BLK"
           : isReshuffle ? "RSH"
@@ -410,7 +360,6 @@ export function GameCard({
         {isReshuffle  && <ReshuffleIcon  className={cn(dims.icon, theme.iconColor)} />}
         {isTrap       && <TrapIcon       className={cn(dims.icon, theme.iconColor)} />}
         {isRevive     && <ReviveIcon     className={cn(dims.icon, theme.iconColor)} />}
-        {isDiamond    && <DiamondIcon    className={cn(dims.icon, theme.iconColor)} />}
       </div>
 
       {/* Bottom label + effect */}
@@ -421,8 +370,6 @@ export function GameCard({
         )}>
           {card.type === CardType.ELEMENT
             ? `${theme.label} +${card.value}`
-            : isDiamond
-            ? `${theme.label} ×${card.value}`
             : theme.label}
         </div>
         {(dims.effect || showEffect) && effectText && (
@@ -463,9 +410,7 @@ export function CardBack({ size = "md", className, pulse }: CardBackProps) {
     >
       <div className="absolute inset-2 rounded-xl opacity-50" />
       <div className="absolute inset-4 rounded-lg opacity-30" />
-      <div className="w-6 h-6 opacity-20">
-        <DiamondIcon className="text-white" />
-      </div>
+      <div className="text-white/20 text-lg">✦</div>
     </motion.div>
   );
 }

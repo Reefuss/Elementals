@@ -9,9 +9,8 @@
  *   2. DISCARD_TRAP
  *   3. REVIVE
  *   4. RESHUFFLE
- *   5. DIAMOND
- *   6. RAINBOW
- *   7. ELEMENT (normal resolution)
+ *   5. RAINBOW
+ *   6. ELEMENT (normal resolution)
  */
 
 import {
@@ -65,7 +64,7 @@ export interface RoundResolution {
  *
  * Card categories:
  *   Utility = Block, Trap, Revive, Reshuffle
- *   Attack  = Element, Diamond
+ *   Attack  = Element, Rainbow
  *
  * Resolution rules:
  *   Utility vs Utility   → always TIE (specific mechanics still fire)
@@ -86,8 +85,6 @@ export function resolveCards(p1Card: Card, p2Card: Card): RoundResolution {
   const p2IsReshuffle = isSpecial(p2Card, SpecialType.RESHUFFLE);
   const p1IsUtility   = p1IsBlock || p1IsTrap || p1IsRevive || p1IsReshuffle;
   const p2IsUtility   = p2IsBlock || p2IsTrap || p2IsRevive || p2IsReshuffle;
-  const p1IsDiamond   = p1Card.type === CardType.DIAMOND;
-  const p2IsDiamond   = p2Card.type === CardType.DIAMOND;
   const p1IsRainbow   = isSpecial(p1Card, SpecialType.RAINBOW);
   const p2IsRainbow   = isSpecial(p2Card, SpecialType.RAINBOW);
 
@@ -130,16 +127,6 @@ export function resolveCards(p1Card: Card, p2Card: Card): RoundResolution {
   }
 
   // ── ATTACK vs ATTACK ──────────────────────────────────────
-  if (p1IsDiamond && p2IsDiamond) {
-    const v1 = (p1Card as { value: number }).value;
-    const v2 = (p2Card as { value: number }).value;
-    if (v1 > v2) return win(0, WinReason.DIAMOND_VALUE);
-    if (v2 > v1) return win(1, WinReason.DIAMOND_VALUE);
-    return tie(WinReason.DIAMOND_TIE);
-  }
-  if (p1IsDiamond) return win(0, WinReason.DIAMOND);
-  if (p2IsDiamond) return win(1, WinReason.DIAMOND);
-
   // Rainbow (kept for safety; no rainbow cards in current pool)
   if (p1IsRainbow && p2IsRainbow) {
     return {
@@ -236,7 +223,6 @@ export function areBothOutOfCards(
 // ─────────────────────────────────────────────
 
 export function cardDisplayName(card: Card): string {
-  if (card.type === CardType.DIAMOND) return `Diamond ×${card.value}`;
   if (card.type === CardType.SPECIAL) {
     switch (card.specialType) {
       case SpecialType.BLOCK:        return "Block";
@@ -263,7 +249,6 @@ export function resultMessage(
       case WinReason.REVIVE_MUTUAL:     return { headline: "Both Revive", sub: "Each player picks a card back." };
       case WinReason.RESHUFFLE:         return { headline: "Reshuffle!", sub: "Hand reset — no points awarded." };
       case WinReason.RESHUFFLE_MUTUAL:  return { headline: "Both Reshuffle", sub: "Hands reshuffled, draw 3." };
-      case WinReason.DIAMOND_TIE:       return { headline: "Diamond Tie", sub: "Equal diamond values." };
       default:                          return { headline: "Tie!", sub: "No points this round." };
     }
   }
@@ -281,8 +266,6 @@ function winReasonLabel(reason: WinReason, youWon: boolean): string {
     case WinReason.HIGHER_VALUE:     return `${subject} had higher power.`;
     case WinReason.RAINBOW_BEATS:    return `${subject}'s Rainbow conquered all.`;
     case WinReason.RAINBOW_TIEBREAK: return `${subject} chose wisely in the Rainbow duel.`;
-    case WinReason.DIAMOND:          return `${subject}'s Diamond beats all elements.`;
-    case WinReason.DIAMOND_VALUE:    return `${subject}'s Diamond had higher value.`;
     case WinReason.DISCARD_TRAP:     return youWon ? "Your trap voided the opponent's card." : "Opponent's trap voided your card.";
     case WinReason.REVIVE_FORFEIT:   return youWon ? "Opponent sacrificed the round to revive." : "You sacrificed the round to revive.";
     case WinReason.RESHUFFLE:        return youWon ? "Opponent reshuffled their hand." : "You reshuffled your hand.";

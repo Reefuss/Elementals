@@ -1,12 +1,12 @@
 // Elementals — full collectible card pool
 
-export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary" | "diamond";
+export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
 export type ElementKey = "ROCK" | "PAPER" | "SCISSORS";
 export type SpecialKey = "BLOCK" | "RAINBOW" | "RESHUFFLE" | "DISCARD_TRAP" | "REVIVE";
 
 export interface CardVariant {
   id:           string;
-  type:         "element" | "special" | "diamond";
+  type:         "element" | "special";
   element?:     ElementKey;
   specialType?: SpecialKey;
   value?:       number;
@@ -29,7 +29,7 @@ export interface CardVariant {
 // ─────────────────────────────────────────────
 
 const RARITY_MAX: Record<Rarity, number> = {
-  common: 3, uncommon: 3, rare: 2, epic: 1, legendary: 1, diamond: 1,
+  common: 3, uncommon: 3, rare: 2, epic: 1, legendary: 1,
 };
 
 // ── Effect table ──────────────────────────────────────────────────────────────
@@ -98,14 +98,6 @@ const CARD_EFFECTS: Record<string, FxEntry> = {
   // ══ BLOCK ════════════════════════════════════════════════════════════════════
   b01: { effect: "Cancel round — no points awarded.", effectType: "none" },
 
-  // ══ RAINBOW (diamonds) ═══════════════════════════════════════════════════════
-  r01: { effect: "Beats all element cards. Higher value wins vs other diamonds.", effectType: "none" },
-  r02: { effect: "Beats all element cards. Higher value wins vs other diamonds.", effectType: "none" },
-  r03: { effect: "Beats all element cards. Higher value wins vs other diamonds.", effectType: "none" },
-  r04: { effect: "Beats all element cards. Higher value wins vs other diamonds.", effectType: "none" },
-  r05: { effect: "Beats all element cards. Higher value wins vs other diamonds.", effectType: "none" },
-  r06: { effect: "Beats all element cards. Higher value wins vs other diamonds.", effectType: "none" },
-
   // ══ RESHUFFLE ════════════════════════════════════════════════════════════════
   rs01: { effect: "Sacrifice this round: shuffle your discard pile back into your deck.", effectType: "none" },
 
@@ -115,13 +107,6 @@ const CARD_EFFECTS: Record<string, FxEntry> = {
   // ══ REVIVE ═══════════════════════════════════════════════════════════════════
   rv01: { effect: "Sacrifice this round: pick 1 card back from your discard pile.", effectType: "none" },
 
-  // ══ DIAMOND ══════════════════════════════════════════════════════════════════
-  d01: { effect: "Beats all element cards. Higher value wins vs other diamonds.", effectType: "none" },
-  d02: { effect: "Beats all element cards. Higher value wins vs other diamonds.", effectType: "none" },
-  d03: { effect: "Beats all element cards. Higher value wins vs other diamonds.", effectType: "none" },
-  d04: { effect: "Beats all element cards. Higher value wins vs other diamonds.", effectType: "none" },
-  d05: { effect: "Beats all element cards. Higher value wins vs other diamonds.", effectType: "none" },
-  d06: { effect: "Beats all element cards. Higher value wins vs other diamonds.", effectType: "none" },
 };
 
 function el(
@@ -141,16 +126,6 @@ function sp(
   const fx = CARD_EFFECTS[id] ?? { effect: "No effect.", effectType: "none" };
   return { id, type: "special", specialType, rarity, displayName,
     artTheme, flavorText, ...fx, setId: "base", maxPerDeck };
-}
-
-function dm(
-  id: string, value: number,
-  rarity: Rarity, displayName: string, artTheme: string,
-  flavorText: string
-): CardVariant {
-  const fx = CARD_EFFECTS[id] ?? { effect: "Beats all element cards.", effectType: "none" };
-  return { id, type: "diamond", value, rarity, displayName,
-    artTheme, flavorText, ...fx, setId: "base", maxPerDeck: 1 };
 }
 
 // ─────────────────────────────────────────────
@@ -183,14 +158,6 @@ export const ALL_CARDS: CardVariant[] = [
   // ══ BLOCK — 1 card ══════════════════════════════════════════════════════
   sp("b01","BLOCK","uncommon", "Null Ward", "block_null", "It stops everything. Even hope.", 3),
 
-  // ══ RAINBOW (diamonds) — 6 cards ══════���════════════════════════���════════
-  dm("r01", 20, "diamond", "Spectrum Shard",    "rainbow_prismatic", "A small piece of everything."),
-  dm("r02", 20, "diamond", "Chromatic Surge",   "rainbow_prismatic", "Every frequency, at once."),
-  dm("r03", 20, "diamond", "Prism Gate",        "rainbow_prismatic", "Walk through, become color."),
-  dm("r04", 20, "diamond", "Iris Veil",         "rainbow_prismatic", "The goddess wears the sky."),
-  dm("r05", 20, "diamond", "Bifrost Bridge",    "rainbow_prismatic", "All realms, connected."),
-  dm("r06", 20, "diamond", "Prismatic Genesis", "rainbow_prismatic", "The first light, split."),
-
   // ══ RESHUFFLE — 1 card ══════════════════════════════════════════════════
   sp("rs01","RESHUFFLE","uncommon", "Tide Turn",  "reshuffle_flow", "The current shifts. So do you.", 2),
 
@@ -200,13 +167,6 @@ export const ALL_CARDS: CardVariant[] = [
   // ══ REVIVE — 1 card ═════════════════════════════════════════════════════
   sp("rv01","REVIVE","uncommon", "Echo Recall", "revive_light", "The past answers when called.", 1),
 
-  // ══ DIAMOND — 6 cards ═══════════════════════════════════════════════════
-  dm("d01", 20, "diamond", "Diamond Shard",     "diamond_prismatic", "A fragment of absolute clarity."),
-  dm("d02", 20, "diamond", "Crystal Core",      "diamond_prismatic", "Compressed under infinite pressure."),
-  dm("d03", 20, "diamond", "Faceted Aegis",     "diamond_prismatic", "Cuts through everything it touches."),
-  dm("d04", 20, "diamond", "Prism Absolute",    "diamond_prismatic", "Light enters. Truth exits."),
-  dm("d05", 20, "diamond", "Eternal Diamond",   "diamond_prismatic", "Formed at the birth of the universe."),
-  dm("d06", 20, "diamond", "The Apex Crystal",  "diamond_prismatic", "Harder than any element. Any law."),
 ];
 
 export const CARD_MAP: Record<string, CardVariant> = Object.fromEntries(
@@ -295,7 +255,7 @@ export const COINS_WIN            = 100;
 export const COINS_LOSS           = 30;
 
 const RARITY_PITY_PRICES: Record<Rarity, number> = {
-  common: 5, uncommon: 10, rare: 20, epic: 50, legendary: 120, diamond: 300,
+  common: 5, uncommon: 10, rare: 20, epic: 50, legendary: 120,
 };
 
 export function getPityPrice(card: CardVariant): number {
@@ -315,12 +275,10 @@ export const DECK_RULES = {
   maxCards:        25,
   minElementCards: 9,
   maxSpecialCards: 5,
-  maxRainbow:      2,
   maxBlock:        3,
   maxReshuffle:    2,
   maxDiscardTrap:  2,
   maxRevive:       1,
-  maxDiamond:      1,
 };
 
 export interface DeckValidationResult {
@@ -340,12 +298,10 @@ export function validateDeck(cards: Record<string, number>): DeckValidationResul
 
   let elementCount   = 0;
   let specialCount   = 0;
-  let rainbowCount   = 0;
   let blockCount     = 0;
   let reshuffleCount = 0;
   let trapCount      = 0;
   let reviveCount    = 0;
-  let diamondCount   = 0;
 
   for (const [id, qty] of Object.entries(cards)) {
     if (qty <= 0) continue;
@@ -355,10 +311,8 @@ export function validateDeck(cards: Record<string, number>): DeckValidationResul
       errors.push(`Max ${v.maxPerDeck}× ${v.displayName} per deck.`);
 
     if (v.type === "element") elementCount += qty;
-    if (v.type === "diamond") diamondCount += qty;
     if (v.type === "special") {
       specialCount += qty;
-      if (v.specialType === "RAINBOW")      rainbowCount   += qty;
       if (v.specialType === "BLOCK")        blockCount     += qty;
       if (v.specialType === "RESHUFFLE")    reshuffleCount += qty;
       if (v.specialType === "DISCARD_TRAP") trapCount      += qty;
@@ -370,8 +324,6 @@ export function validateDeck(cards: Record<string, number>): DeckValidationResul
     errors.push(`Need at least ${DECK_RULES.minElementCards} element cards.`);
   if (specialCount > DECK_RULES.maxSpecialCards)
     errors.push(`Max ${DECK_RULES.maxSpecialCards} special cards total.`);
-  if (rainbowCount > DECK_RULES.maxRainbow)
-    errors.push(`Max ${DECK_RULES.maxRainbow} Rainbow cards.`);
   if (blockCount > DECK_RULES.maxBlock)
     errors.push(`Max ${DECK_RULES.maxBlock} Block cards.`);
   if (reshuffleCount > DECK_RULES.maxReshuffle)
@@ -380,8 +332,6 @@ export function validateDeck(cards: Record<string, number>): DeckValidationResul
     errors.push(`Max ${DECK_RULES.maxDiscardTrap} Discard Trap cards.`);
   if (reviveCount > DECK_RULES.maxRevive)
     errors.push(`Max ${DECK_RULES.maxRevive} Revive card.`);
-  if (diamondCount > DECK_RULES.maxDiamond)
-    errors.push(`Max ${DECK_RULES.maxDiamond} Diamond card.`);
 
   return { valid: errors.length === 0, errors };
 }
@@ -390,7 +340,7 @@ export function validateDeck(cards: Record<string, number>): DeckValidationResul
 //  Pack opening
 // ─────────────────────────────────────────────
 
-const RARITY_ORDER: Rarity[] = ["common", "uncommon", "rare", "epic", "legendary", "diamond"];
+const RARITY_ORDER: Rarity[] = ["common", "uncommon", "rare", "epic", "legendary"];
 function rarityIndex(r: Rarity) { return RARITY_ORDER.indexOf(r); }
 
 function rollRarity(weights: PackRarityWeights): Rarity {

@@ -45,9 +45,6 @@ function reasonLine(result: RoundResult): string {
     case WinReason.BLOCK_NEGATES:       return "Block cancels the round";
     case WinReason.SAME_VALUE_TIE:      return "Equal power — tie";
     case WinReason.RAINBOW_TIEBREAK:    return "Rainbow duel settled it";
-    case WinReason.DIAMOND:             return "Diamond beats all elements";
-    case WinReason.DIAMOND_VALUE:       return "Higher diamond value wins";
-    case WinReason.DIAMOND_TIE:         return "Equal diamonds — tie";
     case WinReason.DISCARD_TRAP:        return "Card voided by trap";
     case WinReason.DISCARD_TRAP_MUTUAL: return "Both traps fired — mutual void";
     case WinReason.REVIVE_FORFEIT:      return "Round sacrificed to revive";
@@ -61,7 +58,6 @@ function reasonLine(result: RoundResult): string {
 // Per-card-type winner glow color
 function elementGlow(card: Card | undefined): string {
   if (!card) return "0 0 28px 8px rgba(129,140,248,0.7)";
-  if (card.type === CardType.DIAMOND) return "0 0 28px 8px rgba(34,211,238,0.7)";
   if (card.type === CardType.SPECIAL) {
     if (card.specialType === SpecialType.RAINBOW)      return "0 0 28px 8px rgba(199,119,255,0.7)";
     if (card.specialType === SpecialType.DISCARD_TRAP) return "0 0 28px 8px rgba(248,113,113,0.7)";

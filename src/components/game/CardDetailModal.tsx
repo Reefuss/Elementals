@@ -13,7 +13,6 @@ const RARITY_BADGE: Record<Rarity, string> = {
   rare:      "text-blue-300 border-blue-400/50",
   epic:      "text-purple-300 border-purple-400/60",
   legendary: "text-amber-300 border-amber-400/70",
-  diamond:   "text-cyan-200 border-cyan-300/70",
 };
 
 function variantToDisplayCard(v: CardVariant): Card {
@@ -26,19 +25,11 @@ function variantToDisplayCard(v: CardVariant): Card {
       variantId: v.id,
     };
   }
-  if (v.type === "special") {
-    return {
-      id:          v.id,
-      type:        CardType.SPECIAL,
-      specialType: v.specialType as SpecialType,
-      variantId:   v.id,
-    };
-  }
   return {
-    id:        v.id,
-    type:      CardType.DIAMOND,
-    value:     v.value!,
-    variantId: v.id,
+    id:          v.id,
+    type:        CardType.SPECIAL,
+    specialType: v.specialType as SpecialType,
+    variantId:   v.id,
   };
 }
 

@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import {
   Card, CardType, Element, SpecialType,
-  ElementCard, SpecialCard, DiamondCard,
+  ElementCard, SpecialCard,
 } from "./types";
 import { DECK_TEMPLATE } from "./constants";
 import { CARD_MAP } from "./cardPool";
@@ -59,14 +59,6 @@ export function buildDeckFromCards(savedCards: Record<string, number>): Card[] {
           type:        CardType.SPECIAL,
           specialType: variant.specialType as SpecialType,
           variantId:   variantId,
-        };
-        deck.push(card);
-      } else if (variant.type === "diamond") {
-        const card: DiamondCard = {
-          id:        uuidv4(),
-          type:      CardType.DIAMOND,
-          value:     variant.value as number,
-          variantId: variantId,
         };
         deck.push(card);
       }
