@@ -854,6 +854,7 @@ export class GameManager {
       self:            selfView,
       opponent:        oppView,
       turnStartedAt:   game.turnStartedAt,
+      selfIsPlayerOne: selfIdx === 0,
       lastResult:      game.results[game.results.length - 1] ?? null,
       matchResult:     game.finalResult,
       rainbowTiebreak,

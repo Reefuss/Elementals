@@ -89,6 +89,7 @@ interface BattleArenaProps {
   selfPlayedCard?:   Card;
   lastResult?:       RoundResult | null;
   selfId:            string;
+  selfIsPlayerOne?:  boolean;
   isDragging?:       boolean;
   dropZoneRef?:      React.RefObject<HTMLDivElement>;
 }
@@ -99,7 +100,7 @@ interface BattleArenaProps {
 
 export function BattleArena({
   phase, round, msLeft, selfHasPlayed, opponentHasPlayed,
-  selfPlayedCard, lastResult, selfId, isDragging, dropZoneRef,
+  selfPlayedCard, lastResult, selfId, selfIsPlayerOne, isDragging, dropZoneRef,
 }: BattleArenaProps) {
   const isRevealing = phase === GamePhase.REVEALING;
   const isPlaying   = phase === GamePhase.PLAYING;
@@ -130,10 +131,9 @@ export function BattleArena({
   const p1Card = lastResult?.playerOneCard;
   const p2Card = lastResult?.playerTwoCard;
 
-  // Determine which result card belongs to self (self may be player 1 or 2)
-  const selfIsP1 = !p1Card || !selfPlayedCard || p1Card.id === selfPlayedCard.id;
-  const selfCard = selfIsP1 ? p1Card : p2Card;
-  const oppCard  = selfIsP1 ? p2Card : p1Card;
+  // Use server-authoritative player order
+  const selfCard = selfIsPlayerOne !== false ? p1Card : p2Card;
+  const oppCard  = selfIsPlayerOne !== false ? p2Card : p1Card;
 
   const selfWon = isRevealing && lastResult?.winnerId === selfId;
   const oppWon  = isRevealing && lastResult?.winnerId !== null && lastResult?.winnerId !== selfId;

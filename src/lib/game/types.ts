@@ -188,13 +188,15 @@ export interface SelfView {
 // ─────────────────────────────────────────────
 
 export interface ClientGameState {
-  roomId:        string;
-  phase:         GamePhase;
-  round:         number;
-  self:          SelfView;
-  opponent:      OpponentView;
-  turnStartedAt: number | null;   // epoch ms — used to drive client-side timer
-  lastResult:    RoundResult | null;
+  roomId:          string;
+  phase:           GamePhase;
+  round:           number;
+  self:            SelfView;
+  opponent:        OpponentView;
+  turnStartedAt:   number | null;   // epoch ms — used to drive client-side timer
+  /** true if self is players[0] on the server — determines which result card is "yours" */
+  selfIsPlayerOne: boolean;
+  lastResult:      RoundResult | null;
   matchResult:   MatchResult | null;
   rainbowTiebreak: {
     attempt:      number;

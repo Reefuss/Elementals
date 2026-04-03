@@ -219,7 +219,7 @@ export default function GamePage() {
 
   if (!gameState) return <LoadingState />;
 
-  const { self, opponent, phase, round, lastResult, rainbowTiebreak } = gameState;
+  const { self, opponent, phase, round, lastResult, rainbowTiebreak, selfIsPlayerOne } = gameState;
 
   return (
     <div className="h-full flex flex-col relative overflow-hidden select-none">
@@ -271,6 +271,7 @@ export default function GamePage() {
             opponentHasPlayed={opponent.hasPlayed}
             lastResult={lastResult}
             selfId={self.id}
+            selfIsPlayerOne={selfIsPlayerOne}
             isDragging={!!dragState?.active}
             dropZoneRef={dropZoneRef}
           />
