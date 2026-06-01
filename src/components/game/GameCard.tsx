@@ -51,30 +51,11 @@ function PaperIcon({ className }: { className?: string }) {
   );
 }
 
-function BlockIcon({ className }: { className?: string }) {
+function StallIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" fill="none" className={className}>
-      <path
-        d="M32 4L6 16v16c0 14 11.4 27.1 26 31 14.6-3.9 26-17 26-31V16L32 4Z"
-        fill="currentColor"
-        opacity="0.9"
-      />
-      <path
-        d="M32 16L18 22v10c0 8.5 6.8 16.5 14 19 7.2-2.5 14-10.5 14-19V22L32 16Z"
-        fill="rgba(0,0,0,0.35)"
-      />
-    </svg>
-  );
-}
-
-function RainbowIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 64 64" fill="none" className={className}>
-      <path d="M4 44a28 28 0 0 1 56 0" stroke="#ff6b6b" strokeWidth="5" strokeLinecap="round" fill="none"/>
-      <path d="M10 44a22 22 0 0 1 44 0" stroke="#ffd93d" strokeWidth="5" strokeLinecap="round" fill="none"/>
-      <path d="M16 44a16 16 0 0 1 32 0" stroke="#6bcb77" strokeWidth="5" strokeLinecap="round" fill="none"/>
-      <path d="M22 44a10 10 0 0 1 20 0" stroke="#4d96ff" strokeWidth="5" strokeLinecap="round" fill="none"/>
-      <path d="M27 44a5 5 0 0 1 10 0"   stroke="#c77dff" strokeWidth="5" strokeLinecap="round" fill="none"/>
+      <rect x="16" y="12" width="12" height="40" rx="4" fill="currentColor" opacity="0.9" />
+      <rect x="36" y="12" width="12" height="40" rx="4" fill="currentColor" opacity="0.9" />
     </svg>
   );
 }
@@ -111,6 +92,15 @@ function ReviveIcon({ className }: { className?: string }) {
 }
 
 // ─────────────────────────────────────────────
+//  Diamond variant detection
+// ─────────────────────────────────────────────
+
+function isDiamondVariant(card: Card): boolean {
+  if (card.type !== CardType.ELEMENT || !card.variantId) return false;
+  return CARD_MAP[card.variantId]?.rarity === "diamond";
+}
+
+// ─────────────────────────────────────────────
 //  Theme per card type
 // ─────────────────────────────────────────────
 
@@ -127,15 +117,15 @@ interface CardTheme {
 function getCardTheme(card: Card): CardTheme {
   if (card.type === CardType.SPECIAL) {
     switch (card.specialType) {
-      case SpecialType.RAINBOW:
+      case SpecialType.STALL:
         return {
-          bg:         "bg-gradient-to-b from-[#1a0d30] to-[#0d0820]",
-          border:     "border-transparent",
-          iconColor:  "text-white",
-          nameColor:  "text-white",
-          glow:       "shadow-rainbow-glow",
-          valueColor: "text-white/80",
-          label:      "Rainbow",
+          bg:         "bg-gradient-to-b from-[#151520] to-[#0d0d18]",
+          border:     "border-slate-500/40",
+          iconColor:  "text-slate-400",
+          nameColor:  "text-slate-300",
+          glow:       "shadow-[0_0_20px_4px_rgba(100,116,139,0.4)]",
+          valueColor: "text-slate-300/60",
+          label:      "Stall",
         };
       case SpecialType.RESHUFFLE:
         return {
@@ -167,21 +157,47 @@ function getCardTheme(card: Card): CardTheme {
           valueColor: "text-amber-400/60",
           label:      "Revive",
         };
-      default: // BLOCK
+    }
+  }
+
+  // CardType.ELEMENT — check for diamond rarity variant
+  if (isDiamondVariant(card) && card.type === CardType.ELEMENT) {
+    switch (card.element) {
+      case Element.ROCK:
         return {
-          bg:         "bg-gradient-to-b from-[#151520] to-[#0d0d18]",
-          border:     "border-block-500/40",
-          iconColor:  "text-block-400",
-          nameColor:  "text-block-300",
-          glow:       "shadow-block-glow",
-          valueColor: "text-block-300/60",
-          label:      "Block",
+          bg:         "bg-gradient-to-b from-[#1f1400] to-[#0a0500]",
+          border:     "border-cyan-400/60",
+          iconColor:  "text-cyan-300",
+          nameColor:  "text-cyan-200",
+          glow:       "shadow-[0_0_24px_6px_rgba(34,211,238,0.55)]",
+          valueColor: "text-cyan-300",
+          label:      "Rock",
+        };
+      case Element.SCISSORS:
+        return {
+          bg:         "bg-gradient-to-b from-[#05101e] to-[#020508]",
+          border:     "border-cyan-400/60",
+          iconColor:  "text-cyan-300",
+          nameColor:  "text-cyan-200",
+          glow:       "shadow-[0_0_24px_6px_rgba(34,211,238,0.55)]",
+          valueColor: "text-cyan-300",
+          label:      "Scissors",
+        };
+      case Element.PAPER:
+        return {
+          bg:         "bg-gradient-to-b from-[#160a1f] to-[#050308]",
+          border:     "border-cyan-400/60",
+          iconColor:  "text-cyan-300",
+          nameColor:  "text-cyan-200",
+          glow:       "shadow-[0_0_24px_6px_rgba(34,211,238,0.55)]",
+          valueColor: "text-cyan-300",
+          label:      "Paper",
         };
     }
   }
 
-  // CardType.ELEMENT
-  switch (card.element) {
+  // Standard element cards
+  switch ((card as { element: Element }).element) {
     case Element.ROCK:
       return {
         bg:         "bg-gradient-to-b from-[#1f1400] to-[#0f0900]",
@@ -215,11 +231,11 @@ function getCardTheme(card: Card): CardTheme {
     default:
       return {
         bg: "bg-gradient-to-b from-[#151520] to-[#0d0d18]",
-        border: "border-block-500/40",
-        iconColor: "text-block-400",
-        nameColor: "text-block-300",
-        glow: "shadow-block-glow",
-        valueColor: "text-block-300/60",
+        border: "border-slate-500/40",
+        iconColor: "text-slate-400",
+        nameColor: "text-slate-300",
+        glow: "shadow-[0_0_20px_4px_rgba(100,116,139,0.4)]",
+        valueColor: "text-slate-300/60",
         label: "",
       };
   }
@@ -262,12 +278,12 @@ export function GameCard({
   const theme      = getCardTheme(card);
   const dims       = cardSizes[size];
   const effectText = card.variantId ? (CARD_MAP[card.variantId]?.effect ?? "") : "";
+  const isDiamond  = isDiamondVariant(card);
 
-  const isRainbow     = card.type === CardType.SPECIAL && card.specialType === SpecialType.RAINBOW;
-  const isBlock       = card.type === CardType.SPECIAL && card.specialType === SpecialType.BLOCK;
-  const isReshuffle   = card.type === CardType.SPECIAL && card.specialType === SpecialType.RESHUFFLE;
-  const isTrap        = card.type === CardType.SPECIAL && card.specialType === SpecialType.DISCARD_TRAP;
-  const isRevive      = card.type === CardType.SPECIAL && card.specialType === SpecialType.REVIVE;
+  const isStall     = card.type === CardType.SPECIAL && card.specialType === SpecialType.STALL;
+  const isReshuffle = card.type === CardType.SPECIAL && card.specialType === SpecialType.RESHUFFLE;
+  const isTrap      = card.type === CardType.SPECIAL && card.specialType === SpecialType.DISCARD_TRAP;
+  const isRevive    = card.type === CardType.SPECIAL && card.specialType === SpecialType.REVIVE;
 
   const initial =
     animateIn === "bottom" ? { y: 80, opacity: 0 } :
@@ -299,9 +315,14 @@ export function GameCard({
         className
       )}
     >
-      {/* Rainbow shimmer overlay */}
-      {isRainbow && (
-        <div className="absolute inset-0 rounded-2xl opacity-20 rainbow-shimmer pointer-events-none" />
+      {/* Diamond shimmer overlay */}
+      {isDiamond && (
+        <motion.div
+          animate={{ opacity: [0.1, 0.35, 0.1] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute inset-0 rounded-2xl pointer-events-none"
+          style={{ background: "linear-gradient(135deg, transparent 30%, rgba(34,211,238,0.2) 50%, transparent 70%)" }}
+        />
       )}
 
       {/* Selection ring */}
@@ -310,23 +331,20 @@ export function GameCard({
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           className={cn(
-            "absolute -inset-[3px] rounded-[18px] pointer-events-none",
-            isRainbow
-              ? "rainbow-shimmer opacity-80"
-              : cn("border-2", {
-                  "border-rock-400":     card.type === CardType.ELEMENT && card.element === Element.ROCK,
-                  "border-scissors-300": card.type === CardType.ELEMENT && card.element === Element.SCISSORS,
-                  "border-paper-400":    card.type === CardType.ELEMENT && card.element === Element.PAPER,
-                  "border-block-400":    isBlock,
-                  "border-emerald-400":  isReshuffle,
-                  "border-red-400":      isTrap,
-                  "border-amber-400":    isRevive,
-                })
+            "absolute -inset-[3px] rounded-[18px] pointer-events-none border-2",
+            isDiamond                                                             ? "border-cyan-400"
+              : card.type === CardType.ELEMENT && card.element === Element.ROCK    ? "border-rock-400"
+              : card.type === CardType.ELEMENT && card.element === Element.SCISSORS ? "border-scissors-300"
+              : card.type === CardType.ELEMENT && card.element === Element.PAPER    ? "border-paper-400"
+              : isStall     ? "border-slate-400"
+              : isReshuffle ? "border-emerald-400"
+              : isTrap      ? "border-red-400"
+              : "border-amber-400"
           )}
         />
       )}
 
-      {/* Value badge (top-left) */}
+      {/* Value badge (top-left) for element cards */}
       {card.type === CardType.ELEMENT && (
         <div className={cn(
           "absolute top-2 left-2 text-[10px] font-bold leading-none px-1.5 py-0.5 rounded",
@@ -337,16 +355,22 @@ export function GameCard({
         </div>
       )}
 
+      {/* Diamond badge (top-left) */}
+      {isDiamond && (
+        <div className="absolute top-2 left-2 text-[8px] font-bold leading-none px-1 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">
+          ◆
+        </div>
+      )}
+
       {/* Type label (top-right) */}
       <div className={cn(
         "absolute top-2 right-2 text-[9px] uppercase tracking-widest font-semibold opacity-60",
         theme.nameColor
       )}>
         {card.type === CardType.ELEMENT ? card.element.slice(0, 3)
-          : isRainbow ? "RBW"
-          : isBlock   ? "BLK"
+          : isStall     ? "STL"
           : isReshuffle ? "RSH"
-          : isTrap ? "TRP"
+          : isTrap      ? "TRP"
           : "RVV"}
       </div>
 
@@ -355,11 +379,10 @@ export function GameCard({
         {card.type === CardType.ELEMENT && card.element === Element.ROCK     && <RockIcon     className={cn(dims.icon, theme.iconColor)} />}
         {card.type === CardType.ELEMENT && card.element === Element.SCISSORS && <ScissorsIcon className={cn(dims.icon, theme.iconColor)} />}
         {card.type === CardType.ELEMENT && card.element === Element.PAPER    && <PaperIcon    className={cn(dims.icon, theme.iconColor)} />}
-        {isBlock      && <BlockIcon      className={cn(dims.icon, theme.iconColor)} />}
-        {isRainbow    && <RainbowIcon    className={cn(dims.icon)} />}
-        {isReshuffle  && <ReshuffleIcon  className={cn(dims.icon, theme.iconColor)} />}
-        {isTrap       && <TrapIcon       className={cn(dims.icon, theme.iconColor)} />}
-        {isRevive     && <ReviveIcon     className={cn(dims.icon, theme.iconColor)} />}
+        {isStall      && <StallIcon     className={cn(dims.icon, theme.iconColor)} />}
+        {isReshuffle  && <ReshuffleIcon className={cn(dims.icon, theme.iconColor)} />}
+        {isTrap       && <TrapIcon      className={cn(dims.icon, theme.iconColor)} />}
+        {isRevive     && <ReviveIcon    className={cn(dims.icon, theme.iconColor)} />}
       </div>
 
       {/* Bottom label + effect */}
@@ -372,7 +395,7 @@ export function GameCard({
             ? `${theme.label} +${card.value}`
             : theme.label}
         </div>
-        {(dims.effect || showEffect) && effectText && (
+        {(dims.effect || showEffect) && effectText && effectText !== "No effect." && (
           <p className={cn(
             "w-full text-center leading-tight line-clamp-3 opacity-60 px-0.5",
             dims.effect || "text-[6px]", theme.nameColor

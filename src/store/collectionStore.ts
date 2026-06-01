@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { CardVariant, DEFAULT_COLLECTION, STARTER_RARES } from "@/lib/game/cardPool";
+import { CardVariant, DEFAULT_COLLECTION } from "@/lib/game/cardPool";
 
 interface CollectionStore {
   /** variantId → quantity owned */
@@ -32,22 +32,15 @@ export const useCollectionStore = create<CollectionStore>()(
       getQuantity: (variantId) => get().owned[variantId] ?? 0,
 
       initialize: () => {
-        // Always merge DEFAULT_COLLECTION so new starter cards added after
-        // first launch are granted to existing players.
+        // Seed with DEFAULT_COLLECTION on first launch
         const current = get().owned;
-        const merged  = { ...current };
-        for (const [id, qty] of Object.entries(DEFAULT_COLLECTION)) {
-          if ((merged[id] ?? 0) < qty) merged[id] = qty;
+        if (Object.keys(current).length > 0) {
+          set({ initialized: true });
+          return;
         }
-        // Grant 1 random +8 rare if the player has none of the starter rares yet.
-        const hasRare = STARTER_RARES.some((id) => (merged[id] ?? 0) > 0);
-        if (!hasRare) {
-          const pick = STARTER_RARES[Math.floor(Math.random() * STARTER_RARES.length)];
-          merged[pick] = 1;
-        }
-        set({ owned: merged, initialized: true });
+        set({ owned: { ...DEFAULT_COLLECTION }, initialized: true });
       },
     }),
-    { name: "elementals-collection" }
+    { name: "elementals-collection-v2" }
   )
 );

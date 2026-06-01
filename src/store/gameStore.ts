@@ -4,7 +4,7 @@
  */
 
 import { create } from "zustand";
-import { ClientGameState, Element } from "@/lib/game/types";
+import { ClientGameState } from "@/lib/game/types";
 
 export type AppScreen =
   | "menu"
@@ -47,9 +47,6 @@ interface GameStore {
   opponentDisconnected: { username: string; reconnectGraceMs: number } | null;
   setOpponentDisconnected: (info: { username: string; reconnectGraceMs: number } | null) => void;
 
-  rainbowMyChoice: Element | null;
-  setRainbowMyChoice: (el: Element | null) => void;
-
   // ── Reset ─────────────────────────────────────────────────
   resetGame: () => void;
 }
@@ -89,9 +86,6 @@ export const useGameStore = create<GameStore>((set) => ({
   opponentDisconnected:    null,
   setOpponentDisconnected: (info) => set({ opponentDisconnected: info }),
 
-  rainbowMyChoice:    null,
-  setRainbowMyChoice: (el) => set({ rainbowMyChoice: el }),
-
   // Reset clears game-specific state but keeps identity
   resetGame: () =>
     set({
@@ -99,7 +93,6 @@ export const useGameStore = create<GameStore>((set) => ({
       selectedCardId:       null,
       opponentJustPlayed:   false,
       opponentDisconnected: null,
-      rainbowMyChoice:      null,
       matchOpponent:        null,
       matchRoomId:          null,
       screen:               "menu",

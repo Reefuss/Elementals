@@ -29,31 +29,35 @@ export type CardValue = (typeof CARD_VALUES)[number];
 /**
  * Legacy deck template — kept for fallback / testing.
  * The live game now builds decks from player collections.
- * 5 element cards per element (2×+3, 2×+5, 1×+8), 3 Block, 2 Rainbow = 20 cards.
  */
 export const DECK_TEMPLATE = [
   // Rock
   { element: "ROCK",     value: 3 },
   { element: "ROCK",     value: 3 },
+  { element: "ROCK",     value: 3 },
+  { element: "ROCK",     value: 5 },
   { element: "ROCK",     value: 5 },
   { element: "ROCK",     value: 5 },
   { element: "ROCK",     value: 8 },
   // Paper
   { element: "PAPER",    value: 3 },
   { element: "PAPER",    value: 3 },
+  { element: "PAPER",    value: 3 },
+  { element: "PAPER",    value: 5 },
   { element: "PAPER",    value: 5 },
   { element: "PAPER",    value: 5 },
   { element: "PAPER",    value: 8 },
   // Scissors
   { element: "SCISSORS", value: 3 },
   { element: "SCISSORS", value: 3 },
+  { element: "SCISSORS", value: 3 },
+  { element: "SCISSORS", value: 5 },
   { element: "SCISSORS", value: 5 },
   { element: "SCISSORS", value: 5 },
   { element: "SCISSORS", value: 8 },
   // Special
-  { special: "BLOCK" },
-  { special: "BLOCK" },
-  { special: "BLOCK" },
-  { special: "RAINBOW" },
-  { special: "RAINBOW" },
+  { special: "STALL" },
+  { special: "RESHUFFLE" },
+  { special: "DISCARD_TRAP" },
+  { special: "REVIVE" },
 ] as const;

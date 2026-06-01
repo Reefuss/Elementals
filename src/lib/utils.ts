@@ -8,22 +8,22 @@ export function cn(...inputs: ClassValue[]) {
 
 export function getStoredPlayerId(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("elementals_player_id");
+  return localStorage.getItem("elementals_player_id_v2");
 }
 
 export function setStoredPlayerId(id: string): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem("elementals_player_id", id);
+  localStorage.setItem("elementals_player_id_v2", id);
 }
 
 export function getStoredUsername(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("elementals_username");
+  return localStorage.getItem("elementals_username_v2");
 }
 
 export function setStoredUsername(name: string): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem("elementals_username", name);
+  localStorage.setItem("elementals_username_v2", name);
 }
 
 /** Element → Tailwind color key */
@@ -38,8 +38,12 @@ export function elementColorKey(element: Element): "rock" | "scissors" | "paper"
 /** Returns the CSS glow shadow class for a card */
 export function cardGlowClass(card: Card): string {
   if (card.type === CardType.SPECIAL) {
-    if (card.specialType === SpecialType.RAINBOW) return "shadow-rainbow-glow";
-    return "shadow-block-glow";
+    switch (card.specialType) {
+      case SpecialType.STALL:        return "shadow-[0_0_20px_4px_rgba(100,116,139,0.4)]";
+      case SpecialType.RESHUFFLE:    return "shadow-[0_0_20px_4px_rgba(52,211,153,0.4)]";
+      case SpecialType.DISCARD_TRAP: return "shadow-[0_0_20px_4px_rgba(248,113,113,0.4)]";
+      case SpecialType.REVIVE:       return "shadow-[0_0_20px_4px_rgba(251,191,36,0.4)]";
+    }
   }
   switch (card.element) {
     case Element.ROCK:     return "shadow-rock-glow";
@@ -51,9 +55,12 @@ export function cardGlowClass(card: Card): string {
 /** Returns the gradient border color for a card */
 export function cardBorderColor(card: Card): string {
   if (card.type === CardType.SPECIAL) {
-    if (card.specialType === SpecialType.RAINBOW)
-      return "from-pink-500 via-yellow-400 via-green-400 to-blue-500";
-    return "from-block-400 to-block-600";
+    switch (card.specialType) {
+      case SpecialType.STALL:        return "from-slate-400 to-slate-600";
+      case SpecialType.RESHUFFLE:    return "from-emerald-400 to-emerald-600";
+      case SpecialType.DISCARD_TRAP: return "from-red-400 to-red-600";
+      case SpecialType.REVIVE:       return "from-amber-400 to-amber-600";
+    }
   }
   switch (card.element) {
     case Element.ROCK:     return "from-rock-400 to-rock-600";

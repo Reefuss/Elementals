@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Card, CardType, Element, GamePhase, RoundResult, WinReason, SpecialType } from "@/lib/game/types";
+import { Card, CardType, Element, GamePhase, RoundResult, WinReason } from "@/lib/game/types";
 import { GameCard, CardBack, CardSlot } from "./GameCard";
 import { TurnTimer } from "./TurnTimer";
 import { SoundEngine } from "@/lib/sound/engine";
@@ -41,10 +41,9 @@ function reasonLine(result: RoundResult): string {
       return "";
     }
     case WinReason.HIGHER_VALUE:        return "Higher value wins";
-    case WinReason.RAINBOW_BEATS:       return "Rainbow conquers all";
-    case WinReason.BLOCK_NEGATES:       return "Block cancels the round";
+    case WinReason.DIAMOND_BEATS:       return "Diamond overpowers all";
     case WinReason.SAME_VALUE_TIE:      return "Equal power — tie";
-    case WinReason.RAINBOW_TIEBREAK:    return "Rainbow duel settled it";
+    case WinReason.STALL:               return "Stalled — cards returned to hand";
     case WinReason.DISCARD_TRAP:        return "Card voided by trap";
     case WinReason.DISCARD_TRAP_MUTUAL: return "Both traps fired — mutual void";
     case WinReason.REVIVE_FORFEIT:      return "Round sacrificed to revive";
@@ -59,9 +58,8 @@ function reasonLine(result: RoundResult): string {
 function elementGlow(card: Card | undefined): string {
   if (!card) return "0 0 28px 8px rgba(129,140,248,0.7)";
   if (card.type === CardType.SPECIAL) {
-    if (card.specialType === SpecialType.RAINBOW)      return "0 0 28px 8px rgba(199,119,255,0.7)";
-    if (card.specialType === SpecialType.DISCARD_TRAP) return "0 0 28px 8px rgba(248,113,113,0.7)";
-    if (card.specialType === SpecialType.REVIVE)       return "0 0 28px 8px rgba(251,191,36,0.7)";
+    if (card.specialType === "DISCARD_TRAP") return "0 0 28px 8px rgba(248,113,113,0.7)";
+    if (card.specialType === "REVIVE")       return "0 0 28px 8px rgba(251,191,36,0.7)";
     return "0 0 28px 8px rgba(129,140,248,0.7)";
   }
   const map: Record<Element, string> = {

@@ -9,8 +9,7 @@ export enum Element {
 }
 
 export enum SpecialType {
-  BLOCK        = "BLOCK",
-  RAINBOW      = "RAINBOW",
+  STALL        = "STALL",
   RESHUFFLE    = "RESHUFFLE",
   DISCARD_TRAP = "DISCARD_TRAP",
   REVIVE       = "REVIVE",
@@ -23,17 +22,15 @@ export enum CardType {
 
 export enum GamePhase {
   /** Waiting for both players to be ready */
-  WAITING            = "WAITING",
+  WAITING    = "WAITING",
   /** Players choosing a card to play */
-  PLAYING            = "PLAYING",
+  PLAYING    = "PLAYING",
   /** Both cards submitted, awaiting reveal */
-  REVEALING          = "REVEALING",
-  /** Rainbow vs Rainbow tiebreak in progress */
-  RAINBOW_TIEBREAK   = "RAINBOW_TIEBREAK",
+  REVEALING  = "REVEALING",
   /** One or both players must pick a card from their discard pile (Revive) */
-  REVIVE_PICK        = "REVIVE_PICK",
+  REVIVE_PICK = "REVIVE_PICK",
   /** Game over */
-  GAME_OVER          = "GAME_OVER",
+  GAME_OVER  = "GAME_OVER",
 }
 
 export enum RoundOutcome {
@@ -47,12 +44,10 @@ export enum WinReason {
   ELEMENT_BEATS       = "ELEMENT_BEATS",
   HIGHER_VALUE        = "HIGHER_VALUE",
   SAME_VALUE_TIE      = "SAME_VALUE_TIE",
-  // Rainbow
-  RAINBOW_BEATS       = "RAINBOW_BEATS",
-  RAINBOW_TIEBREAK    = "RAINBOW_TIEBREAK",
-  // Block
-  BLOCK_NEGATES       = "BLOCK_NEGATES",
+  // Diamond
+  DIAMOND_BEATS       = "DIAMOND_BEATS",
   // Special actions
+  STALL               = "STALL",
   DISCARD_TRAP        = "DISCARD_TRAP",
   DISCARD_TRAP_MUTUAL = "DISCARD_TRAP_MUTUAL",
   REVIVE_FORFEIT      = "REVIVE_FORFEIT",
@@ -185,11 +180,6 @@ export interface ClientGameState {
   selfIsPlayerOne: boolean;
   lastResult:      RoundResult | null;
   matchResult:   MatchResult | null;
-  rainbowTiebreak: {
-    attempt:      number;
-    myChoice:     Element | null;
-    waitingForOp: boolean;
-  } | null;
   /** Present during REVIVE_PICK phase */
   revivePick: {
     /** This player must pick a card from their discard pile */
@@ -213,10 +203,6 @@ export interface ServerGame {
   results:        RoundResult[];
   turnStartedAt:  number | null;
   turnTimer:      ReturnType<typeof setTimeout> | null;
-  rainbowTiebreak: {
-    attempt: number;
-    choices: Map<string, Element>;
-  } | null;
   /** Present during REVIVE_PICK phase: which players still need to pick */
   revivePick: {
     waitingFor: Set<string>;

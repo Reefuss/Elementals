@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { GamePhase, WinReason } from "@/lib/game/types";
+import { GamePhase } from "@/lib/game/types";
 import { SoundEngine } from "@/lib/sound/engine";
 import type { ClientGameState } from "@/lib/game/types";
 
@@ -49,17 +49,15 @@ export function useGameSounds(
         if (lastResult) {
           const tie    = lastResult.winnerId === null;
           const youWon = lastResult.winnerId === selfId;
-          const block  = lastResult.reason === WinReason.BLOCK_NEGATES;
 
           schedule(() => {
-            if (block)       SoundEngine.play("round_block");
-            else if (tie)    SoundEngine.play("round_tie");
+            if (tie)         SoundEngine.play("round_tie");
             else if (youWon) SoundEngine.play("round_win");
             else             SoundEngine.play("round_lose");
           }, 1850);
 
           // Score pip pop for winner
-          if (youWon && !tie && !block) {
+          if (youWon && !tie) {
             schedule(() => SoundEngine.play("point_pop"), 2300);
           }
         }

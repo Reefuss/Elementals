@@ -16,7 +16,6 @@ import { BattleArena }        from "@/components/game/BattleArena";
 import { OpponentArea }       from "@/components/game/OpponentArea";
 import { Scoreboard }         from "@/components/game/Scoreboard";
 import { MatchResultScreen }  from "@/components/game/MatchResult";
-import { RainbowTiebreak }    from "@/components/game/RainbowTiebreak";
 import { RevivePick }         from "@/components/game/RevivePick";
 import { Button }             from "@/components/ui/button";
 import { cn }                 from "@/lib/utils";
@@ -63,10 +62,9 @@ function DisconnectBanner({ username }: { username: string }) {
 
 function PhaseChip({ phase }: { phase: GamePhase }) {
   const labels: Partial<Record<GamePhase, string>> = {
-    [GamePhase.PLAYING]:           "Your Turn",
-    [GamePhase.REVEALING]:         "Reveal",
-    [GamePhase.RAINBOW_TIEBREAK]:  "Rainbow Duel",
-    [GamePhase.WAITING]:           "Starting…",
+    [GamePhase.PLAYING]:   "Your Turn",
+    [GamePhase.REVEALING]: "Reveal",
+    [GamePhase.WAITING]:   "Starting…",
   };
   const label = labels[phase];
   if (!label) return null;
@@ -77,10 +75,9 @@ function PhaseChip({ phase }: { phase: GamePhase }) {
       animate={{ opacity: 1, scale: 1 }}
       className={cn(
         "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider",
-        phase === GamePhase.PLAYING          && "bg-indigo-500/20 text-indigo-300 border border-indigo-400/30",
-        phase === GamePhase.REVEALING        && "bg-amber-500/20  text-amber-300  border border-amber-400/30",
-        phase === GamePhase.RAINBOW_TIEBREAK && "bg-pink-500/20   text-pink-300   border border-pink-400/30",
-        phase === GamePhase.WAITING          && "bg-white/5       text-white/40   border border-white/10",
+        phase === GamePhase.PLAYING   && "bg-indigo-500/20 text-indigo-300 border border-indigo-400/30",
+        phase === GamePhase.REVEALING && "bg-amber-500/20  text-amber-300  border border-amber-400/30",
+        phase === GamePhase.WAITING   && "bg-white/5       text-white/40   border border-white/10",
       )}
     >
       <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
@@ -103,11 +100,9 @@ export default function GamePage() {
     selectedCardId,
     selectCard,
     playCard,
-    submitRainbowChoice,
     submitRevivePick,
     isMyTurn,
     isRevealing,
-    isRainbowTiebreak,
     isRevivePick,
     isGameOver,
     msLeft,
@@ -219,7 +214,7 @@ export default function GamePage() {
 
   if (!gameState) return <LoadingState />;
 
-  const { self, opponent, phase, round, lastResult, rainbowTiebreak, selfIsPlayerOne } = gameState;
+  const { self, opponent, phase, round, lastResult, selfIsPlayerOne } = gameState;
 
   return (
     <div className="h-full flex flex-col relative overflow-hidden select-none">
@@ -380,15 +375,6 @@ export default function GamePage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* ── Rainbow Tiebreak modal ─── */}
-      <RainbowTiebreak
-        open={isRainbowTiebreak}
-        attempt={rainbowTiebreak?.attempt ?? 1}
-        myChoice={rainbowTiebreak?.myChoice ?? null}
-        waitingForOp={rainbowTiebreak?.waitingForOp ?? false}
-        onChoose={submitRainbowChoice}
-      />
 
       {/* ── Revive Pick modal ─── */}
       <RevivePick

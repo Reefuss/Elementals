@@ -8,7 +8,7 @@ import {
 } from "../src/lib/socket/events";
 import { Matchmaker } from "./matchmaker";
 import { GameManager } from "./gameManager";
-import { Element, MatchResult } from "../src/lib/game/types";
+import { MatchResult } from "../src/lib/game/types";
 import { RECONNECT_GRACE_MS } from "../src/lib/game/constants";
 
 type AppSocket = Socket<
@@ -167,20 +167,6 @@ export function registerSocketHandlers(io: AppServer): void {
       const game = gameManager.getGame(roomId);
       const opp  = game?.players.find((p) => p.id !== socket.data.playerId);
       if (opp) io.to(opp.socketId).emit("game:opponent_played");
-    });
-
-    // ── game:rainbow_choice ───────────────────────────────────────
-    socket.on("game:rainbow_choice", ({ element }, ack) => {
-      const roomId = socket.data.roomId ?? gameManager.getPlayerRoom(socket.data.playerId);
-      if (!roomId) { ack("Not in a game."); return; }
-
-      const result = gameManager.processRainbowChoice(roomId, socket.data.playerId, element as Element);
-      if (result.error) { ack(result.error); return; }
-
-      ack(null);
-      const game = gameManager.getGame(roomId);
-      const opp  = game?.players.find((p) => p.id !== socket.data.playerId);
-      if (opp) io.to(opp.socketId).emit("game:rainbow_waiting");
     });
 
     // ── game:revive_pick ──────────────────────────────────────────

@@ -70,6 +70,6 @@ export const usePlayerStore = create<PlayerStore>()(
         return reward;
       },
     }),
-    { name: "elementals-player" }
+    { name: "elementals-player-v2" }
   )
 );

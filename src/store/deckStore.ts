@@ -78,6 +78,6 @@ export const useDeckStore = create<DeckStore>()(
 
       getDeck: (id) => get().decks.find((d) => d.id === id),
     }),
-    { name: "elementals-decks" }
+    { name: "elementals-decks-v2" }
   )
 );

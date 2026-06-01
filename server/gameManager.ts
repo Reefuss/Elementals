@@ -3,7 +3,6 @@ import {
   Card,
   CardType,
   ClientGameState,
-  Element,
   GamePhase,
   MatchResult,
   OpponentView,
@@ -28,7 +27,6 @@ import {
   hasWon,
   isValidPlay,
   resolveCards,
-  resolveRainbowTiebreak,
 } from "../src/lib/game/rules";
 
 type StateCallback    = (roomId: string) => void;
@@ -82,11 +80,10 @@ export class GameManager {
       activeEffects:   [],
       turnStartedAt:   null,
       turnTimer:       null,
-      rainbowTiebreak: null,
       revivePick:      null,
-      cardCache:       new Map(),
-      reconnectTimers: new Map(),
-      finalResult:     null,
+      cardCache:        new Map(),
+      reconnectTimers:  new Map(),
+      finalResult:      null,
     };
 
     this.games.set(roomId, game);
@@ -98,8 +95,7 @@ export class GameManager {
     game.round++;
     game.plays.clear();
     game.cardCache.clear();
-    game.rainbowTiebreak = null;
-    game.revivePick      = null;
+    game.revivePick = null;
 
     const baseDrawCount = game.round === 1 ? INITIAL_HAND_SIZE : DRAW_PER_ROUND;
     for (const player of game.players) {
@@ -321,14 +317,6 @@ export class GameManager {
           player.discard.push(playedCard);
         }
       }
-    }
-
-    // Handle rainbow tiebreak
-    if (resolution.needsTiebreak) {
-      game.phase           = GamePhase.RAINBOW_TIEBREAK;
-      game.rainbowTiebreak = { attempt: 1, choices: new Map() };
-      this.onStateSync(game.roomId);
-      return;
     }
 
     // ── Score the round ───────────────────────────────────────
@@ -565,8 +553,17 @@ export class GameManager {
 
     game.results.push(result);
 
-    // Discard played cards — skip if already handled by trap or reshuffle side effects
-    if (resolution.voidedIndex === undefined && !isReshuffleRound) {
+    // Stall: return both played cards to hand, each player draws 1 extra
+    const isStallRound = resolution.reason === WinReason.STALL;
+    if (isStallRound) {
+      p1.hand.push(p1Card);
+      p2.hand.push(p2Card);
+      p1.hand.push(...drawCards(p1.deck, 1));
+      p2.hand.push(...drawCards(p2.deck, 1));
+    }
+
+    // Discard played cards — skip if already handled by trap, reshuffle, or stall
+    if (resolution.voidedIndex === undefined && !isReshuffleRound && !isStallRound) {
       p1.discard.push(p1Card);
       p2.discard.push(p2Card);
     }
@@ -656,73 +653,6 @@ export class GameManager {
     }
 
     this.startRound(game);
-  }
-
-  // ───────────────────────────────────────────────────────────
-  //  Rainbow tiebreak
-  // ───────────────────────────────────────────────────────────
-
-  processRainbowChoice(
-    roomId: string,
-    playerId: string,
-    element: Element
-  ): { error?: string } {
-    const game = this.games.get(roomId);
-    if (!game)                                     return { error: "Game not found." };
-    if (game.phase !== GamePhase.RAINBOW_TIEBREAK) return { error: "Not in tiebreak." };
-    if (!game.rainbowTiebreak)                     return { error: "No tiebreak active." };
-    if (game.rainbowTiebreak.choices.has(playerId)) return { error: "Already chose." };
-
-    game.rainbowTiebreak.choices.set(playerId, element);
-    this.onStateSync(game.roomId);
-
-    if (game.rainbowTiebreak.choices.size === 2) {
-      this.concludeRainbowTiebreak(game);
-    }
-
-    return {};
-  }
-
-  private concludeRainbowTiebreak(game: InternalGame): void {
-    const tb      = game.rainbowTiebreak!;
-    const [p1, p2] = game.players;
-    const c1       = tb.choices.get(p1.id)!;
-    const c2       = tb.choices.get(p2.id)!;
-    const res      = resolveRainbowTiebreak(c1, c2);
-
-    if (res.winnerIndex === null) {
-      tb.attempt++;
-      tb.choices.clear();
-      this.onStateSync(game.roomId);
-      return;
-    }
-
-    const winner = game.players[res.winnerIndex];
-    winner.score++;
-
-    const p1Card = game.cardCache.get(game.plays.get(p1.id)!)!;
-    const p2Card = game.cardCache.get(game.plays.get(p2.id)!)!;
-
-    p1.discard.push(p1Card);
-    p2.discard.push(p2Card);
-
-    const result: RoundResult = {
-      roundNumber:   game.round,
-      playerOneCard: p1Card,
-      playerTwoCard: p2Card,
-      outcome:
-        res.winnerIndex === 0 ? RoundOutcome.PLAYER_ONE_WINS : RoundOutcome.PLAYER_TWO_WINS,
-      reason:      WinReason.RAINBOW_TIEBREAK,
-      winnerId:    winner.id,
-      scoreAfter:  { [p1.id]: p1.score, [p2.id]: p2.score },
-    };
-
-    game.results.push(result);
-    game.rainbowTiebreak = null;
-    game.phase           = GamePhase.REVEALING;
-    this.onStateSync(game.roomId);
-
-    setTimeout(() => this.afterReveal(game), 4000);
   }
 
   // ───────────────────────────────────────────────────────────
@@ -825,17 +755,6 @@ export class GameManager {
       connected:    opp.connected,
     };
 
-    let rainbowTiebreak: ClientGameState["rainbowTiebreak"] = null;
-    if (game.rainbowTiebreak) {
-      const myChoice  = game.rainbowTiebreak.choices.get(playerId) ?? null;
-      const oppChose  = game.rainbowTiebreak.choices.has(opp.id);
-      rainbowTiebreak = {
-        attempt:      game.rainbowTiebreak.attempt,
-        myChoice,
-        waitingForOp: myChoice !== null && !oppChose,
-      };
-    }
-
     let revivePick: ClientGameState["revivePick"] = null;
     if (game.revivePick && game.phase === GamePhase.REVIVE_PICK) {
       const needsPick    = game.revivePick.waitingFor.has(playerId) &&
@@ -855,7 +774,6 @@ export class GameManager {
       selfIsPlayerOne: selfIdx === 0,
       lastResult:      game.results[game.results.length - 1] ?? null,
       matchResult:     game.finalResult,
-      rainbowTiebreak,
       revivePick,
     };
   }

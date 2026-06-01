@@ -21,13 +21,18 @@ export const ART_THEME_STYLES: Record<string, ArtThemeStyle> = {
   paper_parchment:   { bgFrom: "from-violet-950/70",   bgTo: "to-gray-950/90",    textColor: "text-violet-400",  glowColor: "rgba(167,139,250,0.45)" },
   paper_arcane:      { bgFrom: "from-fuchsia-900/70",  bgTo: "to-slate-900/90",   textColor: "text-fuchsia-400", glowColor: "rgba(232,121,249,0.45)" },
   paper_void:        { bgFrom: "from-purple-800/60",   bgTo: "to-indigo-950/90",  textColor: "text-purple-300",  glowColor: "rgba(216,180,254,0.45)" },
-  // ── Block ────────────────────────────────────────────
-  block_null:        { bgFrom: "from-slate-800/70",    bgTo: "to-gray-950/90",    textColor: "text-slate-300",   glowColor: "rgba(100,116,139,0.35)" },
-  block_stone:       { bgFrom: "from-stone-800/70",    bgTo: "to-slate-950/90",   textColor: "text-stone-300",   glowColor: "rgba(120,113,108,0.35)" },
-  // ── Rainbow ──────────────────────────────────────────
-  rainbow_prismatic: { bgFrom: "from-violet-900/70",   bgTo: "to-fuchsia-950/90", textColor: "text-white",       glowColor: "rgba(255,255,255,0.35)" },
+  // ── Stall ────────────────────────────────────────────
+  stall_void:        { bgFrom: "from-slate-800/70",    bgTo: "to-gray-950/90",    textColor: "text-slate-300",   glowColor: "rgba(100,116,139,0.35)" },
+  stall_null:        { bgFrom: "from-stone-800/70",    bgTo: "to-slate-950/90",   textColor: "text-stone-300",   glowColor: "rgba(120,113,108,0.35)" },
+  // ── Reshuffle ─────────────────────────────────────────
+  reshuffle_flow:    { bgFrom: "from-emerald-900/70",  bgTo: "to-slate-950/90",   textColor: "text-emerald-300", glowColor: "rgba(52,211,153,0.35)"  },
+  reshuffle_cycle:   { bgFrom: "from-teal-900/70",     bgTo: "to-slate-950/90",   textColor: "text-teal-300",    glowColor: "rgba(45,212,191,0.35)"  },
+  // ── Trap ─────────────────────────────────────────────
+  trap_dark:         { bgFrom: "from-red-950/70",      bgTo: "to-slate-950/90",   textColor: "text-red-300",     glowColor: "rgba(248,113,113,0.35)" },
+  // ── Revive ────────────────────────────────────────────
+  revive_light:      { bgFrom: "from-amber-900/70",    bgTo: "to-slate-950/90",   textColor: "text-amber-300",   glowColor: "rgba(251,191,36,0.35)"  },
 };
 
 export function getThemeStyle(artTheme: string): ArtThemeStyle {
-  return ART_THEME_STYLES[artTheme] ?? ART_THEME_STYLES["block_null"];
+  return ART_THEME_STYLES[artTheme] ?? ART_THEME_STYLES["stall_void"];
 }

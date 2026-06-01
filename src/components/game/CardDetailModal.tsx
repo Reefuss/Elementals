@@ -11,6 +11,7 @@ const RARITY_BADGE: Record<Rarity, string> = {
   common:    "text-white/35 border-white/15",
   uncommon:  "text-teal-300 border-teal-400/40",
   rare:      "text-blue-300 border-blue-400/50",
+  diamond:   "text-cyan-200 border-cyan-300/70",
   epic:      "text-purple-300 border-purple-400/60",
   legendary: "text-amber-300 border-amber-400/70",
 };

@@ -3,7 +3,7 @@
  * Imported by both server and client for full type safety.
  */
 
-import type { ClientGameState, Element } from "../game/types";
+import type { ClientGameState } from "../game/types";
 
 // ─────────────────────────────────────────────
 //  Client → Server
@@ -21,12 +21,6 @@ export interface ClientToServerEvents {
 
   /** Play a card during PLAYING phase */
   "game:play": (payload: { cardId: string }, ack: (err: string | null) => void) => void;
-
-  /** Submit Rainbow tiebreak element choice */
-  "game:rainbow_choice": (
-    payload: { element: Element },
-    ack: (err: string | null) => void
-  ) => void;
 
   /** Pick a card from discard pile during REVIVE_PICK phase */
   "game:revive_pick": (
@@ -63,12 +57,6 @@ export interface ServerToClientEvents {
 
   /** Opponent submitted their card (not what the card is) */
   "game:opponent_played": () => void;
-
-  /** Server requests Rainbow tiebreak choices */
-  "game:rainbow_tiebreak": (payload: { attempt: number }) => void;
-
-  /** Rainbow choice accepted; waiting for opponent */
-  "game:rainbow_waiting": () => void;
 
   /** Opponent disconnected */
   "game:opponent_disconnected": (payload: { username: string; reconnectGraceMs: number }) => void;
